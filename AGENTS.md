@@ -20,6 +20,7 @@ Read the relevant planning documents before implementation:
 - Keep committed document edits behind application commands with validation and coherent undo/redo.
 - Keep internal model, persistence schema, and bridge DTOs distinct.
 - Keep UI projections, caches, previews, and workspace preferences separate from the authoritative document.
+- Use the application `Document` controller and versioned store contract for normal save/reload behavior. Low-level `ProjectStore` saves are unconditional. Preserve session/history/checkpoints on lifecycle failures, and do not overstate optimistic conflict detection as a filesystem lock.
 - Respect stable identities, explicit units, structured routes, property ownership, and style inheritance.
 - Distinguish reusable definitions, immutable revisions, and occurrences. Publish shared changes explicitly and keep consuming projects pinned until they adopt an update. Known-use discovery is advisory and may be incomplete.
 - Start with modules and crates needed by working features; avoid speculative plugin frameworks and empty scaffolding.

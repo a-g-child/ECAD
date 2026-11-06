@@ -1,37 +1,41 @@
-//! Run the first complete edit/save/reopen workflow without a desktop or remote service.
+//! Generated identities, a compound edit, and guarded save/reopen without a desktop.
 
-use ecad_adapters::{JsonFile, encode_project};
-use ecad_app::{Command, Session};
-use ecad_domain::{Conductor, ConductorId, Device, DeviceId, Project, Terminal, TerminalId};
+use ecad_adapters::{JsonFile, RandomIds, encode_project};
+use ecad_app::{Command, Document};
+use ecad_domain::{Conductor, Device, Project, Terminal};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut session = Session::new(Project::default());
+    let directory = tempfile::tempdir()?;
+    let store = JsonFile::new(directory.path().join("example.json"));
+    let project = Project::new(RandomIds::project()?);
+    let mut document = Document::new(project, store.clone());
+    let terminals = [RandomIds::terminal()?, RandomIds::terminal()?];
     let mut commands = Vec::new();
-    for (value, name) in [(1, "-Controller"), (2, "-Lamp")] {
-        let terminal = Terminal::new(TerminalId::new(value)?, "1")?;
-        let device = Device::new(DeviceId::new(value)?, name, [terminal])?;
+    for (terminal_id, name) in terminals.into_iter().zip(["-Controller", "-Lamp"]) {
+        let terminal = Terminal::new(terminal_id, "1")?;
+        let device = Device::new(RandomIds::device()?, name, [terminal])?;
         commands.push(Command::InsertDevice(device));
     }
     let conductor = Conductor::new(
-        ConductorId::new(1)?,
-        Some(TerminalId::new(1)?),
-        Some(TerminalId::new(2)?),
+        RandomIds::conductor()?,
+        Some(terminals[0]),
+        Some(terminals[1]),
     );
     commands.push(Command::InsertConductor(conductor));
-    session.execute_batch(session.revision(), commands)?;
-    session.undo(session.revision())?;
-    session.redo(session.revision())?;
-
-    let directory = tempfile::tempdir()?;
-    let store = JsonFile::new(directory.path().join("example.json"));
-    session.save(&store)?;
-    let reopened = Session::open(&store)?;
-    if reopened.project() != session.project() || session.is_dirty() || reopened.is_dirty() {
+    document.execute_batch(document.session().revision(), commands)?;
+    document.undo(document.session().revision())?;
+    document.redo(document.session().revision())?;
+    document.save()?;
+    let reopened = Document::open(store)?;
+    if reopened.session().project() != document.session().project()
+        || document.session().is_dirty()
+        || reopened.session().is_dirty()
+    {
         return Err("saved model changed during reopening".into());
     }
     println!(
-        "Two devices and one conductor created as one transaction, undone/redone, saved and reopened cleanly.\n"
+        "Generated project/object IDs; created one transaction, undid/redid it, and reopened the guarded save cleanly.\n"
     );
-    print!("{}", encode_project(reopened.project())?);
+    print!("{}", encode_project(reopened.session().project())?);
     Ok(())
 }

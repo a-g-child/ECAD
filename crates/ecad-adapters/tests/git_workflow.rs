@@ -1,7 +1,7 @@
 //! Real local Git interoperability; no remote, global configuration, or user repository.
 
-use ecad_adapters::{JsonFile, decode_project};
-use ecad_app::{Command, ProjectStore, Session};
+use ecad_adapters::{JsonFile, ProjectFileError, decode_project};
+use ecad_app::{Command, Document, ProjectStore, ReloadPolicy, Session};
 use ecad_domain::{ConductorId, End};
 use std::{path::Path, process::Command as Process};
 
@@ -65,7 +65,7 @@ fn stable_saves_focused_diffs_and_branch_checkout_preserve_electrical_data() {
     let root = directory.path();
     git(root, &["init", "--quiet"]);
     let store = JsonFile::new(root.join("project.json"));
-    let original = decode_project(include_str!("fixtures/minimal-v1.json")).unwrap();
+    let original = decode_project(include_str!("fixtures/minimal-v2.json")).unwrap();
     let mut session = Session::new(original.clone());
     store.save(session.project()).unwrap();
     git(root, &["add", "project.json"]);
@@ -104,4 +104,44 @@ fn stable_saves_focused_diffs_and_branch_checkout_preserve_electrical_data() {
     assert_eq!(store.load().unwrap(), original);
     git(root, &["checkout", "--quiet", "disconnect-core"]);
     assert_eq!(store.load().unwrap(), edited);
+}
+
+#[test]
+fn branch_checkout_is_detected_and_reload_invalidates_the_previous_session() {
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path();
+    git(root, &["init", "--quiet"]);
+    let store = JsonFile::new(root.join("project.json"));
+    let original = decode_project(include_str!("fixtures/minimal-v2.json")).unwrap();
+    store.save(&original).unwrap();
+    git(root, &["add", "project.json"]);
+    git(root, &["commit", "--quiet", "-m", "Initial project"]);
+    let mut document = Document::open(store).unwrap();
+    git(root, &["checkout", "--quiet", "-b", "variant"]);
+    document
+        .execute(
+            document.session().revision(),
+            Command::SetTermination {
+                conductor: ConductorId::new(1001).unwrap(),
+                end: End::B,
+                terminal: None,
+            },
+        )
+        .unwrap();
+    document.save().unwrap();
+    git(root, &["add", "project.json"]);
+    git(root, &["commit", "--quiet", "-m", "Variant connection"]);
+    let old = document.session().revision();
+    git(root, &["checkout", "--quiet", "main"]);
+    assert!(document.has_external_changes().unwrap());
+    assert!(matches!(
+        document.save(),
+        Err(ProjectFileError::ExternalChange(_))
+    ));
+    document.reload(old, ReloadPolicy::RequireClean).unwrap();
+    assert_eq!(document.session().project(), &original);
+    assert_ne!(document.session().revision().epoch(), old.epoch());
+    assert_eq!(document.session().undo_len(), 0);
+    assert!(!document.has_external_changes().unwrap());
+    assert_eq!(git(root, &["status", "--porcelain"]), "");
 }

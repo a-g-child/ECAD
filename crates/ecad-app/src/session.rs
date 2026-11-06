@@ -70,8 +70,18 @@ impl Session {
     /// Returns the store's original save failure. Store durability is adapter-specific.
     pub fn save<S: ProjectStore>(&mut self, store: &S) -> Result<(), S::Error> {
         store.save(&self.project)?;
-        self.saved_state = Some(self.state);
+        self.mark_saved();
         Ok(())
+    }
+
+    pub(crate) fn mark_saved(&mut self) {
+        self.saved_state = Some(self.state);
+    }
+
+    pub(crate) fn replace_saved(&mut self, project: Project) {
+        let mut replacement = Self::with_history_limit(project, self.history_limit);
+        replacement.mark_saved();
+        *self = replacement;
     }
 
     /// Whether this history state differs from the last successful save/open.
@@ -188,7 +198,7 @@ impl Session {
         Ok(true)
     }
 
-    fn check_revision(&self, expected: Revision) -> Result<(), EditError> {
+    pub(crate) fn check_revision(&self, expected: Revision) -> Result<(), EditError> {
         if expected == self.revision {
             Ok(())
         } else {

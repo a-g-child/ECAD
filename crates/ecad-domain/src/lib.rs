@@ -5,8 +5,8 @@
 //! drawing geometry. Unassigned conductor ends are valid unfinished engineering.
 //!
 //! ```
-//! use ecad_domain::{Device, DeviceId, Project};
-//! let mut project = Project::default();
+//! use ecad_domain::{Device, DeviceId, Project, ProjectId};
+//! let mut project = Project::new(ProjectId::new(1)?);
 //! let device = Device::new(DeviceId::new(1)?, "-X1", [])?;
 //! project.insert_device(device)?;
 //! assert_eq!(project.devices().count(), 1);
@@ -19,6 +19,6 @@ mod objects;
 mod project;
 
 pub use error::ModelError;
-pub use identity::{ConductorId, DeviceId, IdError, TerminalId};
+pub use identity::{ConductorId, DeviceId, IdError, ProjectId, TerminalId};
 pub use objects::{Conductor, Device, End, Terminal};
 pub use project::Project;

@@ -108,6 +108,8 @@ The authoritative document is the in-memory validated project; the authoritative
 
 The persistence adapter translates between domain objects and explicit disk DTOs, validates loaded projects, and handles migrations deliberately. An internal struct refactor should not silently alter the disk format. Stable IDs, deterministic ordering, defined numeric encoding, and deliberate file boundaries support useful Git diffs.
 
+The implemented v2 format includes a persistent project lineage ID, with explicit v1 migration. `Document<S>` orchestrates observed-version saves, save-as, and validated reloads through `VersionedProjectStore`. Reload preserves the live session on failure and resets history/epoch only on success. See [decision 0003](decisions/0003-project-identity-and-guarded-reload.md) for the optimistic file-check guarantees and remaining concurrent-writer limitations.
+
 Saving a multi-file project needs a defined recovery protocol; independent per-file atomic writes alone do not make a whole-project save atomic. Prototype crash recovery and detection of externally changed files before claiming reliable saves.
 
 Repository operations go through application orchestration: resolve dirty documents, perform the operation, detect conflicts, load/validate changed project data, then replace the session and its history coherently. A textual merge is not proof of a valid electrical model. Keep external Git CLI use supported and detect its working-tree changes.

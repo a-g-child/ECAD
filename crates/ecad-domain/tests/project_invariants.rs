@@ -20,7 +20,7 @@ fn device(value: u128, terminals: &[u128]) -> Device {
 
 #[test]
 fn duplicate_terminal_rejects_entire_device_without_leaking_anchors() {
-    let mut project = Project::default();
+    let mut project = Project::new(ecad_domain::ProjectId::new(1).unwrap());
     project.insert_device(device(1, &[100])).unwrap();
     let original = project.clone();
     assert_eq!(
@@ -33,7 +33,7 @@ fn duplicate_terminal_rejects_entire_device_without_leaking_anchors() {
 
 #[test]
 fn partially_assigned_conductors_are_valid_but_dangling_ends_are_not() {
-    let mut project = Project::default();
+    let mut project = Project::new(ecad_domain::ProjectId::new(1).unwrap());
     project.insert_device(device(1, &[100])).unwrap();
     let first = ConductorId::new(1).unwrap();
     project
@@ -62,7 +62,7 @@ fn partially_assigned_conductors_are_valid_but_dangling_ends_are_not() {
 
 #[test]
 fn connected_device_cannot_be_removed_and_disconnect_is_explicit() {
-    let mut project = Project::default();
+    let mut project = Project::new(ecad_domain::ProjectId::new(1).unwrap());
     project.insert_device(device(1, &[100])).unwrap();
     let id = ConductorId::new(1).unwrap();
     project
@@ -83,7 +83,7 @@ fn connected_device_cannot_be_removed_and_disconnect_is_explicit() {
 
 #[test]
 fn duplicate_identity_never_replaces_an_existing_object() {
-    let mut project = Project::default();
+    let mut project = Project::new(ecad_domain::ProjectId::new(1).unwrap());
     project.insert_device(device(1, &[100])).unwrap();
     let original = project.clone();
     assert_eq!(
@@ -113,7 +113,7 @@ fn device_numbers_are_unique_locally_not_across_devices() {
         Device::new(DeviceId::new(1).unwrap(), "-X1", terminals),
         Err(ModelError::DuplicateTerminalNumber("1".into()))
     );
-    let mut project = Project::default();
+    let mut project = Project::new(ecad_domain::ProjectId::new(1).unwrap());
     for value in [1, 2] {
         project
             .insert_device(

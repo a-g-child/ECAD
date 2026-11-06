@@ -59,6 +59,10 @@ macro_rules! identity {
 }
 
 identity!(
+    ProjectId,
+    "Persistent identity of one project lineage, independent of its file path."
+);
+identity!(
     DeviceId,
     "Identity of one device occurrence; independent of its designation."
 );

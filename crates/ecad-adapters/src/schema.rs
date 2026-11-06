@@ -1,7 +1,7 @@
 //! Experimental disk schema and explicit conversion at the persistence boundary.
 
 use crate::ProjectFileError;
-use ecad_domain::{Conductor, Device, End, Project, Terminal};
+use ecad_domain::{Conductor, Device, End, Project, ProjectId, Terminal};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -13,8 +13,31 @@ pub(crate) struct VersionEnvelope {
 #[serde(deny_unknown_fields)]
 pub(crate) struct ProjectData {
     schema_version: u32,
+    project_id: String,
     devices: Vec<DeviceData>,
     conductors: Vec<ConductorData>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct LegacyProjectData {
+    schema_version: u32,
+    devices: Vec<DeviceData>,
+    conductors: Vec<ConductorData>,
+}
+
+impl LegacyProjectData {
+    pub(crate) fn migrate(self, id: ProjectId) -> Result<Project, ProjectFileError> {
+        if self.schema_version != 1 {
+            return Err(ProjectFileError::UnsupportedVersion(self.schema_version));
+        }
+        Project::try_from(ProjectData {
+            schema_version: 2,
+            project_id: id.to_string(),
+            devices: self.devices,
+            conductors: self.conductors,
+        })
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -65,7 +88,8 @@ impl From<&Project> for ProjectData {
             })
             .collect();
         Self {
-            schema_version: 1,
+            schema_version: 2,
+            project_id: project.id().to_string(),
             devices,
             conductors,
         }
@@ -76,7 +100,7 @@ impl TryFrom<ProjectData> for Project {
     type Error = ProjectFileError;
 
     fn try_from(data: ProjectData) -> Result<Self, Self::Error> {
-        let mut project = Project::default();
+        let mut project = Project::new(data.project_id.parse()?);
         for device in data.devices {
             let terminals = device
                 .terminals

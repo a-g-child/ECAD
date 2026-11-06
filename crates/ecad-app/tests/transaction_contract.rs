@@ -29,7 +29,7 @@ fn assembly() -> Vec<Command> {
 
 #[test]
 fn dependent_multi_object_creation_is_one_complete_undo_and_redo() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     assert!(
         session
             .execute_batch(session.revision(), assembly())
@@ -41,7 +41,10 @@ fn dependent_multi_object_creation_is_one_complete_undo_and_redo() {
     assert_eq!(session.undo_len(), 1);
     assert_eq!(session.revision().get(), 1);
     session.undo(session.revision()).unwrap();
-    assert_eq!(session.project(), &Project::default());
+    assert_eq!(
+        session.project(),
+        &Project::new(ecad_domain::ProjectId::new(1).unwrap())
+    );
     session.redo(session.revision()).unwrap();
     assert_eq!(session.project(), &complete);
 }
@@ -49,7 +52,7 @@ fn dependent_multi_object_creation_is_one_complete_undo_and_redo() {
 #[test]
 fn failure_at_each_batch_position_restores_model_revision_and_history() {
     for position in 0..=3 {
-        let mut session = Session::new(Project::default());
+        let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
         session.execute(session.revision(), device(99)).unwrap();
         session.execute(session.revision(), device(98)).unwrap();
         session.undo(session.revision()).unwrap();
@@ -71,7 +74,7 @@ fn failure_at_each_batch_position_restores_model_revision_and_history() {
 
 #[test]
 fn rollback_restores_deleted_devices_and_connections_in_dependency_order() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     session
         .execute_batch(session.revision(), assembly())
         .unwrap();
@@ -94,7 +97,7 @@ fn rollback_restores_deleted_devices_and_connections_in_dependency_order() {
 
 #[test]
 fn empty_and_all_no_op_batches_preserve_revision_and_redo() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     session
         .execute_batch(session.revision(), assembly())
         .unwrap();
@@ -119,7 +122,7 @@ fn empty_and_all_no_op_batches_preserve_revision_and_redo() {
 
 #[test]
 fn mixed_no_ops_and_edits_restore_the_original_state() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     session
         .execute_batch(session.revision(), assembly())
         .unwrap();
@@ -156,8 +159,10 @@ fn mixed_no_ops_and_edits_restore_the_original_state() {
 
 #[test]
 fn history_capacity_counts_transactions_not_individual_commands() {
-    let mut session =
-        Session::with_history_limit(Project::default(), NonZeroUsize::new(1).unwrap());
+    let mut session = Session::with_history_limit(
+        Project::new(ecad_domain::ProjectId::new(1).unwrap()),
+        NonZeroUsize::new(1).unwrap(),
+    );
     session.execute(session.revision(), device(99)).unwrap();
     session
         .execute_batch(session.revision(), assembly())
@@ -178,8 +183,8 @@ fn history_capacity_counts_transactions_not_individual_commands() {
 
 #[test]
 fn equal_sequence_from_another_session_cannot_edit_undo_or_redo() {
-    let first = Session::new(Project::default());
-    let mut second = Session::new(Project::default());
+    let first = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
+    let mut second = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     assert_eq!(first.revision().get(), second.revision().get());
     assert_ne!(first.revision().epoch(), second.revision().epoch());
     let foreign = first.revision();
@@ -199,6 +204,9 @@ fn equal_sequence_from_another_session_cannot_edit_undo_or_redo() {
         second.redo(foreign),
         Err(EditError::StaleRevision { .. })
     ));
-    assert_eq!(second.project(), &Project::default());
+    assert_eq!(
+        second.project(),
+        &Project::new(ecad_domain::ProjectId::new(1).unwrap())
+    );
     assert_eq!(second.undo_len(), 0);
 }

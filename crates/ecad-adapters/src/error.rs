@@ -1,7 +1,7 @@
 //! Typed format and filesystem failures, retaining their original sources.
 
 use ecad_domain::{IdError, ModelError};
-use std::{error::Error, fmt, io};
+use std::{error::Error, fmt, io, path::PathBuf};
 
 /// A project could not be loaded or saved.
 #[derive(Debug)]
@@ -12,6 +12,10 @@ pub enum ProjectFileError {
     Json(serde_json::Error),
     /// A newer or otherwise unsupported format must not be interpreted as v1.
     UnsupportedVersion(u32),
+    /// Legacy data needs an explicit migration assigning a persistent project ID.
+    MigrationRequired(u32),
+    /// The target differs from the observed revision, including a new destination.
+    ExternalChange(PathBuf),
     /// An identity does not use the canonical nonzero hexadecimal format.
     Identity(IdError),
     /// The parsed objects violate electrical-model invariants.
@@ -27,6 +31,14 @@ impl fmt::Display for ProjectFileError {
                 write!(f, "unsupported project schema version {version}")
             }
             Self::Identity(error) => error.fmt(f),
+            Self::MigrationRequired(version) => {
+                write!(f, "project schema {version} requires explicit migration")
+            }
+            Self::ExternalChange(path) => write!(
+                f,
+                "project file changed or was not observed: {}",
+                path.display()
+            ),
             Self::Model(error) => write!(f, "invalid project model: {error}"),
         }
     }
@@ -39,7 +51,9 @@ impl Error for ProjectFileError {
             Self::Json(error) => Some(error),
             Self::Identity(error) => Some(error),
             Self::Model(error) => Some(error),
-            Self::UnsupportedVersion(_) => None,
+            Self::UnsupportedVersion(_) | Self::MigrationRequired(_) | Self::ExternalChange(_) => {
+                None
+            }
         }
     }
 }

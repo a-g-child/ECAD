@@ -4,7 +4,7 @@ use ecad_adapters::{JsonFile, ProjectFileError, decode_project, encode_project};
 use ecad_app::{Command, ProjectStore, Session};
 use ecad_domain::{ConductorId, DeviceId, End, ModelError, Project, TerminalId};
 
-const FIXTURE: &str = include_str!("fixtures/minimal-v1.json");
+const FIXTURE: &str = include_str!("fixtures/minimal-v2.json");
 
 #[test]
 fn golden_fixture_has_known_electrical_meaning_and_canonical_encoding() {
@@ -27,7 +27,7 @@ fn golden_fixture_has_known_electrical_meaning_and_canonical_encoding() {
 #[test]
 fn insertion_order_does_not_change_saved_text() {
     let expected = decode_project(FIXTURE).unwrap();
-    let mut reversed = Project::default();
+    let mut reversed = Project::new(ecad_domain::ProjectId::new(1).unwrap());
     let devices: Vec<_> = expected.devices().cloned().collect();
     let conductors: Vec<_> = expected.conductors().cloned().collect();
     for device in devices.into_iter().rev() {
@@ -42,13 +42,13 @@ fn insertion_order_does_not_change_saved_text() {
 #[test]
 fn schema_and_unknown_data_cannot_be_silently_downgraded() {
     assert!(matches!(
-        decode_project(&FIXTURE.replace("\"schema_version\": 1", "\"schema_version\": 2")),
-        Err(ProjectFileError::UnsupportedVersion(2))
+        decode_project(&FIXTURE.replace("\"schema_version\": 2", "\"schema_version\": 3")),
+        Err(ProjectFileError::UnsupportedVersion(3))
     ));
     for invalid in [
         FIXTURE.replace(
-            "\"schema_version\": 1,",
-            "\"schema_version\": 1, \"future_feature\": true,",
+            "\"schema_version\": 2,",
+            "\"schema_version\": 2, \"future_feature\": true,",
         ),
         FIXTURE.replace(
             "\"number\": \"1\"",

@@ -11,6 +11,9 @@ ecad-app.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
+getrandom.workspace = true
+uuid.workspace = true
+sha2.workspace = true
 
 [lints]
 workspace = true

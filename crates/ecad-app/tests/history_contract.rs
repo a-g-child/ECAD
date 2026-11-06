@@ -21,7 +21,7 @@ fn execute(session: &mut Session, command: Command) {
 
 #[test]
 fn undo_redo_restores_exact_device_terminal_and_conductor_identities() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     execute(&mut session, Command::InsertDevice(device(1)));
     execute(&mut session, Command::InsertDevice(device(2)));
     let id = ConductorId::new(1).unwrap();
@@ -50,7 +50,7 @@ fn undo_redo_restores_exact_device_terminal_and_conductor_identities() {
 
 #[test]
 fn rejected_edit_preserves_model_revision_and_redo() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     execute(&mut session, Command::InsertDevice(device(1)));
     execute(&mut session, Command::InsertDevice(device(2)));
     session.undo(session.revision()).unwrap();
@@ -75,7 +75,7 @@ fn rejected_edit_preserves_model_revision_and_redo() {
 
 #[test]
 fn no_op_does_not_erase_redo_or_advance_revision() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     let id = ConductorId::new(1).unwrap();
     execute(
         &mut session,
@@ -103,7 +103,7 @@ fn no_op_does_not_erase_redo_or_advance_revision() {
 
 #[test]
 fn new_edit_after_undo_discards_only_the_abandoned_redo_branch() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     execute(&mut session, Command::InsertDevice(device(1)));
     execute(&mut session, Command::InsertDevice(device(2)));
     session.undo(session.revision()).unwrap();
@@ -133,7 +133,7 @@ fn new_edit_after_undo_discards_only_the_abandoned_redo_branch() {
 
 #[test]
 fn undo_advances_revision_so_pre_undo_commands_cannot_replay() {
-    let mut session = Session::new(Project::default());
+    let mut session = Session::new(Project::new(ecad_domain::ProjectId::new(1).unwrap()));
     execute(&mut session, Command::InsertDevice(device(1)));
     let old = session.revision();
     session.undo(old).unwrap();
@@ -157,8 +157,10 @@ fn undo_advances_revision_so_pre_undo_commands_cannot_replay() {
 
 #[test]
 fn history_limit_evicts_oldest_operation_without_deleting_document_objects() {
-    let mut session =
-        Session::with_history_limit(Project::default(), NonZeroUsize::new(2).unwrap());
+    let mut session = Session::with_history_limit(
+        Project::new(ecad_domain::ProjectId::new(1).unwrap()),
+        NonZeroUsize::new(2).unwrap(),
+    );
     for id in 1..=3 {
         execute(&mut session, Command::InsertDevice(device(id)));
     }

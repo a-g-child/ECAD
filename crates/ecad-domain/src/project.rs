@@ -1,17 +1,34 @@
 //! Project ownership and atomic, invariant-preserving single-object operations.
 
-use crate::{Conductor, ConductorId, Device, DeviceId, End, ModelError, TerminalId};
+use crate::{Conductor, ConductorId, Device, DeviceId, End, ModelError, ProjectId, TerminalId};
 use std::collections::BTreeMap;
 
 /// A structurally valid electrical document, independent of drawing geometry.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Project {
+    id: ProjectId,
     devices: BTreeMap<DeviceId, Device>,
     terminal_owners: BTreeMap<TerminalId, DeviceId>,
     conductors: BTreeMap<ConductorId, Conductor>,
 }
 
 impl Project {
+    /// Create an empty document with an explicit persistent identity.
+    /// Production callers should supply a generated ID; fixtures may use fixed IDs.
+    pub fn new(id: ProjectId) -> Self {
+        Self {
+            id,
+            devices: BTreeMap::new(),
+            terminal_owners: BTreeMap::new(),
+            conductors: BTreeMap::new(),
+        }
+    }
+
+    /// Return the project lineage identity, preserved by saves and file copies.
+    pub fn id(&self) -> ProjectId {
+        self.id
+    }
+
     /// Iterate devices in canonical identity order.
     pub fn devices(&self) -> impl ExactSizeIterator<Item = &Device> {
         self.devices.values()

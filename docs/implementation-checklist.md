@@ -1,6 +1,6 @@
 # Implementation checklist
 
-Status: headless Rust foundation plus compound editing and saved-state/session lifecycle implemented. Checked items describe executable behavior or completed checks, not the full intended CAD product. Keep this file current as features and tests land.
+Status: headless foundation, compound editing, persistent identities, explicit v1 migration, and optimistic guarded save/reload implemented. Checked items describe executable behavior or completed checks, not the full intended CAD product. Keep this file current as features and tests land.
 
 ## 1. Working foundation
 
@@ -14,6 +14,7 @@ Status: headless Rust foundation plus compound editing and saved-state/session l
 - [x] Revision-guarded commands with localized inverses, undo/redo, redo branching, and configurable history count limits.
 - [x] Keep failed edits and no-ops from corrupting history or advancing revisions.
 - [x] Separate disk DTOs from domain types; experimental versioned, deterministic JSON with final LF.
+- [x] Set repository LF attributes for source and golden JSON fixtures across checkout platforms.
 - [x] Reject unsupported versions, unknown fields, invalid references, and malformed documents.
 - [x] Save through same-directory staged replacement; save/reopen and failed-replacement integration tests.
 - [x] Golden fixture and real temporary Git workflow verify unchanged saves, focused diffs, and branch content restoration.
@@ -23,16 +24,17 @@ Status: headless Rust foundation plus compound editing and saved-state/session l
 ## 2. Complete the document lifecycle
 
 - [ ] Select and pin an exact Rust toolchain using a supported rustup channel/version; keep dependency setup reproducible on all target OSes.
-- [ ] Define production ID generation and persistent project identity; distinguish these from process-local session epochs.
+- [x] Define fallible OS-random UUID-v4 generation and persistent project lineage identity, distinct from process-local session epochs and file paths.
 - [x] Add process-local session epochs so equal revision sequences in separate/reopened sessions cannot accept each other's commands.
 - [x] Track saved checkpoints/dirty state through successful/failed saves, undo/redo, divergent branches, no-ops, and history eviction.
 - [x] Introduce ordered compound transactions for multi-object edits with rollback on failure and one undo operation.
-- [ ] Integrate saved-state handling with external changes and document reload orchestration.
+- [x] Integrate saved-state handling with external changes through a versioned document controller, guarded saves/save-as, and validated explicit reload policies.
 - [ ] Define memory/byte budgets for history and test long editing sessions.
-- [ ] Add external-change detection and explicit document-reload/history invalidation.
+- [x] Add content-based external-change detection and explicit document-reload/history invalidation, including a real Git checkout regression.
+- [ ] Define cooperative locking/concurrent-writer guarantees and path-alias handling beyond the current optimistic check/replace window.
 - [ ] Specify and test recovery/durability, metadata preservation, and multi-file save behavior before adopting a multi-file project format.
 - [ ] Set input/resource limits and add malformed-input/failure-injection cases as the format grows.
-- [ ] Define migration policy and add a real older-schema fixture when the first schema change occurs.
+- [x] Define explicit v1-to-v2 migration assigning a chosen project ID; retain the original v1 fixture and test preservation of existing electrical identities.
 
 ## 3. Hierarchy and cable vertical slice
 
@@ -95,6 +97,9 @@ Current test owners:
 - History contracts: [session tests](../crates/ecad-app/tests/history_contract.rs) and internal overflow test.
 - Transaction atomicity and session-token isolation: [transaction tests](../crates/ecad-app/tests/transaction_contract.rs).
 - Saved checkpoints and reopen behavior: [saved-state tests](../crates/ecad-adapters/tests/saved_state_contract.rs).
+- Guarded saves and file bindings: [document save tests](../crates/ecad-adapters/tests/document_save.rs).
+- Reload policies and replacement validation: [document reload tests](../crates/ecad-adapters/tests/document_reload.rs).
+- Persistent identities and explicit legacy conversion: [migration tests](../crates/ecad-adapters/tests/migration_and_identity.rs).
 - Persistence fixtures and rejection cases: [persistence tests](../crates/ecad-adapters/tests/persistence_contract.rs).
 - Git interoperability: [local Git workflow](../crates/ecad-adapters/tests/git_workflow.rs).
 - Scale correctness and measurements: [scale example](../crates/ecad-adapters/examples/scale.rs).

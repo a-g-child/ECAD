@@ -36,14 +36,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         None
     };
+    let source_dirty = if source_revision.is_some() {
+        let output = Process::new("git")
+            .current_dir(&workspace)
+            .args(["status", "--porcelain"])
+            .output()?;
+        if !output.status.success() {
+            return Err("could not determine Git working-tree state".into());
+        }
+        Some(!output.stdout.is_empty())
+    } else {
+        None
+    };
     let report = json!({
-        "report_version": 1,
-        "recipe": "unique-device-chain-v1",
+        "report_version": 2,
+        "recipe": "unique-device-chain-v2",
+        "project_schema": 2,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
         "os": std::env::consts::OS,
         "architecture": std::env::consts::ARCH,
         "source_revision": source_revision,
+        "source_dirty": source_dirty,
         "rustc": String::from_utf8(rustc.stdout)?.trim(),
         "scope": "headless engine only; no native UI, disk IO, or memory measurements",
         "cache": "fresh in-memory project per case; no persistent index",
@@ -60,7 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn probe(count: u128) -> Result<Value, Box<dyn Error>> {
     let start = Instant::now();
-    let mut project = Project::default();
+    let mut project = Project::new(ecad_domain::ProjectId::new(1).unwrap());
     for value in 1..=count {
         let terminal = Terminal::new(TerminalId::new(value)?, "1")?;
         project.insert_device(Device::new(
