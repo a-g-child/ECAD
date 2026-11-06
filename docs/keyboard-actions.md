@@ -1,0 +1,85 @@
+# Keyboard and action model
+
+Status: proposed interaction and architecture requirements. The initial keymap and input implementation have not been selected.
+
+## Intent and coverage
+
+Make common CAD work fast through direct, sensible keys, while keeping all eligible user operations discoverable and assignable. Plan input dispatch as infrastructure before individual features accumulate their own shortcut handling.
+
+An action is a user operation such as starting a wire, moving a selection, aligning objects, opening Properties, or saving a document. It is not every internal Rust function or every possible assignment of a property value. Detailed property editing remains keyboard-accessible through ordinary controls rather than requiring an action for every field/value combination.
+
+Every eligible action has a registry entry and can be bound. Common operations receive mnemonic defaults where practical; less frequent actions can use modifiers, sequences, or command-palette access. An unbound action is not inaccessible or impossible to map. Record the default binding policy explicitly rather than letting shortcut support depend on which feature author remembered it.
+
+## Central action registry
+
+Each action definition includes:
+
+- A stable, non-localized ID, such as `drawing.wire.start` or `selection.align.left`.
+- A user-facing name, category, description, and search terms.
+- Context/applicability, enabled state, and a reason when unavailable.
+- Invocation requirements, such as selection, cursor anchor, or a parameter dialog.
+- Default shortcut candidates per platform and context, or an explicit unbound policy.
+- Repeat behavior and any checked/toggle state.
+
+Menus, native menu adapters, toolbars, context menus, shortcut help, and the command palette reference action identities. They must not duplicate their own action implementation. Shortcut displays come from the effective keymap, so a remapped key is reflected throughout the interface.
+
+Distinguish UI actions from document commands. Starting a tool, changing zoom, or opening a dialog may not change the document. A completed wire placement or bulk property edit dispatches a validated application command and creates the appropriate undo record. The registry must not bypass that boundary or become a giant module containing every feature's business logic.
+
+## Bindings and growth
+
+Support single keys, modifier combinations, and multi-key sequences through one routing mechanism. Sequence bindings extend the available space without requiring a unique modifier combination for every future action. They are a supported mechanism, not a requirement to replace direct keys for frequent tools.
+
+Use a declarative, versioned keymap with stable action references and no arbitrary action-count limit. Layer shipped defaults with user overrides and optional imported presets. Show conflicts and unknown action references during import; allow users to resolve them rather than silently dropping entries. Define migration behavior when an action is renamed or retired.
+
+Provide a shortcut editor with search, key capture, assignment, removal, conflict inspection, reset, and import/export. Do not store arbitrary executable code in a keymap. Keep keymaps outside the shared electrical project by default.
+
+## Context, focus, and targets
+
+Contexts may include the document canvas, an active drawing tool, a project tree, an inspector, a text editor, and a modal dialog. Define a deterministic precedence and consumption model. The same key may intentionally mean different things in mutually exclusive contexts; ambiguity in overlapping contexts is a conflict.
+
+Do not fire bare-letter drawing actions while editing a text or numeric field, composing characters through an input method, or interacting with a control that owns the key. Preserve navigation, copy/paste, selection, and native text undo. Application document undo should not steal an active text editor's local undo operation.
+
+Make action targeting explicit. Selection-based operations use the current selection. Cursor-based tools use a well-defined canvas anchor or highlighted candidate. If hover fallback is supported, display the target and use documented precedence rather than unpredictably switching between hovered and selected objects.
+
+Palette or menu invocation must not accidentally change the cursor anchor to the menu's location. Capture the applicable document context before opening transient UI, then revalidate it before execution. If an action requires a location and none is available, enter placement mode or request input rather than inventing a position.
+
+Define Escape consistently for cancelling a preview, ending a tool, and dismissing transient UI. Active-tool shortcuts and temporary modifiers need visible feedback. Exiting a tool restores the appropriate drawing context.
+
+## Conflict handling and event behavior
+
+Distinguish simultaneous chords from ordered sequences. Define sequence timeout/cancellation, show pending sequence feedback, and detect prefix conflicts such as assigning both `W` and `W, A` in the same context. Avoid delaying frequently used single-key tools to accommodate ambiguous sequences; require explicit resolution.
+
+Classify key repeat per action. Holding a pan/nudge key may repeat; holding a placement or delete shortcut must not accidentally generate uncontrolled document edits. Define grouping into undo steps for intentional repeated edits.
+
+Normalize platform modifiers and handle keyboard layouts deliberately. Decide whether character-based mnemonics or physical-key positions apply to each binding category; do not accidentally assume a US keyboard. Make reserved or unavailable OS shortcuts visible and offer alternatives.
+
+Native menu accelerators and webview keyboard handlers must invoke an action once. Centralize event routing, prevent duplicate dispatch, and avoid scattered global listeners. Dialog shortcuts and focus restoration require native-host verification.
+
+## Discoverability and accessibility
+
+Provide a keyboard-accessible command palette and shortcut reference generated from the registry. Search includes actions that are currently disabled, with an explanation of what is required. Actions needing parameters may open an input control rather than having a separate binding for each parameter value.
+
+Keep visible focus, keyboard navigation, and non-pointer access to essential operations. Users should be able to disable or remap bare-character shortcuts when needed and use modifiers or sequences instead. Tooltips, menus, and help reflect effective bindings and platform naming.
+
+## Proposed first workflow
+
+1. With the canvas focused, press `W` to enter wire placement; show the tool and endpoint candidates.
+2. Place bends, complete the route as one document command, then cancel/end the tool predictably.
+3. Invoke Properties through its assigned action and type a label containing `w`; verify no drawing tool starts.
+4. Select several devices and invoke alignment from a key, menu, or command palette; all entry points use the same target and operation.
+5. Remap wire placement and verify shortcut help and menus update. Save and reload the keymap.
+6. Assign a key sequence to a less frequent action and resolve an intentional conflict without losing other bindings.
+
+`W` is a proposed default; the complete initial keymap remains a design task.
+
+## Verification requirements
+
+- Unit-test context resolution, repeat policy, keymap merging, sequence/prefix conflict detection, and unknown action handling.
+- Integration-test that keyboard, menu, and toolbar dispatch reach the same action and document command where applicable.
+- Regression-test shortcuts during typing/composition, dialog focus, cursor-anchor retention, duplicate dispatch, and stale selection/context.
+- Check registry coverage so eligible menu/tool operations are not accidentally unregistered or impossible to bind. Check default binding conflicts automatically.
+- Verify native shortcuts and relevant non-US layouts on Linux, Windows, and macOS. Simulated browser key events alone do not establish native behavior.
+
+## Open decisions
+
+Choose the first keymap, sequence leader and feedback, hover-selection policy, scope precedence, keymap schema, and platform alternatives using representative drawing workflows. Keep interfaces extensible before selecting a shortcut library.
