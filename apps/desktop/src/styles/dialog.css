@@ -1,0 +1,52 @@
+.settings-dialog {
+  width: min(520px, calc(100vw - 40px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: inherit;
+  background: var(--panel);
+  overflow: auto;
+}
+.settings-dialog::backdrop {
+  background: #18243266;
+}
+.settings-form {
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+.settings-form h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.settings-note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.settings-field {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+.settings-field > span {
+  padding-top: 6px;
+}
+.settings-field .property-input {
+  width: 100%;
+  min-width: 0;
+}
+.settings-error {
+  height: 48px;
+  overflow: auto;
+  color: #a63838;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.settings-actions {
+  display: flex;
+  justify-content: end;
+  gap: 12px;
+}

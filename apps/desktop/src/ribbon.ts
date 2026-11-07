@@ -103,6 +103,7 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
         commands: [
           command('Fit', 'Fit drawing · F', 'fit', 'drawing.view.fit'),
           command('Connections', 'Connection reports', 'report', 'reports.connections'),
+          command('Defaults', 'Drawing defaults and styles', 'properties', 'drawing.styles.edit'),
         ],
       },
     ],

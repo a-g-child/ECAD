@@ -3,6 +3,7 @@ import { createShell } from './shell';
 import { DrawingCanvas } from './canvas';
 import { MovementTool } from './movement';
 import { LayoutTool } from './layout';
+import { DefaultsDialog } from './defaults';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
 import { renderProperties, renderReport, renderTree } from './panels';
@@ -57,6 +58,7 @@ path = new PathTool(
     void action('placement.cancel');
   },
 );
+const defaults = new DefaultsDialog(shell, apply, status);
 function toolActive() {
   return !!(movement?.active || layout?.active || annotation?.active || path?.active);
 }
@@ -193,6 +195,7 @@ async function apply(reply: Reply) {
   }
   if (reply.request === 'fit') drawing.fit();
   if (reply.request === 'palette') openPalette();
+  if (reply.request === 'defaults' && reply.defaults) defaults.open(context(), reply.defaults);
   if (reply.request === 'save_as' || reply.request === 'open') {
     const result = await chooseFile(reply.request === 'save_as');
     if (result) await apply(result);
@@ -368,7 +371,8 @@ document.addEventListener('keydown', (event) => {
     composing ||
     event.isComposing ||
     target.matches('input,textarea,select,button,[contenteditable="true"]') ||
-    shell.palette.open
+    shell.palette.open ||
+    defaults.active
   )
     return;
   if (event.key === 'Escape' && drawing.cancelGesture()) {

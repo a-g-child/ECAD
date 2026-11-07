@@ -127,3 +127,5 @@ Keep visible focus, keyboard navigation, and non-pointer access to essential ope
 ## Open decisions
 
 Choose the first keymap, sequence leader and feedback, hover-selection policy, scope precedence, keymap schema, and platform alternatives using representative drawing workflows. Keep interfaces extensible before selecting a shortcut library.
+
+The desktop drawing-defaults editor is available through `drawing.styles.edit` from Drawing, Edit and command search, or Primary+K then S. The modal owns text and Escape input; Apply submits one guarded settings command and returns focus to the canvas. Named-style and creation-preset editing remain future UI work.

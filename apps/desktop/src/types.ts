@@ -93,7 +93,14 @@ export interface PathRow extends MoveRow {
   can_add: boolean;
   can_finish: boolean;
 }
+export interface DrawingDefaults {
+  font: string;
+  text_height: string;
+  stroke_width: string;
+  colour: string;
+}
 export interface Reply {
+  defaults: DrawingDefaults | null;
   path: PathRow | null;
   annotation: AnnotationRow | null;
   transform: TransformRow | null;

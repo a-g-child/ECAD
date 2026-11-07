@@ -121,6 +121,15 @@ pub enum Request {
         /// Literal editable value, never an inferred identity.
         value: String,
     },
+    /// Replace project fallbacks, retaining every creation preset and named style.
+    UpdateDefaults {
+        /// Captured document revision and action context.
+        context: serde_json::Value,
+        /// Strict font/text_height/stroke_width/colour string fields.
+        defaults: serde_json::Value,
+        /// Shared monotonic host input identity.
+        input: String,
+    },
     /// Invoke a centrally registered operation through its normal shared dispatcher.
     Action {
         /// Captured original targets/revision.
@@ -272,6 +281,7 @@ pub struct Response {
     pub(crate) transform: Option<TransformRow>,
     pub(crate) annotation: Option<AnnotationRow>,
     pub(crate) path: Option<PathRow>,
+    pub(crate) defaults: Option<crate::defaults::DefaultsRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {

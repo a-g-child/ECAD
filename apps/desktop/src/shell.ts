@@ -21,6 +21,7 @@ export function createShell(action: (id: string) => void) {
         ['Undo', 'document.undo'],
         ['Redo', 'document.redo'],
         ['Properties', 'selection.properties'],
+        ['Drawing defaults…', 'drawing.styles.edit'],
         ['Create annotation', 'drawing.label.create'],
         ['Create graphical path', 'drawing.polyline.create'],
         ['Move selection', 'drawing.selection.move'],

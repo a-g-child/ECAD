@@ -2,6 +2,7 @@
 //! Tauri and the local browser harness both use this crate; the core depends on neither.
 mod annotation;
 mod controller;
+mod defaults;
 mod dto;
 mod layout_tool;
 mod movement;

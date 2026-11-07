@@ -167,6 +167,7 @@ pub(crate) fn snapshot(
             let supported = matches!(
                 d.handler,
                 ActionHandler::OpenProject
+                    | ActionHandler::DrawingSettings
                     | ActionHandler::CreateLabel
                     | ActionHandler::CreatePolyline
                     | ActionHandler::FitDrawing

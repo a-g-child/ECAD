@@ -1,7 +1,7 @@
 //! Guarded document ownership and one shared action/key routing path for desktop requests.
 use crate::{
-    annotation::Annotation, dto::*, layout_tool::LayoutTool, movement::Movement, path::PathDraft,
-    projection, properties,
+    annotation::Annotation, defaults, dto::*, layout_tool::LayoutTool, movement::Movement,
+    path::PathDraft, projection, properties,
 };
 use ecad_adapters::JsonFile;
 use ecad_app::*;
@@ -203,6 +203,12 @@ impl DesktopBridge {
             ActionOutcome::Request(r) => {
                 response.request = Some(
                     match r.kind {
+                        ActionRequestKind::DrawingSettings => {
+                            response.defaults = Some(defaults::project(
+                                r.settings.as_ref().expect("settings request"),
+                            ));
+                            "defaults"
+                        }
                         ActionRequestKind::Palette => "palette",
                         ActionRequestKind::OpenProject => "open",
                         ActionRequestKind::FitDrawing => "fit",
@@ -297,6 +303,7 @@ impl DesktopBridge {
         | Request::CommitMove { input, .. }
         | Request::CommitTransform { input, .. }
         | Request::CommitAnnotation { input, .. }
+        | Request::UpdateDefaults { input, .. }
         | Request::CommitPath { input, .. } = &request
         {
             let id = input_id(input)?.get();
@@ -321,6 +328,36 @@ impl DesktopBridge {
             | Request::BackPathVertex { .. }
             | Request::CommitPath { .. }) => self.tool(request),
             Request::Snapshot {} => Ok(self.snapshot()),
+            Request::UpdateDefaults {
+                context,
+                defaults,
+                input,
+            } => {
+                let context = self.context(context)?;
+                let settings = defaults::replace(
+                    self.document.session().project().drawing().settings(),
+                    defaults,
+                )?;
+                let revision = self.document.session().revision();
+                let invocation = ActionInvocation {
+                    input_id: input_id(&input)?,
+                    action: ActionId::new("drawing.styles.edit").expect("builtin"),
+                    source: InvocationSource::Toolbar,
+                    repeat: false,
+                    context,
+                    parameters: ActionParameters::DrawingSettings(settings),
+                };
+                let mut response = self.invoke(invocation)?;
+                response.message = Some(
+                    if self.document.session().revision() == revision {
+                        "Drawing defaults already match · no document changes"
+                    } else {
+                        "Drawing defaults updated · one undo operation"
+                    }
+                    .into(),
+                );
+                Ok(response)
+            }
             Request::Inspect { context } => {
                 let context = self.context(context)?;
                 Ok(Response {

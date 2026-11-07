@@ -13,6 +13,7 @@ import { registerMultilineTests } from './multiline.mjs';
 import { registerPathTests } from './paths.mjs';
 import { registerRibbonTests } from './ribbons.mjs';
 import { registerArrangementTests } from './arrangement.mjs';
+import { registerDefaultsTests } from './defaults.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -439,3 +440,5 @@ registerArrangementTests({
   root,
   project: () => project,
 });
+
+registerDefaultsTests({ page, button, until, bounds, root, project: () => project, pressAction });
