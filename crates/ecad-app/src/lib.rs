@@ -21,6 +21,7 @@ mod adoption;
 mod command;
 mod document;
 mod document_error;
+mod drawing_command;
 mod error;
 mod instantiation;
 mod library;
@@ -37,13 +38,16 @@ pub use adoption::{AdoptionPlan, adoption_plan};
 pub use command::Command;
 pub use document::{Document, ReloadPolicy};
 pub use document_error::DocumentError;
+pub use drawing_command::DrawingCommand;
 pub use error::EditError;
 pub use instantiation::instance_commands;
 pub use library::{
     LibraryPublisher, LibrarySnapshot, Recommendation, VersionedLibraryStore, library_import,
 };
 pub use project_usage::{ProjectUsage, RevisionUse};
-pub use property_edits::{PropertyChange, PropertyEditPlan, property_edit_plan};
+pub use property_edits::{
+    PropertyChange, PropertyEdit, PropertyEditPlan, property_edit_plan, property_patch_plan,
+};
 pub use property_selection::{
     PropertySelection, SelectionProperty, SelectionValue, inspect_properties,
 };

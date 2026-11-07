@@ -5,6 +5,12 @@ use crate::{CableId, ConductorId, DeviceId, InterfacePortId, SubsystemId, Termin
 /// An addressable existing electrical object; IDs of different kinds remain distinct.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ObjectRef {
+    /// Drawing view.
+    View(crate::ViewId),
+    /// Free-standing text annotation.
+    Label(crate::LabelId),
+    /// Graphical path without electrical connectivity.
+    Polyline(crate::PolylineId),
     /// Functional subsystem occurrence.
     Subsystem(SubsystemId),
     /// Device occurrence.
@@ -22,6 +28,25 @@ pub enum ObjectRef {
 /// Stable property identities; sharing a label alone never combines two properties.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PropertyId {
+    /// Requested font family on drawing text.
+    FontFamily,
+    /// Graphical text height in micrometres.
+    TextHeight,
+    /// Graphical stroke width in micrometres, never conductor area.
+    StrokeWidth,
+    /// Output drawing colour across text and strokes.
+    DrawingColour,
+    /// Literal free-standing annotation content.
+    DrawingText,
+    /// Annotation location in document units.
+    DrawingPosition,
+    /// Ordered whole graphical path vertices.
+    DrawingVertices,
+    /// Drawing scope, independent of functional containment.
+    DrawingView,
+    /// Optional named style link, independent of explicit overrides.
+    DrawingStyle,
+
     /// Stable typed object identity.
     Identity,
     /// Device/cable engineering designation.
@@ -57,6 +82,17 @@ pub enum PropertyId {
 /// Runtime value type, shared by inspection and validated edits.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyValueKind {
+    /// Positive document distance in micrometres.
+    Length,
+    /// Output RGB colour.
+    Colour,
+    /// Signed document coordinates.
+    Point,
+    /// Ordered whole-path vertices.
+    Points,
+    /// Optional named style identity.
+    Style,
+
     /// Human-readable text; field constructors enforce required labels and uniqueness.
     Text,
     /// One typed object reference.
@@ -70,6 +106,17 @@ pub enum PropertyValueKind {
 /// Typed inspected/proposed value; absence and mixed-selection state are separate concepts.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PropertyValue {
+    /// Positive document distance in micrometres.
+    Length(crate::DrawingLength),
+    /// Output RGB colour.
+    Colour(crate::DrawingColour),
+    /// Signed document coordinates.
+    Point(crate::DrawingPoint),
+    /// Ordered whole graphical path vertices.
+    Points(Vec<crate::DrawingPoint>),
+    /// Explicit optional named style link.
+    Style(Option<crate::StyleId>),
+
     /// A displayed label or engineering identifier.
     Text(String),
     /// One existing typed identity/reference.
@@ -83,6 +130,11 @@ impl PropertyValue {
     /// Identify this value's runtime kind without coercing strings or reference types.
     pub fn kind(&self) -> PropertyValueKind {
         match self {
+            Self::Length(_) => PropertyValueKind::Length,
+            Self::Colour(_) => PropertyValueKind::Colour,
+            Self::Point(_) => PropertyValueKind::Point,
+            Self::Points(_) => PropertyValueKind::Points,
+            Self::Style(_) => PropertyValueKind::Style,
             Self::Text(_) => PropertyValueKind::Text,
             Self::Object(_) => PropertyValueKind::Object,
             Self::OptionalObject(_) => PropertyValueKind::OptionalObject,
@@ -94,6 +146,10 @@ impl PropertyValue {
 /// Semantic ownership/category; future graphical properties have separate identities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyOwnership {
+    /// Display identification shared across electrical and drawing scopes.
+    Identification,
+    /// Document presentation on a drawing representation.
+    Presentation,
     /// Immutable electrical identity.
     Identity,
     /// Engineering labels on the addressed electrical object.
@@ -147,6 +203,8 @@ pub struct PropertyDescriptor {
 /// Allowed target kinds for a reference-valued field, independent of displayed labels.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyReferenceKind {
+    /// Drawing scope, independent of functional containment.
+    View,
     /// An object's own identity may be of any supported kind.
     Any,
     /// A functional subsystem.
@@ -165,6 +223,7 @@ impl PropertyReferenceKind {
     pub fn accepts(self, target: ObjectRef) -> bool {
         match self {
             Self::Any => true,
+            Self::View => matches!(target, ObjectRef::View(_)),
             Self::Subsystem => matches!(target, ObjectRef::Subsystem(_)),
             Self::Device => matches!(target, ObjectRef::Device(_)),
             Self::Terminal => matches!(target, ObjectRef::Terminal(_)),
@@ -181,7 +240,13 @@ impl PropertyDescriptor {
         }
         let accepts = |target| self.reference_kind.is_some_and(|kind| kind.accepts(target));
         match value {
-            PropertyValue::Text(_) | PropertyValue::OptionalObject(None) => true,
+            PropertyValue::Length(_)
+            | PropertyValue::Colour(_)
+            | PropertyValue::Point(_)
+            | PropertyValue::Points(_)
+            | PropertyValue::Style(_)
+            | PropertyValue::Text(_)
+            | PropertyValue::OptionalObject(None) => true,
             PropertyValue::Object(target) | PropertyValue::OptionalObject(Some(target)) => {
                 accepts(*target)
             }
@@ -197,4 +262,27 @@ pub struct PropertyObservation {
     pub value: PropertyValue,
     /// Current restrictions, including reusable-instance ownership.
     pub access: PropertyAccess,
+    /// Effective style source per property; electrical and literal fields have none.
+    pub origin: Option<PropertyOrigin>,
+}
+
+/// Effective style source for one resolved property.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PropertyOrigin {
+    /// Complete project role fallback.
+    Project,
+    /// Sparse value from a linked named style.
+    NamedStyle(crate::StyleId),
+    /// Override from the containing drawing view.
+    View(crate::ViewId),
+    /// Explicit object override, including values equal to inheritance.
+    Object,
+}
+/// Exact editable state; style override intent is distinct from resolved appearance.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PropertyState {
+    /// Literal electrical/geometry field or named style link.
+    Field(PropertyValue),
+    /// An explicit per-property value or absence restoring inheritance.
+    Override(Option<PropertyValue>),
 }

@@ -54,14 +54,17 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 ## 4. Foundational editing contracts
 
 - [x] Implement typed metadata and union inspection for all existing electrical object fields, with applicability, mixed/uniform values, semantic ownership, typed reference kinds, and access restrictions.
-- [ ] Implement creation defaults, per-property inherited styles, explicit overrides, and reset.
+- [x] Implement portable drawing creation presets, named/project/view per-property inheritance, explicit override intent, and reset for fonts, text height, stroke width, and colour.
 - [x] Bulk-edit supported electrical fields across mixed selections atomically; report changes, no-ops, and inapplicable pairs; reject actual restrictions/validation failures without partial mutation.
-- [ ] Extend properties to drawing representations, physical wire attributes, library assignments, units/ranges, and custom schemas as those model fields are introduced.
+- [x] Extend union inspection/bulk editing to annotations and graphical polylines, with typed document lengths, effective origins, and exact inheritance-aware undo.
+- [ ] Extend properties to physical wire attributes, library assignments, and custom schemas with their real fields.
 - [ ] Establish the action registry, context rules, keymaps, and command-palette queries before wiring UI shortcuts.
-- [ ] Add document units and structured per-view geometry, kept separate from electrical identity.
+- [x] Add integer-micrometre drawing views, positioned annotations, and retained whole graphical polylines separate from electrical identity.
+- [ ] Add electrical route anchors, symbol/label attachment, transforms, and broader geometry operations.
 - [ ] Implement whole-route/vertex/segment editing, snapping, and local connection-preserving adjustments.
 - [x] Test electrical property applicability/types, pinned ownership, label uniqueness, topology validation, compound rollback, stale plans, saved checkpoints, and exact undo/redo.
-- [ ] Test style/default precedence, shortcut conflicts/typing protection, and geometry invariants with their implementation.
+- [x] Test style/default precedence, captured creation intent, equal overrides, reset/undo, focused shared-style persistence, strict drawing schema, malformed geometry/roles/references, and v2–v4 upgrades to v5.
+- [ ] Test shortcut conflicts/typing protection and interactive geometry invariants with their implementation.
 
 ## 5. Desktop interaction prototype
 
@@ -94,7 +97,8 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Add headless hierarchy probes for unrelated block growth and depths through the 256-level guard, preserving interface/cable invariants and undo correctness.
 - [x] Probe 1/10/100 materialized instances sharing one bundled revision, with placement, validation, round-trip, external-edit/undo, and one-occurrence adoption measurements.
 - [x] Add mixed-property inspection/preflight/commit/undo probes at 20/200/2,000 selected objects with correctness checks.
-- [ ] Expand probes to nested reusable dependencies, visible geometry, defaults/styles, libraries, and assets.
+- [x] Probe shared-style updates, resolution, mixed graphical edits, and exact undo at 20/200/2,000 drawing objects.
+- [ ] Expand probes to nested reusable dependencies, visible rendering, libraries, and assets.
 - [ ] Measure memory, cache invalidation, object visits, save/load IO, native frame times, and foreground response during background work.
 - [ ] Add bounded soak/cancellation/failure cases and establish stable performance regression gates from measured variance.
 - [x] Current core checks and examples executed on macOS/aarch64 with Rust 1.97.0.
@@ -113,6 +117,7 @@ Current test owners:
 - Hierarchy and cable invariants: [hierarchy tests](../crates/ecad-domain/tests/hierarchy_contract.rs) and [cable tests](../crates/ecad-domain/tests/cable_contract.rs).
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
+- Drawing defaults/styles: [workflow contracts](../crates/ecad-adapters/tests/style_workflow.rs), [persistence/compatibility contracts](../crates/ecad-adapters/tests/styles/persistence.rs), and [styled golden fixture](../crates/ecad-adapters/tests/fixtures/styled-overview-v5.json).
 - Electrical properties: [inspection and bulk workflows](../crates/ecad-adapters/tests/property_workflow.rs) and [restriction/rollback contracts](../crates/ecad-adapters/tests/properties/restrictions.rs).
 - Known-use indexing: [headless read contracts](../crates/ecad-app/tests/usage_index_contract.rs), [registered-file discovery](../crates/ecad-adapters/tests/known_usage.rs), and the existing Git workflow regression.
 - Shared-library publication and persistence: [library contracts](../crates/ecad-adapters/tests/library_contract.rs) and [consuming-project workflows](../crates/ecad-adapters/tests/library/workflow.rs).

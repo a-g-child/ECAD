@@ -6,7 +6,16 @@ use crate::{
 };
 
 /// All currently registered fields, in stable inspector order.
-pub const PROPERTY_IDS: [PropertyId; 15] = [
+pub const PROPERTY_IDS: [PropertyId; 24] = [
+    PropertyId::FontFamily,
+    PropertyId::TextHeight,
+    PropertyId::StrokeWidth,
+    PropertyId::DrawingColour,
+    PropertyId::DrawingText,
+    PropertyId::DrawingPosition,
+    PropertyId::DrawingVertices,
+    PropertyId::DrawingView,
+    PropertyId::DrawingStyle,
     PropertyId::Identity,
     PropertyId::Designation,
     PropertyId::Name,
@@ -29,6 +38,69 @@ impl PropertyId {
         use PropertyOwnership as Owner;
         use PropertyValueKind as Kind;
         let (key, label, value_kind, ownership, editable) = match self {
+            Self::FontFamily => (
+                "font_family",
+                "Font family",
+                Kind::Text,
+                Owner::Presentation,
+                true,
+            ),
+            Self::TextHeight => (
+                "text_height",
+                "Text height (µm)",
+                Kind::Length,
+                Owner::Presentation,
+                true,
+            ),
+            Self::StrokeWidth => (
+                "stroke_width",
+                "Stroke width (µm)",
+                Kind::Length,
+                Owner::Presentation,
+                true,
+            ),
+            Self::DrawingColour => (
+                "drawing_colour",
+                "Drawing colour",
+                Kind::Colour,
+                Owner::Presentation,
+                true,
+            ),
+            Self::DrawingText => (
+                "drawing_text",
+                "Text",
+                Kind::Text,
+                Owner::Presentation,
+                true,
+            ),
+            Self::DrawingPosition => (
+                "drawing_position",
+                "Position (µm)",
+                Kind::Point,
+                Owner::Presentation,
+                true,
+            ),
+            Self::DrawingVertices => (
+                "drawing_vertices",
+                "Vertices (µm)",
+                Kind::Points,
+                Owner::Presentation,
+                true,
+            ),
+            Self::DrawingView => (
+                "drawing_view",
+                "Drawing view",
+                Kind::Object,
+                Owner::Presentation,
+                true,
+            ),
+            Self::DrawingStyle => (
+                "drawing_style",
+                "Named style",
+                Kind::Style,
+                Owner::Presentation,
+                true,
+            ),
             Self::Identity => ("identity", "Identity", Kind::Object, Owner::Identity, false),
             Self::Designation => (
                 "designation",
@@ -37,7 +109,7 @@ impl PropertyId {
                 Owner::Electrical,
                 true,
             ),
-            Self::Name => ("name", "Name", Kind::Text, Owner::Electrical, true),
+            Self::Name => ("name", "Name", Kind::Text, Owner::Identification, true),
             Self::TerminalNumber => (
                 "terminal_number",
                 "Terminal number",
@@ -124,6 +196,15 @@ impl PropertyId {
             ),
         };
         let reference_kind = match self {
+            Self::DrawingView => Some(PropertyReferenceKind::View),
+            Self::FontFamily
+            | Self::TextHeight
+            | Self::StrokeWidth
+            | Self::DrawingColour
+            | Self::DrawingText
+            | Self::DrawingPosition
+            | Self::DrawingVertices
+            | Self::DrawingStyle => None,
             Self::Identity => Some(PropertyReferenceKind::Any),
             Self::DeviceTerminals | Self::PortTerminal | Self::ConductorA | Self::ConductorB => {
                 Some(PropertyReferenceKind::Terminal)
@@ -150,9 +231,19 @@ impl PropertyId {
     pub fn applies_to(self, target: ObjectRef) -> bool {
         use ObjectRef as Object;
         match self {
+            Self::FontFamily | Self::TextHeight | Self::DrawingText | Self::DrawingPosition => {
+                matches!(target, Object::Label(_))
+            }
+            Self::StrokeWidth | Self::DrawingVertices => matches!(target, Object::Polyline(_)),
+            Self::DrawingColour | Self::DrawingView | Self::DrawingStyle => {
+                matches!(target, Object::Label(_) | Object::Polyline(_))
+            }
             Self::Identity => true,
             Self::Designation => matches!(target, Object::Device(_) | Object::Cable(_)),
-            Self::Name => matches!(target, Object::Subsystem(_) | Object::Port(_)),
+            Self::Name => matches!(
+                target,
+                Object::Subsystem(_) | Object::Port(_) | Object::View(_)
+            ),
             Self::TerminalNumber | Self::TerminalDevice => matches!(target, Object::Terminal(_)),
             Self::DeviceTerminals | Self::DeviceSubsystem => matches!(target, Object::Device(_)),
             Self::SubsystemParent => matches!(target, Object::Subsystem(_)),
@@ -162,5 +253,15 @@ impl PropertyId {
                 matches!(target, Object::Cable(_))
             }
         }
+    }
+}
+
+impl PropertyId {
+    /// Whether setting this field establishes an explicit per-object override.
+    pub fn is_inheritable(self) -> bool {
+        matches!(
+            self,
+            Self::FontFamily | Self::TextHeight | Self::StrokeWidth | Self::DrawingColour
+        )
     }
 }

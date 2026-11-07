@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// Property inspection/editing failed; unsupported, read-only, and invalid are distinct.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PropertyError {
+    /// Only graphical style properties support reset to inheritance.
+    NotInheritable(PropertyId),
     /// The object kind does not support this field.
     NotApplicable {
         /// Addressed object.
@@ -33,6 +35,9 @@ pub enum PropertyError {
 impl fmt::Display for PropertyError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::NotInheritable(property) => {
+                write!(f, "property {property:?} does not inherit a style")
+            }
             Self::NotApplicable { target, property } => {
                 write!(f, "property {property:?} does not apply to {target:?}")
             }

@@ -15,6 +15,11 @@
 
 mod adoption_changes;
 mod cable;
+mod drawing_document;
+mod drawing_error;
+mod drawing_objects;
+mod drawing_style;
+mod drawing_values;
 mod error;
 mod hierarchy;
 mod identity;
@@ -29,18 +34,26 @@ mod reuse_error;
 
 pub use adoption_changes::{ObjectChanges, RevisionChanges};
 pub use cable::{Cable, CableEndpoint};
+pub use drawing_document::DrawingDocument;
+pub use drawing_error::DrawingError;
+pub use drawing_objects::{DrawingLabel, DrawingPolyline, DrawingView};
+pub use drawing_style::{
+    Appearance, DrawingRole, DrawingSettings, DrawingStyle, DrawingValues, StylePatch,
+};
+pub use drawing_values::{DrawingColour, DrawingLength, DrawingPoint, FontFamily};
 pub use error::ModelError;
 pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};
 pub use identity::{
     CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, IdError, InterfacePortId,
     ProjectId, SubsystemId, TerminalId,
 };
+pub use identity::{LabelId, PolylineId, StyleId, ViewId};
 pub use library::{LibraryError, SubsystemLibrary};
 pub use objects::{Conductor, Device, End, Terminal};
 pub use project::Project;
 pub use property::{
-    ObjectRef, PropertyAccess, PropertyDescriptor, PropertyId, PropertyObservation,
-    PropertyOwnership, PropertyReferenceKind, PropertyRestriction, PropertyValue,
+    ObjectRef, PropertyAccess, PropertyDescriptor, PropertyId, PropertyObservation, PropertyOrigin,
+    PropertyOwnership, PropertyReferenceKind, PropertyRestriction, PropertyState, PropertyValue,
     PropertyValueKind,
 };
 pub use property_error::PropertyError;

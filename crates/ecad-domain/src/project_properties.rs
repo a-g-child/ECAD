@@ -8,15 +8,16 @@ use crate::{
 };
 
 impl ObjectRef {
-    fn owned(self) -> OwnedObject {
-        match self {
+    fn owned(self) -> Option<OwnedObject> {
+        Some(match self {
+            Self::View(_) | Self::Label(_) | Self::Polyline(_) => return None,
             Self::Subsystem(id) => OwnedObject::Subsystem(id),
             Self::Device(id) => OwnedObject::Device(id),
             Self::Terminal(id) => OwnedObject::Terminal(id),
             Self::Port(id) => OwnedObject::Port(id),
             Self::Conductor(id) => OwnedObject::Conductor(id),
             Self::Cable(id) => OwnedObject::Cable(id),
-        }
+        })
     }
 }
 impl Project {
@@ -24,6 +25,18 @@ impl Project {
     /// # Errors
     /// Returns the matching typed missing-object error, never an unsupported-property result.
     pub fn require_object(&self, target: ObjectRef) -> Result<(), ModelError> {
+        match target {
+            ObjectRef::View(id) if self.drawing.view(id).is_none() => {
+                return Err(crate::DrawingError::MissingView(id).into());
+            }
+            ObjectRef::Label(id) if self.drawing.label(id).is_none() => {
+                return Err(crate::DrawingError::MissingLabel(id).into());
+            }
+            ObjectRef::Polyline(id) if self.drawing.polyline(id).is_none() => {
+                return Err(crate::DrawingError::MissingPolyline(id).into());
+            }
+            _ => {}
+        }
         let error = match target {
             ObjectRef::Subsystem(id) if self.subsystem(id).is_none() => {
                 Some(ModelError::MissingSubsystem(id))
@@ -52,13 +65,22 @@ impl Project {
         property: PropertyId,
     ) -> Result<PropertyObservation, ModelError> {
         self.require_object(target)?;
+        if matches!(
+            target,
+            ObjectRef::View(_) | ObjectRef::Label(_) | ObjectRef::Polyline(_)
+        ) {
+            return self.drawing.property(target, property);
+        }
         let value = self.property_value(target, property)?;
         let descriptor = property.descriptor();
         let access = if property == PropertyId::Identity {
             PropertyAccess::ReadOnly(PropertyRestriction::Identity)
         } else if !descriptor.editable {
             PropertyAccess::ReadOnly(PropertyRestriction::StructuralOperation)
-        } else if let Some(root) = self.instance_owners.get(&target.owned()) {
+        } else if let Some(root) = target
+            .owned()
+            .and_then(|owned| self.instance_owners.get(&owned))
+        {
             let parameter = target == ObjectRef::Subsystem(*root)
                 && matches!(property, PropertyId::Name | PropertyId::SubsystemParent);
             if parameter {
@@ -69,7 +91,11 @@ impl Project {
         } else {
             PropertyAccess::Editable
         };
-        Ok(PropertyObservation { value, access })
+        Ok(PropertyObservation {
+            value,
+            access,
+            origin: None,
+        })
     }
     fn property_value(
         &self,
@@ -158,6 +184,8 @@ impl Project {
     /// Change a supported real field atomically and return its previous value.
     /// Exact no-ops leave even read-only fields untouched. Ordinary application edits
     /// must use commands so validation, revision guards, and undo remain coherent.
+    /// Graphical assignments establish explicit overrides even when visually equal;
+    /// compare `property_state` when deciding whether editable intent changed.
     /// # Errors
     /// Rejects missing/inapplicable targets, type errors, access restrictions, invalid
     /// labels, and topology violations without changing the preceding model.
@@ -167,6 +195,13 @@ impl Project {
         property: PropertyId,
         value: PropertyValue,
     ) -> Result<PropertyValue, ModelError> {
+        self.require_object(target)?;
+        if matches!(
+            target,
+            ObjectRef::View(_) | ObjectRef::Label(_) | ObjectRef::Polyline(_)
+        ) {
+            return self.drawing.set_property(target, property, value);
+        }
         let observation = self.property(target, property)?;
         let wrong_type = || {
             ModelError::from(PropertyError::WrongType {

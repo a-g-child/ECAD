@@ -78,3 +78,9 @@ impl From<ModelError> for ProjectFileError {
         Self::Model(error)
     }
 }
+
+impl From<ecad_domain::DrawingError> for ProjectFileError {
+    fn from(error: ecad_domain::DrawingError) -> Self {
+        Self::Model(error.into())
+    }
+}

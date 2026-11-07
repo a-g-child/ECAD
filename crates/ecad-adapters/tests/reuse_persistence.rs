@@ -273,7 +273,7 @@ fn v3_upgrades_without_inventing_definitions_or_changing_object_identity() {
     assert_eq!(legacy.instances().len(), 0);
     assert_eq!(
         encode_project(&legacy).unwrap(),
-        include_str!("fixtures/minimal-v4.json")
+        include_str!("fixtures/minimal-v5.json")
     );
 }
 

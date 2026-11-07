@@ -6,6 +6,8 @@ mod hierarchy;
 mod properties;
 #[path = "support/reuse.rs"]
 mod reuse;
+#[path = "support/styles.rs"]
+mod styles;
 
 use ecad_adapters::{decode_project, encode_project};
 use ecad_app::{Command, Session};
@@ -28,6 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let hierarchy_cases = hierarchy::cases()?;
     let reuse_cases = reuse::cases()?;
     let property_cases = properties::cases()?;
+    let style_cases = styles::cases()?;
     let rustc = Process::new("rustc").arg("--version").output()?;
     if !rustc.status.success() {
         return Err("could not identify rustc".into());
@@ -59,9 +62,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 6,
-        "recipe": "electrical-properties-v6",
-        "project_schema": 4,
+        "report_version": 7,
+        "recipe": "electrical-drawing-styles-v7",
+        "project_schema": 5,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
         "os": std::env::consts::OS,
@@ -75,6 +78,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "hierarchy_cases": hierarchy_cases,
         "reuse_cases": reuse_cases,
         "property_cases": property_cases,
+        "style_cases": style_cases,
     });
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/scale");
     std::fs::create_dir_all(&root)?;

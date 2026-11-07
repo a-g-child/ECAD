@@ -13,21 +13,21 @@ use std::{collections::BTreeMap, fmt::Display, str::FromStr, sync::Arc};
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct ReusableProjectData {
-    schema_version: u32,
-    project_id: String,
-    subsystems: Vec<SubsystemData>,
-    devices: Vec<DeviceData>,
-    ports: Vec<PortData>,
-    conductors: Vec<ConductorData>,
-    cables: Vec<CableData>,
-    definitions: Vec<DefinitionData>,
-    instances: Vec<InstanceData>,
-    local_origins: Vec<InstanceData>,
+    pub(crate) schema_version: u32,
+    pub(crate) project_id: String,
+    pub(crate) subsystems: Vec<SubsystemData>,
+    pub(crate) devices: Vec<DeviceData>,
+    pub(crate) ports: Vec<PortData>,
+    pub(crate) conductors: Vec<ConductorData>,
+    pub(crate) cables: Vec<CableData>,
+    pub(crate) definitions: Vec<DefinitionData>,
+    pub(crate) instances: Vec<InstanceData>,
+    pub(crate) local_origins: Vec<InstanceData>,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct InstanceData {
+pub(crate) struct InstanceData {
     root: String,
     definition: String,
     revision: String,

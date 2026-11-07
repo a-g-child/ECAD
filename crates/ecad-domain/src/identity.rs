@@ -95,6 +95,20 @@ identity!(
     "Identity of one immutable reusable subsystem revision."
 );
 
+identity!(
+    ViewId,
+    "Identity of a drawing view, separate from functional containment."
+);
+identity!(
+    LabelId,
+    "Identity of a free-standing drawing text annotation."
+);
+identity!(
+    PolylineId,
+    "Identity of a graphical polyline without electrical connectivity."
+);
+identity!(StyleId, "Identity of a project-owned named drawing style.");
+
 #[cfg(test)]
 mod tests {
     use super::*;

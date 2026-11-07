@@ -12,6 +12,31 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a drawing view identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn view() -> Result<ecad_domain::ViewId, getrandom::Error> {
+        Ok(ecad_domain::ViewId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+    /// Generate a drawing annotation identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn label() -> Result<ecad_domain::LabelId, getrandom::Error> {
+        Ok(ecad_domain::LabelId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+    /// Generate a graphical path identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn polyline() -> Result<ecad_domain::PolylineId, getrandom::Error> {
+        Ok(ecad_domain::PolylineId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+    /// Generate a named drawing style identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn style() -> Result<ecad_domain::StyleId, getrandom::Error> {
+        Ok(ecad_domain::StyleId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+
     /// Generate a reusable definition lineage identity.
     /// # Errors
     /// Returns the OS entropy error.

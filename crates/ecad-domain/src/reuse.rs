@@ -59,6 +59,9 @@ impl SubsystemRevision {
         content: Project,
     ) -> Result<Self, ModelError> {
         content.validate()?;
+        if content.drawing() != &crate::DrawingDocument::default() {
+            return Err(crate::DrawingError::ReusableDrawingsUnsupported.into());
+        }
         if content.definition_count() != 0 || content.instances().next().is_some() {
             return Err(crate::ReuseError::NestedDefinitionsUnsupported.into());
         }

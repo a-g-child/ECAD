@@ -1,6 +1,6 @@
 # Drawing and editing workflows
 
-Status: proposed requirements for discussion. Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
+Status: headless views, annotations, retained graphical polylines, portable defaults/styles, and whole-value property edits are implemented. Interactive tools, rendering, electrically anchored routes, symbols, attachment, and the broader workflows below remain proposed. See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
 
 ## Design intent
 

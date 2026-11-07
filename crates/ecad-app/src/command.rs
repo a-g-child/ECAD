@@ -10,6 +10,17 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Drawing content, shared styles, and creation settings with localized inverses.
+    Drawing(crate::DrawingCommand),
+    /// Restore exact literal/override state, used for inheritance-aware undo and reset.
+    SetPropertyState {
+        /// Existing addressed object.
+        target: ecad_domain::ObjectRef,
+        /// Stable field identity.
+        property: ecad_domain::PropertyId,
+        /// Literal value or exact override/inheritance state.
+        state: ecad_domain::PropertyState,
+    },
     /// Change one supported real field with validated access and an exact localized inverse.
     SetProperty {
         /// Existing electrical object whose field changes.
@@ -92,19 +103,36 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::Drawing(command) => return Ok(command.apply(project)?.map(Self::Drawing)),
+            Self::SetPropertyState {
+                target,
+                property,
+                state,
+            } => {
+                let previous = project.set_property_state(*target, *property, state.clone())?;
+                if previous == *state {
+                    return Ok(None);
+                }
+                Self::SetPropertyState {
+                    target: *target,
+                    property: *property,
+                    state: previous,
+                }
+            }
             Self::SetProperty {
                 target,
                 property,
                 value,
             } => {
-                let previous = project.set_property(*target, *property, value.clone())?;
-                if previous == *value {
+                let previous = project.property_state(*target, *property)?;
+                project.set_property(*target, *property, value.clone())?;
+                if previous == project.property_state(*target, *property)? {
                     return Ok(None);
                 }
-                Self::SetProperty {
+                Self::SetPropertyState {
                     target: *target,
                     property: *property,
-                    value: previous,
+                    state: previous,
                 }
             }
             Self::AdoptInstance { expected, target } => {

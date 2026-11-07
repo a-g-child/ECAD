@@ -13,6 +13,8 @@ use std::sync::Arc;
 mod adoption;
 #[path = "project_cables.rs"]
 mod cables;
+#[path = "project_drawing.rs"]
+mod drawing;
 #[path = "project_hierarchy.rs"]
 mod hierarchy;
 #[path = "project_instance_checks.rs"]
@@ -32,6 +34,7 @@ mod properties;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Project {
     id: ProjectId,
+    drawing: crate::DrawingDocument,
     devices: BTreeMap<DeviceId, Device>,
     terminal_owners: BTreeMap<TerminalId, DeviceId>,
     conductors: BTreeMap<ConductorId, Conductor>,
@@ -52,6 +55,7 @@ impl Project {
     pub fn new(id: ProjectId) -> Self {
         Self {
             id,
+            drawing: crate::DrawingDocument::default(),
             devices: BTreeMap::new(),
             terminal_owners: BTreeMap::new(),
             conductors: BTreeMap::new(),
@@ -221,6 +225,7 @@ impl Project {
             self.check_cable(cable)?;
         }
         self.validate_instances()?;
+        self.drawing.validate()?;
         Ok(())
     }
 

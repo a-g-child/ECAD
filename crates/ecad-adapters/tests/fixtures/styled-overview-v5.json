@@ -1,0 +1,232 @@
+{
+  "schema_version": 5,
+  "project_id": "00000000000000000000000000000001",
+  "subsystems": [
+    {
+      "id": "0000000000000000000000000000000a",
+      "name": "Conveyor",
+      "parent": null
+    },
+    {
+      "id": "00000000000000000000000000000014",
+      "name": "Sensor assembly",
+      "parent": "0000000000000000000000000000000a"
+    }
+  ],
+  "devices": [
+    {
+      "id": "00000000000000000000000000000001",
+      "designation": "-Controller",
+      "terminals": [
+        {
+          "id": "00000000000000000000000000000065",
+          "number": "1"
+        }
+      ],
+      "subsystem": null
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "designation": "-Junction",
+      "terminals": [
+        {
+          "id": "000000000000000000000000000000c9",
+          "number": "1"
+        }
+      ],
+      "subsystem": "0000000000000000000000000000000a"
+    },
+    {
+      "id": "00000000000000000000000000000003",
+      "designation": "-Sensor",
+      "terminals": [
+        {
+          "id": "0000000000000000000000000000012d",
+          "number": "1"
+        }
+      ],
+      "subsystem": "00000000000000000000000000000014"
+    }
+  ],
+  "ports": [
+    {
+      "id": "00000000000000000000000000000001",
+      "subsystem": "0000000000000000000000000000000a",
+      "name": "Sensor cable input",
+      "terminal": "000000000000000000000000000000c9"
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "subsystem": "00000000000000000000000000000014",
+      "name": "Sensor signal",
+      "terminal": "0000000000000000000000000000012d"
+    }
+  ],
+  "conductors": [
+    {
+      "id": "00000000000000000000000000000001",
+      "a": "00000000000000000000000000000065",
+      "b": "000000000000000000000000000000c9"
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "a": "000000000000000000000000000000c9",
+      "b": "0000000000000000000000000000012d"
+    }
+  ],
+  "cables": [
+    {
+      "id": "00000000000000000000000000000001",
+      "designation": "-C1",
+      "a": {
+        "kind": "device",
+        "id": "00000000000000000000000000000001"
+      },
+      "b": {
+        "kind": "subsystem",
+        "id": "0000000000000000000000000000000a"
+      },
+      "conductors": [
+        "00000000000000000000000000000001"
+      ]
+    }
+  ],
+  "definitions": [],
+  "instances": [],
+  "local_origins": [],
+  "drawing": {
+    "settings": {
+      "base": {
+        "font": "sans-serif",
+        "text_height_um": 2500,
+        "stroke_width_um": 250,
+        "colour": [
+          0,
+          0,
+          0
+        ]
+      },
+      "text_creation": {
+        "style": "00000000000000000000000000000001",
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      },
+      "stroke_creation": {
+        "style": "00000000000000000000000000000002",
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      }
+    },
+    "styles": [
+      {
+        "id": "00000000000000000000000000000001",
+        "name": "Device labels",
+        "role": "text",
+        "values": {
+          "font": "Named family",
+          "text_height_um": 3000,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "name": "Graphical strokes",
+        "role": "stroke",
+        "values": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": 400,
+          "colour": null
+        }
+      }
+    ],
+    "views": [
+      {
+        "id": "00000000000000000000000000000001",
+        "name": "Overview",
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      }
+    ],
+    "labels": [
+      {
+        "id": "00000000000000000000000000000001",
+        "view": "00000000000000000000000000000001",
+        "text": "Label 1",
+        "position_um": [
+          -1000,
+          2000
+        ],
+        "appearance": {
+          "style": "00000000000000000000000000000001",
+          "overrides": {
+            "font": null,
+            "text_height_um": null,
+            "stroke_width_um": null,
+            "colour": null
+          }
+        }
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "view": "00000000000000000000000000000001",
+        "text": "Label 2",
+        "position_um": [
+          -1000,
+          2000
+        ],
+        "appearance": {
+          "style": "00000000000000000000000000000001",
+          "overrides": {
+            "font": null,
+            "text_height_um": null,
+            "stroke_width_um": null,
+            "colour": null
+          }
+        }
+      }
+    ],
+    "polylines": [
+      {
+        "id": "00000000000000000000000000000001",
+        "view": "00000000000000000000000000000001",
+        "points_um": [
+          [
+            0,
+            0
+          ],
+          [
+            10000,
+            0
+          ],
+          [
+            10000,
+            5000
+          ]
+        ],
+        "appearance": {
+          "style": "00000000000000000000000000000002",
+          "overrides": {
+            "font": null,
+            "text_height_um": null,
+            "stroke_width_um": null,
+            "colour": null
+          }
+        }
+      }
+    ]
+  }
+}

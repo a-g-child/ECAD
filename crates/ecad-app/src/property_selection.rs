@@ -28,6 +28,8 @@ pub struct SelectionProperty {
     pub read_only: BTreeMap<ObjectRef, PropertyRestriction>,
     /// Selected objects that do not support this property at all.
     pub inapplicable: BTreeSet<ObjectRef>,
+    /// Effective per-property style sources; equal values may have different intent.
+    pub origins: BTreeMap<ObjectRef, ecad_domain::PropertyOrigin>,
 }
 
 /// Read-only inspector projection over a deduplicated, stable-ordered selection.
@@ -61,9 +63,13 @@ pub fn inspect_properties(
         let mut values = Vec::new();
         let mut editable = BTreeSet::new();
         let mut read_only = BTreeMap::new();
+        let mut origins = BTreeMap::new();
         for target in &applicable {
             let observation = project.property(*target, property)?;
             values.push(observation.value);
+            if let Some(origin) = observation.origin {
+                origins.insert(*target, origin);
+            }
             match observation.access {
                 PropertyAccess::Editable => {
                     editable.insert(*target);
@@ -88,6 +94,7 @@ pub fn inspect_properties(
                     editable,
                     read_only,
                     inapplicable,
+                    origins,
                 },
             );
         }

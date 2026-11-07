@@ -27,6 +27,7 @@ Read the relevant planning documents before implementation:
 - Keep shared-library publication outside project undo. Library writes preserve published bodies, validate recommendations, and coordinate cooperating writers; never infer adoption from a recommendation change or automatically steal retained locks.
 - Known-use discovery is read-only and advisory. Preserve labelled last-known references on failed scans, expose registration coverage/freshness, and keep copied file locations distinct from project lineage. Never interpret empty results as global absence.
 - Electrical properties map typed identities to real fields. Skip only inapplicable pairs in mixed edits; read-only/invalid changes fail coherently. Keep graphical style/default fields on drawing representations and preserve constructor/topology/pin validation.
+- Creation presets copy appearance intent only into new drawing objects. Resolve each property through object, view, named style, then project; preserve equal-valued explicit overrides and restore PropertyState during undo. Reusable electrical bodies reject drawing-bearing content until template drawing instantiation exists.
 - Start with modules and crates needed by working features; avoid speculative plugin frameworks and empty scaffolding.
 
 ## Maintainability
