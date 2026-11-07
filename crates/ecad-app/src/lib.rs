@@ -31,7 +31,9 @@ mod input_router;
 mod instantiation;
 mod keymap;
 mod layout;
+mod layout_preview;
 mod library;
+mod move_preview;
 mod project_usage;
 mod property_edits;
 mod property_selection;
@@ -66,9 +68,11 @@ pub use keymap::{
     EffectiveBinding, EffectiveKeymap, KeymapIssue, KeymapOverrides, ScopedShortcut, compile_keymap,
 };
 pub use layout::{LayoutAxis, LayoutChange, LayoutError, LayoutOperation, LayoutPlan, layout_plan};
+pub use layout_preview::{LayoutPreview, PreviewObject, preview_layout};
 pub use library::{
     LibraryPublisher, LibrarySnapshot, Recommendation, VersionedLibraryStore, library_import,
 };
+pub use move_preview::{MovePlacement, MovePreview, MovePreviewError, SnapChoice, preview_move};
 pub use project_usage::{ProjectUsage, RevisionUse};
 pub use property_edits::{
     PropertyChange, PropertyEdit, PropertyEditPlan, property_edit_plan, property_patch_plan,

@@ -12,6 +12,8 @@ mod properties;
 mod reuse;
 #[path = "support/routes.rs"]
 mod routes;
+#[path = "support/snapping.rs"]
+mod snapping;
 #[path = "support/styles.rs"]
 mod styles;
 
@@ -40,6 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let action_cases = actions::cases()?;
     let route_cases = routes::cases()?;
     let layout_cases = layout::cases()?;
+    let snap_cases = snapping::cases()?;
     let rustc = Process::new("rustc").arg("--version").output()?;
     if !rustc.status.success() {
         return Err("could not identify rustc".into());
@@ -71,8 +74,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 10,
-        "recipe": "origin-layout-v10",
+        "report_version": 11,
+        "recipe": "snapped-placement-v11",
         "project_schema": 6,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
@@ -91,6 +94,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "action_cases": action_cases,
         "route_cases": route_cases,
         "layout_cases": layout_cases,
+        "snap_cases": snap_cases,
     });
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/scale");
     std::fs::create_dir_all(&root)?;

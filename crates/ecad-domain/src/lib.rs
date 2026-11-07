@@ -34,6 +34,7 @@ mod reuse_error;
 mod route;
 mod route_error;
 mod route_geometry;
+mod snapping;
 
 pub use adoption_changes::{ObjectChanges, RevisionChanges};
 pub use cable::{Cable, CableEndpoint};
@@ -69,3 +70,5 @@ pub use reuse::{
 pub use reuse_error::ReuseError;
 pub use route::{AnchorLayout, DrawingRoute, RouteEdit, RouteLayout, RouteMode, TerminalAnchor};
 pub use route_error::RouteError;
+
+pub use snapping::{DrawingGrid, SnapCandidate, SnapEnd, SnapQuery, SnapSettings, SnapTarget};

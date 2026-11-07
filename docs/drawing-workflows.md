@@ -1,6 +1,6 @@
 # Drawing and editing workflows
 
-Status: Headless views, annotations, graphical polylines, electrically anchored whole conductor routes, portable defaults/styles, and property edits are implemented. Route commands support indexed vertex/segment editing and local first-leg/bend anchor movement with exact undo. Numeric origin translation/alignment/distribution and simultaneous connected-anchor movement are also implemented. Interactive tools, visual-bounds layout, rendering, symbols, live label attachment, snapping, constraints, crossing/hop presentation, and the broader workflows below remain proposed. See [route decision 0012](decisions/0012-whole-conductor-routes.md). See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
+Status: Headless views, annotations, graphical polylines, electrically anchored whole conductor routes, portable defaults/styles, and property edits are implemented. Route commands support indexed vertex/segment editing and local first-leg/bend anchor movement with exact undo. Numeric origin translation/alignment/distribution and simultaneous connected-anchor movement are also implemented. Headless terminal/endpoint/midpoint/grid snapping and revision-bound exact layout/move previews are implemented. Interactive tools, visual-bounds layout, rendering, symbols, live label attachment, persistent constraints, alignment snapping, crossing/hop presentation, and the broader workflows below remain proposed. See [route decision 0012](decisions/0012-whole-conductor-routes.md). See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
 
 ## Design intent
 
@@ -41,6 +41,8 @@ Labels should support attachment to their owning symbol or route, with editable 
 Nested groups, routes, and device symbols require explicit hit-testing priorities. Reference images and locked background geometry should not intercept ordinary electrical selection unless intentionally targeted.
 
 ## Coordinates, snapping, and constraints
+
+Implemented subset: one view supplies terminal anchors, whole-path endpoints, rounded segment midpoints, and the nearest representable grid point. Rank those source classes in that order, then squared distance and typed identity. Tolerance is an explicit inclusive circle in document micrometres. Grid half ties choose smaller coordinates; midpoints round down independently on each axis. Numeric movement bypasses snapping. Pointer movement supports explicit candidate cycling/suppression and excludes selected geometry plus routes touching selected anchors. Snap coincidence creates no electrical attachment. Immutable previews expose the exact proposed selected records and affected routes; commit uses their original session revision, including for no-ops. Dropping a preview cancels without document edits. See [decision 0014](decisions/0014-deterministic-snapping-and-previews.md). Native tools, screen-tolerance conversion, feedback, hysteresis, and alignment snapping remain future work.
 
 Store geometry in defined document units independently of screen pixels and zoom. Support numeric positions, offsets, rotation, and dimensions through tool input or properties.
 

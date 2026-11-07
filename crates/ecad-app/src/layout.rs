@@ -110,6 +110,7 @@ pub struct LayoutChange {
 }
 /// Preflighted layout proposal. Submit commands as one batch at the observed session revision.
 /// Previewing uses a temporary candidate; history retains only affected object geometry.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LayoutPlan {
     /// Deterministic commands with localized exact inverses; no-ops are omitted.
     pub commands: Vec<Command>,
@@ -169,6 +170,15 @@ pub fn layout_plan(
     selection: impl IntoIterator<Item = ObjectRef>,
     operation: LayoutOperation,
 ) -> Result<LayoutPlan, LayoutError> {
+    layout_plan_candidate(project, selection, operation).map(|(plan, _)| plan)
+}
+
+/// Share the validated candidate with preview projection, avoiding a second routing pass.
+pub(crate) fn layout_plan_candidate(
+    project: &Project,
+    selection: impl IntoIterator<Item = ObjectRef>,
+    operation: LayoutOperation,
+) -> Result<(LayoutPlan, Project), LayoutError> {
     let (_, origins) = layout_origins(project, selection)?;
     let destinations = layout_destinations(&origins, operation)?;
     let mut plan = LayoutPlan {
@@ -231,7 +241,7 @@ pub fn layout_plan(
         command.apply(&mut candidate)?;
     }
     candidate.validate()?;
-    Ok(plan)
+    Ok((plan, candidate))
 }
 
 /// Calculate exact target origins independently of object replacement and route adjustment.

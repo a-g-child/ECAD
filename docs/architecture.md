@@ -96,6 +96,8 @@ Keep action dispatch distinct from document command execution: an action may ent
 
 ## Frontend/core contract
 
+The headless preview contract now exposes immutable exact candidate records for layout and snapped movement, retaining the original session revision and closed commands. Prepare and commit share validated layout rules; commit never re-queries snap targets. The M action supports preview/commit parameters as well as immediate numeric layout. Snap queries are deterministic, view-scoped, and transient, with explicit exclusions/tolerance; the first implementation scans geometry linearly. Project schema v6 is unchanged. See [decision 0014](decisions/0014-deterministic-snapping-and-previews.md). Actual IPC DTOs, native tools, and rendering are still pending.
+
 Use a small, typed bridge supporting document operations, editing commands, queries, and revisioned change notifications. Keep transport DTOs distinct from internal model and persisted-file schemas so changing one boundary does not accidentally change all three.
 
 Use a shared or generated source for bridge types once the frontend stack is selected. Validate incoming data at the Rust boundary. Errors have stable categories, affected object references where applicable, and human-readable context; expected validation errors are structured results rather than panics or opaque strings.

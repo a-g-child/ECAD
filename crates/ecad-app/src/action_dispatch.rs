@@ -36,6 +36,15 @@ pub enum InvocationSource {
 /// Concrete parameters; missing placement data becomes a request, not inferred geometry.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ActionParameters {
+    /// Prepare a non-mutating move preview using the captured selection and view.
+    PreviewMove {
+        /// Explicit selected origin, independent of pointer hover or popup position.
+        reference: ecad_domain::ObjectRef,
+        /// Exact or snapped placement policy.
+        placement: MovePlacement,
+    },
+    /// Commit an already inspected, closed move preview at its original revision.
+    CommitMove(MovePreview),
     /// Explicit numeric translation, alignment, or distribution for captured drawing selection.
     Layout(LayoutOperation),
     /// Complete existing-conductor routing input, with view and stroke preset taken from context.
@@ -124,6 +133,8 @@ pub struct ActionRequest {
 }
 /// Observable action outcome; presentation requests are separate from document edits.
 pub enum ActionOutcome {
+    /// Exact transient geometry and ranked snap targets, with no document mutation.
+    MovePreview(Box<MovePreview>),
     /// A command/history operation completed, indicating whether document state changed.
     Edited(bool),
     /// Guarded persistence completed; project history is unchanged.
@@ -136,6 +147,8 @@ pub enum ActionOutcome {
 /// Invocation failed without bypassing normal model/history/save guarantees.
 #[derive(Debug)]
 pub enum ActionDispatchError<E> {
+    /// Move reference, candidate selection, or original geometry preflight failure.
+    MovePreview(MovePreviewError),
     /// Original layout preflight failure, with geometry/model context retained.
     Layout(LayoutError),
     /// The same or an older host input ID was already attempted.
@@ -167,6 +180,7 @@ impl<E: fmt::Display> fmt::Display for ActionDispatchError<E> {
             Self::ProtectedInput => f.write_str("the focused control owns keyboard input"),
             Self::Disabled(reason) => write!(f, "action is unavailable: {reason:?}"),
             Self::WrongParameters => f.write_str("parameters do not match the action"),
+            Self::MovePreview(error) => error.fmt(f),
             Self::Layout(error) => error.fmt(f),
             Self::Edit(error) => error.fmt(f),
             Self::Model(error) => error.fmt(f),
@@ -177,6 +191,7 @@ impl<E: fmt::Display> fmt::Display for ActionDispatchError<E> {
 impl<E: Error + 'static> Error for ActionDispatchError<E> {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            Self::MovePreview(error) => Some(error),
             Self::Layout(error) => Some(error),
             Self::Edit(error) => Some(error),
             Self::Model(error) => Some(error),
@@ -276,6 +291,33 @@ impl ActionDispatcher {
                 )
                 .map_err(ActionDispatchError::Model)?,
             ),
+            (
+                ActionHandler::MoveSelection,
+                ActionParameters::PreviewMove {
+                    reference,
+                    placement,
+                },
+            ) => ActionOutcome::MovePreview(Box::new(
+                preview_move(
+                    document.session(),
+                    invocation.context.selection.iter().copied(),
+                    reference,
+                    placement,
+                )
+                .map_err(ActionDispatchError::MovePreview)?,
+            )),
+            (ActionHandler::MoveSelection, ActionParameters::CommitMove(preview)) => {
+                if preview.layout().selection() != &invocation.context.selection
+                    || Some(preview.layout().view()) != invocation.context.view
+                {
+                    return Err(ActionDispatchError::WrongParameters);
+                }
+                ActionOutcome::Edited(
+                    document
+                        .apply_layout_preview(preview.into_layout())
+                        .map_err(ActionDispatchError::Edit)?,
+                )
+            }
             (ActionHandler::MoveSelection, ActionParameters::None) => {
                 request(ActionRequestKind::MoveSelection, None)
             }

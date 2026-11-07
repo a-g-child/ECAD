@@ -6,6 +6,8 @@ mod properties;
 mod route_layout;
 #[path = "drawing_routes.rs"]
 mod routes;
+#[path = "drawing_snapping.rs"]
+mod snapping;
 
 use crate::*;
 use std::collections::{BTreeMap, BTreeSet};
