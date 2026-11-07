@@ -33,7 +33,7 @@ Labels should support attachment to their owning symbol or route, with editable 
 - Select whole objects by default; enter vertex, segment, or group-member editing deliberately.
 - Allow expansion from a segment to its route and, separately, to a connected branch or network.
 - Provide selection filters, lock controls, and cycling through overlapping candidates.
-- Define window selection and crossing selection, with clear visual feedback for each.
+- Implemented desktop: left-to-right window selection encloses complete painted geometry; right-to-left crossing selects touched objects. Shift adds results; Escape cancels. Empty primary drag selects; Shift-scroll pans horizontally, Ctrl-scroll vertically, and unmodified scroll zooms at the cursor. Middle-button drag also pans. Direct object dragging preserves the grabbed offset and selected group, then commits one closed Rust proposal on release. See [pointer controls](decisions/0019-cad-pointer-controls.md).
 - Preserve the current selection for successive property, alignment, and transform operations where practical.
 - Preview operations before committing. Escape cancels the active preview without leaving partial document changes; define consistent behavior for ending a tool and clearing selection.
 - Make each completed operation a coherent undoable command. Copy, paste, duplicate, grouping, and transforms follow the same command rules.

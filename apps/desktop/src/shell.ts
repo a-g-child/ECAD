@@ -81,7 +81,7 @@ export function createShell(action: (id: string) => void) {
   const hint = element(
     'span',
     'toolbar-hint',
-    'Select · Shift multi-select · Drag background to pan · Scroll to zoom',
+    'Drag window / crossing selection · Shift scroll X · Ctrl scroll Y · Scroll zoom',
   );
   toolbar.append(hint);
   const workspace = element('main', 'workspace');

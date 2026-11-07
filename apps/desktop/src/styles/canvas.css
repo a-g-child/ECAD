@@ -121,3 +121,15 @@
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
+.selection-marquee {
+  fill: #307ec818;
+  stroke: #307ec8;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.selection-marquee.crossing {
+  fill: #31845818;
+  stroke: #318458;
+  stroke-dasharray: 5 3;
+}

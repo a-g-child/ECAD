@@ -2,7 +2,7 @@
 
 An electrical CAD application in early development, targeting equipment systems around the scale of a car. The intended desktop platforms are Linux, Windows, and macOS.
 
-A first **Tauri desktop editor prototype** now runs against the real Rust engine. It provides a fixed-pane workspace, SVG drawing with pan/zoom, multi-selection and snapped/exact group move previews, a full property inspector with bounded typed editors, undo/redo, guarded open/save, command search, and a live connection table. See [desktop setup and limits](docs/desktop-prototype.md).
+A first **Tauri desktop editor prototype** now runs against the real Rust engine. It provides a fixed-pane workspace, SVG drawing with cursor-centred zoom, modifier panning, directional marquee selection and snapped/exact group dragging, a full property inspector with bounded typed editors, undo/redo, guarded open/save, command search, and a live connection table. See [desktop setup and limits](docs/desktop-prototype.md).
 
 The headless engine supports electrical hierarchy, cables, pinned reusable revisions, document/history guards, mixed property edits, defaults/styles, retained conductor routes, deterministic layout/snapping/previews/transforms, and electrical CSV outputs. It remains independent of Tauri and the frontend. Interactive wire/symbol placement, manufacturer parts, full native interaction automation, and Linux/Windows execution remain planned.
 

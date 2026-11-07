@@ -16,12 +16,23 @@ let pendingSequence = false;
 let composing = false;
 let focus = 'canvas';
 let paletteContext: Context | null = null;
-const drawing = new DrawingCanvas(shell, choose);
+const drawing = new DrawingCanvas(shell, choose, selectMany);
 let movement: MovementTool | undefined;
 movement = new MovementTool(shell, drawing, apply, status, buttons, () => {
   movement?.clear();
   void action('placement.cancel');
 });
+drawing.startMove = async (target, point) => {
+  if (!snapshot || busy || movement?.active) return null;
+  if (selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind))) {
+    status(
+      'Drag terminal anchors to move connected routes. Labels and graphical paths can be dragged directly.',
+      true,
+    );
+    return null;
+  }
+  return movement?.beginDrag(context(), target, point) ?? null;
+};
 shell.connection.textContent = native ? 'Desktop · Rust' : 'Browser harness · Rust';
 function status(message: string, error = false) {
   shell.statusText.textContent = message;
@@ -135,6 +146,19 @@ function choose(target: Target | null, add: boolean) {
       );
     }
   }
+  selectionChanged();
+}
+function selectMany(targets: Target[], add: boolean) {
+  if (!snapshot || busy || movement?.active) return;
+  selection = [
+    ...new Map(
+      (add ? [...selection, ...targets] : targets).map((target) => [keyOf(target), target]),
+    ).values(),
+  ];
+  selectionChanged();
+}
+function selectionChanged() {
+  if (!snapshot) return;
   drawing.setSelection(selection);
   renderTree(shell, snapshot, selection, (target, add) => choose(target, add));
   shell.selectionStatus.textContent = selection.length
@@ -260,6 +284,10 @@ document.addEventListener('keydown', (event) => {
     shell.palette.open
   )
     return;
+  if (event.key === 'Escape' && drawing.cancelGesture()) {
+    event.preventDefault();
+    return;
+  }
   if (movement?.key(event)) return;
   const primary = navigator.platform.toLowerCase().includes('mac') ? event.metaKey : event.ctrlKey;
   const key = event.key.toLowerCase();

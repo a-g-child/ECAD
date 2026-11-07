@@ -6,6 +6,7 @@ import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
+import { registerControlsTests } from './controls.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -356,3 +357,5 @@ test('pointer move uses visible terminal snapping, cycling and temporary suppres
   assert.deepEqual(p.errors, []);
   await p.close();
 });
+
+registerControlsTests({ page, tree, button, until, pressAction, root, route, label });

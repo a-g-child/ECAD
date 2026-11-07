@@ -89,6 +89,7 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Implement SVG pan/zoom, fit, whole-object/mixed selection, right-click/full Properties, bounded typed bulk editors, shared undo/redo/save/open/fit/palette/report paths, and protected keyboard input.
 - [x] Integrate M with host-retained closed previews, explicit reference choice, exact numeric placement, terminal/endpoint/midpoint/grid feedback, cycling/suppression, and one-step connected-route movement.
 - [x] Verify preview/commit agreement, cancellation, invalid proposals, saved geometry/history, and frontend-clock reload protection through local bridge/browser tests.
+- [x] Establish CAD wheel controls, directional/additive marquee selection with stroke/text bounds, direct group dragging with preserved grab offset, and asynchronous release/cancellation regressions.
 - [ ] Add interactive wire/symbol placement, sub-element hit testing/selection, rotate previews, docking/splitters, and broader native interaction.
 - [x] Verify browser edit-to-core-to-render agreement, failed-edit focus retention, one-step undo, real saves/conflicts, report values, and fixed pane bounds using Chromium with the real Rust bridge.
 - [ ] Verify interactive tool preview/commit agreement and cancellation in the native UI.

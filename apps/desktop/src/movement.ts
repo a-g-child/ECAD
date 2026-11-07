@@ -3,6 +3,9 @@ import type { Context, MoveRow, Reply } from './types';
 import type { Shell } from './shell';
 import { DrawingCanvas } from './canvas';
 import { element } from './ui';
+import type { DragPlacement, PointerPosition } from './canvas-input';
+import type { Target } from './types';
+import { keyOf } from './types';
 import { errorText, inputId, send } from './transport';
 export class MovementTool {
   active = false;
@@ -10,6 +13,7 @@ export class MovementTool {
   private row: MoveRow | null = null;
   private pending: Record<string, unknown> | null = null;
   private pumping = false;
+  private idle: (() => void)[] = [];
   private valid = false;
   private committing = false;
   private suppressed = false;
@@ -92,7 +96,7 @@ export class MovementTool {
     for (const node of [this.x, this.y, this.reference, this.applyButton, this.cancelButton])
       node.hidden = !this.active;
     for (const node of [this.x, this.y, this.reference, this.cancelButton])
-      node.disabled = this.committing;
+      node.disabled = this.committing || !this.row;
     this.applyButton.disabled = !this.valid || this.pumping || !!this.pending;
     this.shell.views.disabled = this.active;
     this.shell.inspector.inert = this.active;
@@ -142,6 +146,58 @@ export class MovementTool {
       this.status(errorText(error), true);
     }
   }
+  /** Drag preserves the grabbed offset; release waits for the final closed preview. */
+  async beginDrag(
+    context: Context,
+    target: Target,
+    start: PointerPosition,
+  ): Promise<DragPlacement | null> {
+    const generation = this.generation;
+    this.active = true;
+    this.controls();
+    try {
+      const requested = await send({
+        type: 'action',
+        action: 'drawing.selection.move',
+        context,
+        input: inputId(),
+      });
+      if (generation !== this.generation || requested.request !== 'move') return null;
+      await this.begin(
+        context,
+        context.selection.findIndex((t) => keyOf(t) === keyOf(target)),
+      );
+      if (!this.active || !this.row) return null;
+      const lifetime = this.generation;
+      const dx = BigInt(this.row.x) - BigInt(start.x),
+        dy = BigInt(this.row.y) - BigInt(start.y);
+      const point = (p: PointerPosition) => {
+        if (lifetime !== this.generation) return;
+        this.drawing.movement?.point(
+          String(BigInt(p.x) + dx),
+          String(BigInt(p.y) + dy),
+          p.tolerance,
+        );
+      };
+      return {
+        point,
+        finish: async (p) => {
+          if (lifetime !== this.generation) return;
+          point(p);
+          if (this.pumping || this.pending)
+            await new Promise<void>((resolve) => this.idle.push(resolve));
+          if (lifetime === this.generation) await this.commit();
+        },
+        cancel: () => {
+          if (lifetime === this.generation) this.cancelAction();
+        },
+      };
+    } catch (error) {
+      this.clear();
+      this.status(errorText(error), true);
+      return null;
+    }
+  }
   private pointer(candidate: number | null = null) {
     if (!this.lastPointer) return;
     const { x, y, tolerance } = this.lastPointer;
@@ -184,6 +240,9 @@ export class MovementTool {
       this.pumping = false;
       this.controls();
       if (this.pending) void this.pump();
+      else {
+        for (const resolve of this.idle.splice(0)) resolve();
+      }
     }
   }
   private accept(reply: Reply) {

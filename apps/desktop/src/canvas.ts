@@ -2,26 +2,21 @@
 import type { SceneRow, Target } from './types';
 import { keyOf } from './types';
 import type { Shell } from './shell';
+import { CanvasInput, type DragPlacement, type PointerPosition } from './canvas-input';
 export class DrawingCanvas {
   private box = [-15, -45, 145, 90];
-  private drag: { x: number; y: number; box: number[]; moved: boolean } | null = null;
+  private input: CanvasInput;
+  startMove: (target: Target, point: PointerPosition) => Promise<DragPlacement | null> = async () =>
+    null;
+  cancelGesture() {
+    return this.input.cancel();
+  }
   private selected = new Set<string>();
   private rows: SceneRow[] = [];
   movement: {
     point: (x: string, y: string, tolerance: number) => void;
     commit: () => void;
   } | null = null;
-  pointerTolerance() {
-    return Math.min(
-      4294967295,
-      Math.max(
-        0,
-        Math.round(
-          (this.box[2] * 1000 * 10) / Math.max(1, this.shell.svg.getBoundingClientRect().width),
-        ),
-      ),
-    );
-  }
   preview(rows: SceneRow[], snap?: [number, number]) {
     const base = this.rows;
     const patches = new Map(rows.map((r) => [keyOf(r.target), r]));
@@ -47,26 +42,22 @@ export class DrawingCanvas {
   constructor(
     private shell: Shell,
     private choose: (target: Target | null, add: boolean) => void,
+    selectMany: (targets: Target[], add: boolean) => void,
   ) {
-    shell.svg.addEventListener('pointerdown', (event) => {
-      if (event.button !== 0 && event.button !== 1) return;
-      if (this.movement && event.button === 0) {
-        event.preventDefault();
-        this.movement.commit();
-        shell.canvas.focus();
-        return;
-      }
-      const hit = (event.target as Element).closest<SVGElement>('[data-object]');
-      if (hit && event.button === 0) {
-        const row = this.rows.find((r) => keyOf(r.target) === hit.dataset.object);
-        if (row) this.choose(row.target, event.shiftKey);
-        shell.canvas.focus();
-        return;
-      }
-      this.drag = { x: event.clientX, y: event.clientY, box: [...this.box], moved: false };
-      shell.svg.setPointerCapture(event.pointerId);
-      event.preventDefault();
-      shell.canvas.focus();
+    this.input = new CanvasInput({
+      svg: shell.svg,
+      canvas: shell.canvas,
+      rows: () => this.rows,
+      selected: () => this.selected,
+      box: () => this.box,
+      setBox: (box) => {
+        this.box = box;
+        this.paintBox();
+      },
+      choose,
+      selectMany,
+      startMove: (target, point) => this.startMove(target, point),
+      movement: () => this.movement,
     });
     shell.svg.addEventListener('contextmenu', (event) => {
       if (this.movement) return;
@@ -75,52 +66,6 @@ export class DrawingCanvas {
       if (row && !this.selected.has(keyOf(row.target))) this.choose(row.target, false);
       shell.canvas.focus();
     });
-    shell.svg.addEventListener('pointermove', (event) => {
-      if (!this.drag) {
-        if (this.movement) {
-          const matrix = shell.svg.getScreenCTM();
-          if (!matrix) return;
-          const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
-          const x = Math.round(p.x * 1000),
-            y = Math.round(p.y * 1000);
-          if (Number.isSafeInteger(x) && Number.isSafeInteger(y))
-            this.movement.point(String(x), String(y), this.pointerTolerance());
-        }
-        return;
-      }
-      const bounds = shell.svg.getBoundingClientRect();
-      const dx = ((event.clientX - this.drag.x) * this.box[2]) / bounds.width;
-      const dy = ((event.clientY - this.drag.y) * this.box[3]) / bounds.height;
-      if (Math.abs(event.clientX - this.drag.x) + Math.abs(event.clientY - this.drag.y) > 3)
-        this.drag.moved = true;
-      this.box = [this.drag.box[0] - dx, this.drag.box[1] - dy, this.box[2], this.box[3]];
-      this.paintBox();
-    });
-    shell.svg.addEventListener('pointerup', (event) => {
-      if (!this.movement && this.drag && !this.drag.moved) this.choose(null, event.shiftKey);
-      this.drag = null;
-    });
-    shell.svg.addEventListener('pointercancel', () => (this.drag = null));
-    shell.svg.addEventListener(
-      'wheel',
-      (event) => {
-        event.preventDefault();
-        const factor = event.deltaY < 0 ? 0.85 : 1.18;
-        const bounds = shell.svg.getBoundingClientRect();
-        const fx = (event.clientX - bounds.left) / bounds.width,
-          fy = (event.clientY - bounds.top) / bounds.height;
-        const w = Math.min(100000, Math.max(2, this.box[2] * factor)),
-          h = (this.box[3] * w) / this.box[2];
-        this.box = [
-          this.box[0] + (this.box[2] - w) * fx,
-          this.box[1] + (this.box[3] - h) * fy,
-          w,
-          h,
-        ];
-        this.paintBox();
-      },
-      { passive: false },
-    );
     new ResizeObserver(() => this.paintBox()).observe(shell.canvas);
   }
   setSelection(targets: Target[]) {
