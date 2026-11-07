@@ -25,6 +25,8 @@ Distinguish the following concepts:
 
 Internal use of segments is acceptable; users must not be forced to manage every segment separately. Branch points are explicit topology boundaries. Selecting a route, a connected branch, or a complete network must be distinguishable operations rather than an ambiguous definition of "whole wire".
 
+Every text value supports multiple lines without changing object type. Desktop text editors use Enter for a newline and Ctrl/Cmd+Enter or Apply to commit. Blank lines and indentation render within the same annotation, with complete text-block selection/Fit bounds. See [unified multiline text](decisions/0022-unified-multiline-text.md).
+
 Labels should support attachment to their owning symbol or route, with editable offsets. Deliberately moving a label must not silently detach it from its owner.
 
 ## Predictable interaction and selection

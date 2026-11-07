@@ -3,6 +3,7 @@ import type { PropertyRow, Snapshot, Target } from './types';
 import { keyOf } from './types';
 import { element } from './ui';
 import type { Shell } from './shell';
+import { textEditor, applyTextKey } from './text';
 export function renderTree(
   shell: Shell,
   snapshot: Snapshot,
@@ -115,8 +116,11 @@ export function renderProperties(
     if (row.applicable < count)
       label.append(element('span', 'property-count', `${row.applicable}/${count}`));
     if (row.editable) {
-      const input = element('input', 'property-input');
-      input.type = 'text';
+      const multiline = row.kind === 'text';
+      const input = multiline
+        ? textEditor('property-input property-text')
+        : element('input', 'property-input');
+      if (input instanceof HTMLInputElement) input.type = 'text';
       input.value = row.value ?? '';
       input.placeholder = row.mixed ? 'Mixed' : '';
       input.id = `property-${row.key}`;
@@ -124,11 +128,18 @@ export function renderProperties(
       input.setAttribute('aria-label', row.label);
       label.htmlFor = input.id;
       if (row.kind === 'length') input.inputMode = 'numeric';
-      input.title = [row.origin, 'Press Enter to apply; Escape to revert']
+      input.title = [
+        row.origin,
+        multiline
+          ? 'Enter inserts a line break; Ctrl/Cmd+Enter applies; Escape reverts'
+          : 'Press Enter to apply; Escape to revert',
+      ]
         .filter(Boolean)
         .join('\n');
-      input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
+      input.addEventListener('keydown', (raw) => {
+        const event = raw as KeyboardEvent;
+        if (event.isComposing) return;
+        if (multiline ? applyTextKey(event) : event.key === 'Enter') {
           event.preventDefault();
           event.stopPropagation();
           void edit(row.key, input.value);
@@ -139,9 +150,21 @@ export function renderProperties(
           input.blur();
         }
       });
-      group.append(label, input);
+      const editor = element('div', 'property-editor');
+      editor.append(input);
+      if (multiline) {
+        const apply = element('button', 'plain property-apply', 'Apply');
+        apply.setAttribute('aria-label', `Apply ${row.label}`);
+        apply.addEventListener('click', () => void edit(row.key, input.value));
+        editor.append(apply);
+      }
+      group.append(label, editor);
     } else {
-      const value = element('div', 'property-value', row.display);
+      const value = element(
+        'div',
+        `property-value${row.kind === 'text' ? ' property-text-value' : ''}`,
+        row.display,
+      );
       value.title = `${row.display}\n${row.reason}`;
       value.setAttribute('aria-label', `${row.label}: ${row.display}`);
       group.append(label, value);
@@ -151,7 +174,7 @@ export function renderProperties(
   const hint = element(
     'p',
     'inspector-note',
-    'Enter applies a value as one undoable edit. Graphical fields are distinct from physical wire attributes.',
+    'Text: Enter adds a line; Ctrl/Cmd+Enter or Apply commits one edit. Other fields use Enter.',
   );
   shell.inspector.append(hint);
   shell.inspector.scrollTop = scroll;

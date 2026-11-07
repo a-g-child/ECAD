@@ -100,7 +100,7 @@ export function marqueeTargets(
     .filter((row) => {
       const node = ink.get(keyOf(row.target));
       if (!node) return false;
-      const b = node.getBBox();
+      const b = row.shape === 'text' ? (node.parentNode as SVGGElement).getBBox() : node.getBBox();
       const radius = row.shape === 'path' ? row.width / 2 : row.shape === 'anchor' ? 0.175 : 0;
       const bounds: Rect = [
         b.x - radius,

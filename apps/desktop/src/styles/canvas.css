@@ -95,6 +95,7 @@
   min-width: 0;
 }
 .move-bar input,
+.move-bar textarea,
 .move-bar select {
   height: 26px;
   font-size: 11px;
@@ -154,4 +155,19 @@
 .annotation-text {
   width: 160px;
   min-width: 60px;
+}
+
+.move-bar textarea.annotation-text {
+  height: 28px;
+  line-height: 12px;
+  padding: 1px 4px;
+  resize: none;
+  overflow: auto;
+}
+.text-bounds {
+  pointer-events: all;
+}
+
+.caption-bounds {
+  pointer-events: none;
 }

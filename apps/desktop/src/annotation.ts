@@ -3,6 +3,7 @@ import type { AnnotationRow, Context, Reply, Target } from './types';
 import type { Shell } from './shell';
 import type { DrawingCanvas } from './canvas';
 import { element } from './ui';
+import { textEditor, applyTextKey } from './text';
 import { send, inputId, errorText } from './transport';
 export class AnnotationTool {
   active = false;
@@ -15,7 +16,7 @@ export class AnnotationTool {
   private suppressed = false;
   private pointer: { x: string; y: string; tolerance: number } | null = null;
   private bar = element('div', 'move-bar annotation-bar moving');
-  private text = element('input', 'annotation-text');
+  private text = textEditor('annotation-text', 2);
   private x = element('input', 'move-coordinate');
   private y = element('input', 'move-coordinate');
   private applyButton = element('button', 'plain', 'Apply');
@@ -41,9 +42,13 @@ export class AnnotationTool {
         this.queue();
       });
       input.addEventListener('compositionend', () => this.queue());
-      input.addEventListener('keydown', (e) => {
+      input.addEventListener('keydown', (raw) => {
+        const e = raw as KeyboardEvent;
         if (e.isComposing) return;
-        if (e.key === 'Enter') {
+        if (
+          (input === this.text && applyTextKey(e)) ||
+          (input !== this.text && e.key === 'Enter')
+        ) {
           e.preventDefault();
           void this.commit();
         }
@@ -63,7 +68,7 @@ export class AnnotationTool {
       this.y,
       this.applyButton,
       this.cancelButton,
-      element('span', 'move-note', 'µm · Tab cycles snaps · Alt suppresses'),
+      element('span', 'move-note', 'Enter: newline · Ctrl/Cmd+Enter: Apply'),
     );
     shell.placement.append(this.bar);
     this.controls();

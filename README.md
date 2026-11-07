@@ -2,7 +2,7 @@
 
 An electrical CAD application in early development, targeting equipment systems around the scale of a car. The intended desktop platforms are Linux, Windows, and macOS.
 
-A first **Tauri desktop editor prototype** now runs against the real Rust engine. It provides a fixed-pane workspace, SVG drawing with cursor-centred zoom, modifier panning, directional marquee selection and snapped/exact group dragging, pivot-based rotation/mirroring, annotation placement, a full property inspector with bounded typed editors, undo/redo, guarded open/save, command search, and a live connection table. See [desktop setup and limits](docs/desktop-prototype.md).
+A first **Tauri desktop editor prototype** now runs against the real Rust engine. It provides a fixed-pane workspace, SVG drawing with cursor-centred zoom, modifier panning, directional marquee selection and snapped/exact group dragging, pivot-based rotation/mirroring, multiline annotation placement, a full property inspector with bounded typed editors, undo/redo, guarded open/save, command search, and a live connection table. See [desktop setup and limits](docs/desktop-prototype.md).
 
 The headless engine supports electrical hierarchy, cables, pinned reusable revisions, document/history guards, mixed property edits, defaults/styles, retained conductor routes, deterministic layout/snapping/previews/transforms, and electrical CSV outputs. It remains independent of Tauri and the frontend. Interactive wire/symbol placement, manufacturer parts, full native interaction automation, and Linux/Windows execution remain planned.
 
@@ -68,7 +68,7 @@ The app starts with a real, editable conveyor demonstration. Save it to a new fi
 | `cargo run --offline --locked -p ecad-adapters --example reusable` | Places two instances of one revision, saves/reopens offline, then verifies make-local/undo without changing the other instance |
 | `cargo doc --offline --locked --workspace --no-deps --open` | Opens generated Rust API documentation |
 
-The full suite currently contains 274 behavior tests and two doctests. Integration tests use isolated temporary files and repositories, including a real Git branch/commit/checkout workflow and safe reload after checkout. They do not alter this workspace's repository or contact a remote. This workspace's `origin` is configured as [a-g-child/ECAD](https://github.com/a-g-child/ECAD).
+The full suite currently contains 275 behavior tests and two doctests. Integration tests use isolated temporary files and repositories, including a real Git branch/commit/checkout workflow and safe reload after checkout. They do not alter this workspace's repository or contact a remote. This workspace's `origin` is configured as [a-g-child/ECAD](https://github.com/a-g-child/ECAD).
 
 Four additional browser workflows verify actual edits/saves, mixed selection, protected typing, external conflicts, long values, and stable pane geometry. Native macOS build and launch are verified; automated native interaction, Linux, and Windows remain pending.
 

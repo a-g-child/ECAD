@@ -224,3 +224,55 @@ fn snapped_position_and_large_numeric_values_are_exact_and_drafts_have_distinct_
         "replayed"
     );
 }
+
+#[test]
+fn multiline_text_preserves_literal_breaks_blank_lines_and_identity_through_edit_save_and_reopen() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("multiline.json");
+    let mut b = DesktopBridge::demo().unwrap();
+    b.save_as(&path).unwrap();
+    let seed = begin(&mut b);
+    let text = "\n  Ω <tag>\n\nSecond\r\nLast\r";
+    let proposal =
+        update(&mut b, &seed["session"], text, "0", "0", true).unwrap()["annotation"].clone();
+    assert_eq!(proposal["scene"][0]["label"], text);
+    let target = proposal["scene"][0]["target"].clone();
+    call(
+        &mut b,
+        json!({"type":"commit_annotation","token":proposal["token"],"input":"1"}),
+    )
+    .unwrap();
+    action(&mut b, "document.save", "2");
+    let mut ctx = context(&b);
+    ctx["selection"] = json!([target]);
+    let inspected = call(&mut b, json!({"type":"inspect","context":ctx})).unwrap();
+    assert!(
+        inspected["properties"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["key"] == "drawing_text" && r["value"] == text)
+    );
+    call(
+        &mut b,
+        json!({"type":"edit","context":ctx,"property":"drawing_text","value":"Single line"}),
+    )
+    .unwrap();
+    let undone = action(&mut b, "document.undo", "3");
+    assert!(
+        undone["snapshot"]["scene"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["target"] == target && r["label"] == text)
+    );
+    assert!(!b.is_dirty());
+    let loaded = DesktopBridge::from_path(&path).unwrap();
+    assert!(
+        snapshot(&loaded)["scene"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["target"] == target && r["label"] == text)
+    );
+}

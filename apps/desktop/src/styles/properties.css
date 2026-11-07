@@ -69,3 +69,24 @@
   line-height: 1.7;
   padding: 5px 12px 15px;
 }
+
+.property-editor {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  align-items: flex-start;
+}
+.property-text {
+  height: 64px;
+  line-height: 17px;
+  resize: none;
+  overflow: auto;
+}
+.property-apply {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.property-text-value {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

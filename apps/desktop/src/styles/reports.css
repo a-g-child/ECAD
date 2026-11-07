@@ -26,7 +26,8 @@
 .report-body td {
   padding: 6px 12px;
   border-bottom: 1px solid #e6eaed;
-  white-space: nowrap;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: left;

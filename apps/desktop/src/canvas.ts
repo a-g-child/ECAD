@@ -2,6 +2,7 @@
 import type { SceneRow, Target } from './types';
 import { keyOf } from './types';
 import type { Shell } from './shell';
+import { renderText, reserveTextBounds } from './text';
 import { CanvasInput, type DragPlacement, type PointerPosition } from './canvas-input';
 export class DrawingCanvas {
   private box = [-15, -45, 145, 90];
@@ -80,9 +81,11 @@ export class DrawingCanvas {
   render(rows: SceneRow[], fit = false) {
     this.rows = rows;
     this.shell.svg.replaceChildren();
-    const ns = this.shell.svg.namespaceURI;
-    const make = (tag: string, attrs: Record<string, string | number>) => {
-      const n = document.createElementNS(ns, tag);
+    const make = <K extends keyof SVGElementTagNameMap>(
+      tag: K,
+      attrs: Record<string, string | number>,
+    ) => {
+      const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
       for (const [key, value] of Object.entries(attrs)) n.setAttribute(key, String(value));
       return n;
     };
@@ -154,7 +157,7 @@ export class DrawingCanvas {
           fill: '#46525e',
           class: 'anchor-caption',
         });
-        text.textContent = row.label;
+        renderText(text, row.label, x, y + 6, 2.3);
         group.append(text);
       } else {
         const [x, y] = row.points[0];
@@ -166,10 +169,27 @@ export class DrawingCanvas {
           'font-family': row.font,
           class: 'ink',
         });
-        text.textContent = row.label;
+        renderText(text, row.label, x, y, row.text_height);
         group.append(text);
       }
       this.shell.svg.append(group);
+      if (row.shape === 'text')
+        reserveTextBounds(
+          group,
+          group.querySelector<SVGGraphicsElement>('text.ink')!,
+          row.points[0][0],
+          row.points[0][1],
+          row.text_height,
+        );
+      if (row.shape === 'anchor')
+        reserveTextBounds(
+          group,
+          group.querySelector<SVGGraphicsElement>('text.anchor-caption')!,
+          row.points[0][0],
+          row.points[0][1] + 6,
+          2.3,
+          'caption-bounds',
+        );
     }
     this.setSelection(
       [...this.selected].flatMap((key) =>
@@ -185,13 +205,13 @@ export class DrawingCanvas {
       maxX = -Infinity,
       minY = Infinity,
       maxY = -Infinity;
-    for (const row of this.rows)
-      for (const [x, y] of row.points) {
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
-      }
+    for (const node of this.shell.svg.querySelectorAll<SVGGraphicsElement>('[data-object]')) {
+      const b = node.getBBox();
+      minX = Math.min(minX, b.x);
+      maxX = Math.max(maxX, b.x + b.width);
+      minY = Math.min(minY, b.y);
+      maxY = Math.max(maxY, b.y + b.height);
+    }
     let w = Math.max(30, maxX - minX + 30),
       h = Math.max(30, maxY - minY + 35);
     const bounds = this.shell.svg.getBoundingClientRect();

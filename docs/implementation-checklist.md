@@ -92,6 +92,7 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Establish CAD wheel controls, directional/additive marquee selection with stroke/text bounds, direct group dragging with preserved grab offset, and asynchronous release/cancellation regressions.
 - [x] Integrate R rotation and mirror controls with exact pivot fields, shared preview geometry, invalid/stale/cancelled proposal guards, one-step history, and saved-file/browser regressions.
 - [x] Integrate T annotation placement with generated UUIDs, real text presets, literal previews, snapping/exact input, one-step creation/save/history, deleted-selection cleanup and control-focus regressions.
+- [x] Make text multiline-capable without object conversion: shared textarea controls, explicit line/blank-space rendering, complete selection/Fit bounds, multiline captions/reports, and creation/property/history regressions.
 - [ ] Add interactive wire/symbol placement, sub-element hit testing/selection, docking/splitters, and broader native interaction.
 - [x] Verify browser edit-to-core-to-render agreement, failed-edit focus retention, one-step undo, real saves/conflicts, report values, and fixed pane bounds using Chromium with the real Rust bridge.
 - [ ] Verify interactive tool preview/commit agreement and cancellation in the native UI.

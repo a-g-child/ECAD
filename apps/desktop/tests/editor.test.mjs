@@ -9,6 +9,7 @@ import { chromium } from 'playwright';
 import { registerControlsTests } from './controls.mjs';
 import { registerTransformTests } from './transforms.mjs';
 import { registerAnnotationTests } from './annotations.mjs';
+import { registerMultilineTests } from './multiline.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -79,7 +80,7 @@ async function page() {
   return page;
 }
 const tree = (p, target) => p.locator(`.tree-item[data-object="${target}"]`);
-const input = (p, key) => p.locator(`[data-property="${key}"] input`);
+const input = (p, key) => p.locator(`[data-property="${key}"] :is(input,textarea)`);
 const button = (p, name) => p.getByRole('button', { name, exact: true });
 async function changed(p, fn) {
   await fn();
@@ -96,6 +97,9 @@ async function pressAction(p, name, expected) {
       (message) => document.querySelector('.status-message')?.textContent === message,
       expected,
     );
+  // The same status can occur on consecutive Undo operations. Wait for the
+  // ordinary command controls to unlock before inspecting its resulting state.
+  await until(async () => !(await button(p, 'Save project').isDisabled()));
 }
 async function bounds(p) {
   return p.locator('.canvas').boundingBox();
@@ -182,9 +186,17 @@ test('mixed selection uses applicable subsets and keyboard undo without containe
   await p.mouse.wheel(0, 300);
   await until(async () => (await p.locator('svg.drawing').getAttribute('viewBox')) !== viewbox);
   assert.notEqual(await p.locator('svg.drawing').getAttribute('viewBox'), viewbox);
+  const zoomed = await p.locator('svg.drawing').getAttribute('viewBox');
   await p.locator('.canvas').focus();
   await p.keyboard.press('f');
-  await until(async () => (await p.locator('svg.drawing').getAttribute('viewBox')) === viewbox);
+  await until(async () => (await p.locator('svg.drawing').getAttribute('viewBox')) !== zoomed);
+  const fitted = (await p.locator('svg.drawing').getAttribute('viewBox')).split(' ').map(Number);
+  const expected = viewbox.split(' ').map(Number);
+  const tolerance = expected[2] / (await bounds(p)).width;
+  assert.ok(
+    fitted.every((v, i) => Math.abs(v - expected[i]) <= tolerance),
+    JSON.stringify({ fitted, expected }),
+  );
   await mkdir(resolve(root, 'target/ui'), { recursive: true });
   await p.screenshot({ path: resolve(root, 'target/ui/editor.png') });
   assert.deepEqual(p.errors, []);
@@ -206,7 +218,7 @@ test('long editable values and notifications preserve layout, typing is protecte
     await input(p, 'drawing_text').fill(
       'Very long <img src=x onerror=window.__injected=1> '.repeat(250),
     );
-    await input(p, 'drawing_text').press('Enter');
+    await input(p, 'drawing_text').press(`${primary}+Enter`);
   });
   assert.deepEqual(await bounds(p), before);
   assert.equal(await p.locator('img').count(), 0);
@@ -384,6 +396,19 @@ registerAnnotationTests({
   pressAction,
   bounds,
   input,
+  root,
+  project: () => project,
+});
+
+registerMultilineTests({
+  page,
+  tree,
+  button,
+  input,
+  until,
+  pressAction,
+  changed,
+  bounds,
   root,
   project: () => project,
 });
