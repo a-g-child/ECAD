@@ -4,6 +4,8 @@
 mod actions;
 #[path = "support/hierarchy.rs"]
 mod hierarchy;
+#[path = "support/layout.rs"]
+mod layout;
 #[path = "support/properties.rs"]
 mod properties;
 #[path = "support/reuse.rs"]
@@ -37,6 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let style_cases = styles::cases()?;
     let action_cases = actions::cases()?;
     let route_cases = routes::cases()?;
+    let layout_cases = layout::cases()?;
     let rustc = Process::new("rustc").arg("--version").output()?;
     if !rustc.status.success() {
         return Err("could not identify rustc".into());
@@ -68,8 +71,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 9,
-        "recipe": "electrical-routes-v9",
+        "report_version": 10,
+        "recipe": "origin-layout-v10",
         "project_schema": 6,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
@@ -87,6 +90,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "style_cases": style_cases,
         "action_cases": action_cases,
         "route_cases": route_cases,
+        "layout_cases": layout_cases,
     });
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/scale");
     std::fs::create_dir_all(&root)?;

@@ -69,6 +69,14 @@ pub struct AnchorLayout {
     /// Exactly the routes touching this anchor, in stable identity order.
     pub routes: Vec<DrawingRoute>,
 }
+/// Exact geometry for a set of anchors and the union of their touching routes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RouteLayout {
+    /// Complete selected placements in stable identity order, without duplicates.
+    pub anchors: Vec<TerminalAnchor>,
+    /// Complete union of touching routes, each stored exactly once.
+    pub routes: Vec<DrawingRoute>,
+}
 /// Deterministic geometry-only route editing, with explicit vertex/segment indexing.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RouteEdit {

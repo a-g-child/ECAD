@@ -6,6 +6,12 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Request numeric translation of supported drawing origins.
+    MoveSelection,
+    /// Request origin alignment to an explicit document coordinate.
+    AlignSelection,
+    /// Request origin distribution between selected extrema.
+    DistributeSelection,
     /// Request/create a whole representation of an existing electrical conductor.
     CreateRoute,
     /// Undo one document transaction.
@@ -30,6 +36,8 @@ pub enum ActionHandler {
 /// Declared input needs; missing creation input produces a typed request, not an invented point.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionInputRequirement {
+    /// Supported selected drawing origins and explicit layout parameters.
+    Layout,
     /// Existing conductor, placed terminal anchors, and explicit whole-path geometry.
     RoutePlacement,
     /// No additional parameters.
@@ -85,6 +93,9 @@ impl ActionDefinition {
     /// Derive invocation needs from the actual typed handler, avoiding divergent metadata.
     pub fn input_requirement(&self) -> ActionInputRequirement {
         match self.handler {
+            ActionHandler::MoveSelection
+            | ActionHandler::AlignSelection
+            | ActionHandler::DistributeSelection => ActionInputRequirement::Layout,
             ActionHandler::CreateRoute => ActionInputRequirement::RoutePlacement,
             ActionHandler::Properties => ActionInputRequirement::Selection,
             ActionHandler::CreateLabel => ActionInputRequirement::LabelPlacement,
@@ -213,6 +224,37 @@ impl ActionRegistry {
                     .find(|target| session.project().require_object(**target).is_err())
                     .copied()
                     .map(ActionDisabled::MissingTarget)
+            }
+            ActionHandler::MoveSelection
+            | ActionHandler::AlignSelection
+            | ActionHandler::DistributeSelection => {
+                if context.focus != ActionFocus::Canvas {
+                    return Some(ActionDisabled::CanvasRequired);
+                }
+                let Some(view) = context
+                    .view
+                    .filter(|id| session.project().drawing().view(*id).is_some())
+                else {
+                    return Some(ActionDisabled::NoDrawingView);
+                };
+                if context.selection.is_empty() {
+                    return Some(ActionDisabled::NoSelection);
+                }
+                match crate::layout::layout_origins(
+                    session.project(),
+                    context.selection.iter().copied(),
+                ) {
+                    Err(error) => Some(ActionDisabled::Layout(error)),
+                    Ok((selection_view, _)) if selection_view != view => {
+                        Some(ActionDisabled::Layout(LayoutError::MixedViews))
+                    }
+                    Ok((_, origins))
+                        if handler == ActionHandler::DistributeSelection && origins.len() < 3 =>
+                    {
+                        Some(ActionDisabled::Layout(LayoutError::TooFewObjects))
+                    }
+                    Ok(_) => None,
+                }
             }
             ActionHandler::CreateLabel
             | ActionHandler::CreatePolyline

@@ -175,6 +175,8 @@ impl ActionContext {
 /// Typed unavailability, shared by palette, menus, shortcuts, and execution.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActionDisabled {
+    /// Selection cannot participate in this drawing layout action.
+    Layout(crate::LayoutError),
     /// Action is not registered.
     UnknownAction(ActionId),
     /// A working document is required.

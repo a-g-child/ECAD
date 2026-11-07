@@ -28,6 +28,23 @@ pub struct DrawingPoint {
     /// Vertical coordinate in micrometres.
     pub y: i64,
 }
+impl DrawingPoint {
+    /// Translate in integer micrometres without wrapping or saturating coordinates.
+    /// # Errors
+    /// Returns coordinate overflow if either resulting coordinate cannot fit in i64.
+    pub fn translated(self, delta: Self) -> Result<Self, DrawingError> {
+        Ok(Self {
+            x: self
+                .x
+                .checked_add(delta.x)
+                .ok_or(DrawingError::CoordinateOverflow)?,
+            y: self
+                .y
+                .checked_add(delta.y)
+                .ok_or(DrawingError::CoordinateOverflow)?,
+        })
+    }
+}
 /// Output RGB colour; application theme/selection colours never enter this value.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct DrawingColour {

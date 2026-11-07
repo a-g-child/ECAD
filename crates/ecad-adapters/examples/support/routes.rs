@@ -4,7 +4,7 @@ use ecad_adapters::{decode_project, encode_project};
 use ecad_app::{Command, RouteCommand, Session};
 use ecad_domain::*;
 use serde_json::{Value, json};
-use std::{error::Error, num::NonZeroUsize, time::Instant};
+use std::{collections::BTreeMap, error::Error, num::NonZeroUsize, time::Instant};
 
 pub(super) fn cases() -> Result<Vec<Value>, Box<dyn Error>> {
     [100, 1_000, 10_000].into_iter().map(probe).collect()
@@ -103,8 +103,32 @@ fn probe(count: u128) -> Result<Value, Box<dyn Error>> {
     {
         return Err("route sweep changed identities or failed round trip/undo".into());
     }
+    let mut group_times = Vec::new();
+    for sample in 0..super::SAMPLES {
+        let y = if sample % 2 == 0 { 5_000 } else { 0 };
+        let positions = BTreeMap::from([
+            (AnchorId::new(1)?, DrawingPoint { x: 10_000, y }),
+            (AnchorId::new(2)?, DrawingPoint { x: 20_000, y }),
+        ]);
+        let start = Instant::now();
+        session.execute(
+            session.revision(),
+            Command::Route(RouteCommand::MoveAnchors(positions)),
+        )?;
+        group_times.push(start.elapsed().as_nanos());
+    }
+    if session.project() != &baseline {
+        return Err("group movement accumulated route geometry".into());
+    }
+    for _ in 0..super::SAMPLES {
+        session.undo(session.revision())?;
+    }
+    if session.project() != &baseline {
+        return Err("group movement undo changed layout".into());
+    }
+    group_times.sort_unstable();
     times.sort_unstable();
     Ok(
-        json!({"routes":count,"anchors":count+1,"touching_routes":2,"samples":super::SAMPLES,"local_move_p50_ns":times[super::SAMPLES/2],"local_move_p95_ns":times[super::SAMPLES*95/100],"local_move_max_ns":times[super::SAMPLES-1],"correctness":"fixed local degree, bounded bends, unchanged electrical data, round trip and exact undo verified"}),
+        json!({"routes":count,"anchors":count+1,"touching_routes":2,"samples":super::SAMPLES,"local_move_p50_ns":times[super::SAMPLES/2],"local_move_p95_ns":times[super::SAMPLES*95/100],"local_move_max_ns":times[super::SAMPLES-1],"group_anchors":2,"group_touching_routes":2,"group_move_p50_ns":group_times[super::SAMPLES/2],"group_move_p95_ns":group_times[super::SAMPLES*95/100],"correctness":"fixed local degree, bounded bends, single/group movement, unchanged electrical data, round trip and exact undo verified"}),
     )
 }

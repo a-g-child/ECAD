@@ -27,6 +27,36 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "drawing.selection.move",
+                "Move drawing selection",
+                "Drawing",
+                "Translate selected drawing origins while preserving connected routes",
+                Handler::MoveSelection,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![binding(Scope::Canvas, vec![chord('m', false, false)])],
+            ),
+            (
+                "drawing.selection.align",
+                "Align drawing origins",
+                "Drawing",
+                "Align selected drawing origins to an explicit numeric coordinate",
+                Handler::AlignSelection,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "drawing.selection.distribute",
+                "Distribute drawing origins",
+                "Drawing",
+                "Distribute selected origins between fixed extrema with stable identity ties",
+                Handler::DistributeSelection,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "drawing.route.create",
                 "Route conductor",
                 "Drawing",
@@ -151,7 +181,11 @@ impl ActionRegistry {
                     scope,
                     handler,
                     repeat,
-                    defaults: DefaultBindings::Suggested(defaults),
+                    defaults: if defaults.is_empty() {
+                        DefaultBindings::Unbound
+                    } else {
+                        DefaultBindings::Suggested(defaults)
+                    },
                 })
                 .expect("unique valid builtins");
         }

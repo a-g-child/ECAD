@@ -2,6 +2,8 @@
 
 #[path = "drawing_properties.rs"]
 mod properties;
+#[path = "drawing_route_layout.rs"]
+mod route_layout;
 #[path = "drawing_routes.rs"]
 mod routes;
 

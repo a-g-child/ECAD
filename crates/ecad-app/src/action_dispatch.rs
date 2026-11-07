@@ -36,6 +36,8 @@ pub enum InvocationSource {
 /// Concrete parameters; missing placement data becomes a request, not inferred geometry.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ActionParameters {
+    /// Explicit numeric translation, alignment, or distribution for captured drawing selection.
+    Layout(LayoutOperation),
     /// Complete existing-conductor routing input, with view and stroke preset taken from context.
     Route {
         /// Fresh whole-route identity.
@@ -90,6 +92,12 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Request a signed drawing offset for the captured selection.
+    MoveSelection,
+    /// Request axis and exact numeric coordinate for origin alignment.
+    AlignSelection,
+    /// Request axis for origin distribution between selected extrema.
+    DistributeSelection,
     /// Request an existing conductor, placed anchors, and whole route geometry.
     RoutePlacement,
     /// Request annotation text and/or explicit placement.
@@ -128,6 +136,8 @@ pub enum ActionOutcome {
 /// Invocation failed without bypassing normal model/history/save guarantees.
 #[derive(Debug)]
 pub enum ActionDispatchError<E> {
+    /// Original layout preflight failure, with geometry/model context retained.
+    Layout(LayoutError),
     /// The same or an older host input ID was already attempted.
     ReplayedInput(InputId),
     /// Text, IME, modal UI, or a control owns this keyboard input.
@@ -157,6 +167,7 @@ impl<E: fmt::Display> fmt::Display for ActionDispatchError<E> {
             Self::ProtectedInput => f.write_str("the focused control owns keyboard input"),
             Self::Disabled(reason) => write!(f, "action is unavailable: {reason:?}"),
             Self::WrongParameters => f.write_str("parameters do not match the action"),
+            Self::Layout(error) => error.fmt(f),
             Self::Edit(error) => error.fmt(f),
             Self::Model(error) => error.fmt(f),
             Self::Store(error) => error.fmt(f),
@@ -166,6 +177,7 @@ impl<E: fmt::Display> fmt::Display for ActionDispatchError<E> {
 impl<E: Error + 'static> Error for ActionDispatchError<E> {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            Self::Layout(error) => Some(error),
             Self::Edit(error) => Some(error),
             Self::Model(error) => Some(error),
             Self::Store(error) => Some(error),
@@ -264,6 +276,44 @@ impl ActionDispatcher {
                 )
                 .map_err(ActionDispatchError::Model)?,
             ),
+            (ActionHandler::MoveSelection, ActionParameters::None) => {
+                request(ActionRequestKind::MoveSelection, None)
+            }
+            (ActionHandler::AlignSelection, ActionParameters::None) => {
+                request(ActionRequestKind::AlignSelection, None)
+            }
+            (ActionHandler::DistributeSelection, ActionParameters::None) => {
+                request(ActionRequestKind::DistributeSelection, None)
+            }
+            (
+                ActionHandler::MoveSelection
+                | ActionHandler::AlignSelection
+                | ActionHandler::DistributeSelection,
+                ActionParameters::Layout(operation),
+            ) => {
+                if !matches!(
+                    (handler, operation),
+                    (ActionHandler::MoveSelection, LayoutOperation::Translate(_))
+                        | (ActionHandler::AlignSelection, LayoutOperation::Align { .. })
+                        | (
+                            ActionHandler::DistributeSelection,
+                            LayoutOperation::Distribute(_)
+                        )
+                ) {
+                    return Err(ActionDispatchError::WrongParameters);
+                }
+                let plan = layout_plan(
+                    document.session().project(),
+                    invocation.context.selection.iter().copied(),
+                    operation,
+                )
+                .map_err(ActionDispatchError::Layout)?;
+                ActionOutcome::Edited(
+                    document
+                        .execute_batch(revision, plan.commands)
+                        .map_err(ActionDispatchError::Edit)?,
+                )
+            }
             (ActionHandler::CreateRoute, ActionParameters::None) => {
                 request(ActionRequestKind::RoutePlacement, None)
             }

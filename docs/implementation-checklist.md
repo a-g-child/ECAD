@@ -65,7 +65,10 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Add integer-micrometre drawing views, positioned annotations, and retained whole graphical polylines separate from electrical identity.
 - [x] Add view-local real-terminal anchors and whole conductor routes with exact electrical continuity and independent geometry across views.
 - [x] Implement headless whole-route replacement, indexed vertex/segment edits, and deterministic first-leg/bend anchor adjustment with exact localized undo.
-- [ ] Add symbol/live-label attachment, transforms, snapping, interactive tools, pinned waypoints, and broader geometry operations.
+- [x] Add preflighted numeric group translation, explicit-coordinate origin alignment, and fixed-extrema origin distribution for annotations, graphical paths, and terminal anchors.
+- [x] Move anchor groups simultaneously, translate complete routes when both ends share an offset, and retain exact union-layout inverses for one-operation undo.
+- [x] Register M movement and remappable alignment/distribution actions; test selection validation, overflow, distribution ties, rollback/checkpoints, stale replies, and strict save/reopen.
+- [ ] Add visual-bounds/edge-gap layout, symbol/live-label attachment, transforms, snapping, interactive tools, pinned waypoints, and broader geometry operations.
 - [x] Test electrical property applicability/types, pinned ownership, label uniqueness, topology validation, compound rollback, stale plans, saved checkpoints, and exact undo/redo.
 - [x] Test style/default precedence, captured creation intent, equal overrides, reset/undo, focused shared-style persistence, strict drawing schema, malformed geometry/roles/references, and v2–v4 upgrades to v5.
 - [x] Test shortcut conflicts/typing/composition/repeat/replay protection, context capture, sequence behavior, unknown imports, and shared real-document invocation.
@@ -106,6 +109,7 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Probe shared-style updates, resolution, mixed graphical edits, and exact undo at 20/200/2,000 drawing objects.
 - [x] Probe synthetic registry growth at 100/1,000/10,000 unbound entries with palette coverage and 1,000 direct-key routes per case.
 - [x] Probe 100/1,000/10,000 routes with fixed-degree anchor movement, 1,000 edits, bounded bends, round trips, and complete undo.
+- [x] Measure grouped fixed-degree anchor movement and separate layout preflight/commit/undo over 20/200/2,000 annotation origins.
 - [ ] Expand probes to large bound keymaps, nested reusable dependencies, visible rendering, libraries, and assets.
 - [ ] Measure memory, cache invalidation, object visits, save/load IO, native frame times, and foreground response during background work.
 - [ ] Add bounded soak/cancellation/failure cases and establish stable performance regression gates from measured variance.
@@ -126,6 +130,7 @@ Current test owners:
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
 - Action/keymap contracts: [registry/router tests](../crates/ecad-app/tests/action_contract.rs), [real invocation workflows](../crates/ecad-adapters/tests/action_workflow.rs), and [keymap persistence](../crates/ecad-adapters/tests/keymap_persistence.rs).
+- Origin layout and group movement: [layout workflows](../crates/ecad-adapters/tests/layout_workflow.rs), [failure/rollback regressions](../crates/ecad-adapters/tests/layout/failures.rs), and [shared action workflows](../crates/ecad-adapters/tests/layout/actions.rs).
 - Whole conductor routes: [workflow contracts](../crates/ecad-adapters/tests/route_workflow.rs), [persistence/action/adoption regressions](../crates/ecad-adapters/tests/routes/persistence.rs), and [routed fixture](../crates/ecad-adapters/tests/fixtures/routed-conveyor-v6.json).
 - Drawing defaults/styles: [workflow contracts](../crates/ecad-adapters/tests/style_workflow.rs), [persistence/compatibility contracts](../crates/ecad-adapters/tests/styles/persistence.rs), and [styled golden fixture](../crates/ecad-adapters/tests/fixtures/styled-overview-v6.json).
 - Electrical properties: [inspection and bulk workflows](../crates/ecad-adapters/tests/property_workflow.rs) and [restriction/rollback contracts](../crates/ecad-adapters/tests/properties/restrictions.rs).
@@ -144,7 +149,7 @@ Current test owners:
 
 ## Later scope
 
-Alignment/distribution, retained arrays, advanced drawing constraints, image attachments, complete output conventions, dimensionally accurate DXF layout, and STEP/manifest handoff remain in the product scope. Introduce each with its own executable slice and tests; they are not part of the current headless foundation.
+Visual-bounds alignment and edge-gap distribution, retained arrays, advanced drawing constraints, image attachments, complete output conventions, dimensionally accurate DXF layout, and STEP/manifest handoff remain in the product scope. Introduce each with its own executable slice and tests; they are not part of the current headless foundation.
 
 ## Source repository
 

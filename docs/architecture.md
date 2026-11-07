@@ -76,6 +76,8 @@ Property definitions describe stable identity, type, units, applicability, owner
 
 Whole conductor routes reference existing electrical IDs; view-local anchors place real terminals. One conductor may have one route per view with independent geometry. Project validation enforces exact A/B terminal continuity, while reverse indexes limit anchor movement to touching routes. Geometry never infers junctions or changes electrical topology. See [decision 0012](decisions/0012-whole-conductor-routes.md).
 
+Numeric layout plans act on explicit drawing origins, with deterministic identity ties and checked micrometre arithmetic. A simultaneous anchor command adjusts the union of touching routes once and translates whole routes when both endpoints share an offset. Preflight uses a temporary candidate; undo retains exact localized state. Renderer bounds and persistent constraints are separate future contracts. See [decision 0013](decisions/0013-origin-layout-and-group-movement.md).
+
 ## Commands, transactions, and undo
 
 A proposed edit carries explicit parameters and targets. The application resolves applicability, validates the complete operation, and prepares a change before committing it. Success produces a change summary and an undo record; failure leaves the authoritative document and history unchanged.

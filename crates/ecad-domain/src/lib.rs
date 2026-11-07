@@ -67,5 +67,5 @@ pub use reuse::{
     MAX_INSTANCE_OBJECTS, SubsystemRevision,
 };
 pub use reuse_error::ReuseError;
-pub use route::{AnchorLayout, DrawingRoute, RouteEdit, RouteMode, TerminalAnchor};
+pub use route::{AnchorLayout, DrawingRoute, RouteEdit, RouteLayout, RouteMode, TerminalAnchor};
 pub use route_error::RouteError;

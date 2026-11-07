@@ -57,10 +57,10 @@ impl DrawingDocument {
             .remove(&id)
             .ok_or_else(|| RouteError::MissingAnchor(id).into())
     }
-    fn check_route_with_anchor(
+    pub(super) fn check_route_with_anchor(
         &self,
         route: &DrawingRoute,
-        moved: Option<&TerminalAnchor>,
+        moved: Option<&BTreeMap<AnchorId, TerminalAnchor>>,
     ) -> Result<(), ModelError> {
         route.validate_geometry()?;
         if self.view(route.view).is_none() {
@@ -76,7 +76,7 @@ impl DrawingDocument {
         for (index, id) in route.anchors.iter().enumerate() {
             if let Some(id) = id {
                 let anchor = moved
-                    .filter(|anchor| anchor.id == *id)
+                    .and_then(|anchors| anchors.get(id))
                     .or_else(|| self.anchors.get(id))
                     .ok_or(RouteError::MissingAnchor(*id))?;
                 let point = if index == 0 {
@@ -180,32 +180,18 @@ impl DrawingDocument {
         &mut self,
         layout: AnchorLayout,
     ) -> Result<AnchorLayout, ModelError> {
-        let old = self.anchor_layout(layout.anchor.id)?;
-        let mismatch = || ModelError::from(RouteError::LayoutMismatch(layout.anchor.id));
-        if old.anchor.view != layout.anchor.view
-            || old.anchor.terminal != layout.anchor.terminal
-            || old.routes.len() != layout.routes.len()
-        {
-            return Err(mismatch());
-        }
-        let expected: BTreeSet<_> = old.routes.iter().map(|route| route.id).collect();
-        let supplied: BTreeSet<_> = layout.routes.iter().map(|route| route.id).collect();
-        if expected != supplied || supplied.len() != layout.routes.len() {
-            return Err(mismatch());
-        }
-        for route in &layout.routes {
-            let mut previous = self.routes[&route.id].clone();
-            previous.points = route.points.clone();
-            if previous != *route {
-                return Err(mismatch());
-            }
-            self.check_route_with_anchor(route, Some(&layout.anchor))?;
-        }
-        self.anchors.insert(layout.anchor.id, layout.anchor);
-        for route in layout.routes {
-            self.routes.insert(route.id, route);
-        }
-        Ok(old)
+        let old = self.restore_route_layout(RouteLayout {
+            anchors: vec![layout.anchor],
+            routes: layout.routes,
+        })?;
+        Ok(AnchorLayout {
+            anchor: old
+                .anchors
+                .into_iter()
+                .next()
+                .expect("one requested anchor"),
+            routes: old.routes,
+        })
     }
     /// Move an anchor by adjusting touching first legs/bends; preserve remaining paths and exact undo data.
     /// # Errors
@@ -215,16 +201,15 @@ impl DrawingDocument {
         id: AnchorId,
         position: DrawingPoint,
     ) -> Result<AnchorLayout, ModelError> {
-        let mut layout = self.anchor_layout(id)?;
-        layout.anchor.position = position;
-        for route in &mut layout.routes {
-            for end in 0..2 {
-                if route.anchors[end] == Some(id) {
-                    crate::route_geometry::move_end(route, end, position);
-                }
-            }
-        }
-        self.restore_anchor_layout(layout)
+        let old = self.move_terminal_anchors(BTreeMap::from([(id, position)]))?;
+        Ok(AnchorLayout {
+            anchor: old
+                .anchors
+                .into_iter()
+                .next()
+                .expect("one requested anchor"),
+            routes: old.routes,
+        })
     }
     pub(super) fn validate_routes(&self) -> Result<(), ModelError> {
         for anchor in self.anchors.values() {

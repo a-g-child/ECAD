@@ -5,6 +5,10 @@ use ecad_domain::*;
 /// Committed whole-route or placed-terminal layout operation, independent of UI tools.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RouteCommand {
+    /// Move several anchors together; each affected route is adjusted once.
+    MoveAnchors(std::collections::BTreeMap<AnchorId, DrawingPoint>),
+    /// Restore exact geometry for several anchors and their touching route union.
+    RestoreLayout(RouteLayout),
     /// Create a representation using the current route creation preset.
     Create {
         /// Fresh whole-route identity.
@@ -50,6 +54,20 @@ pub enum RouteCommand {
 impl RouteCommand {
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::MoveAnchors(positions) => {
+                let old = project.move_terminal_anchors(positions.clone())?;
+                if old.anchors.iter().all(|a| positions[&a.id] == a.position) {
+                    return Ok(None);
+                }
+                Self::RestoreLayout(old)
+            }
+            Self::RestoreLayout(layout) => {
+                let old = project.restore_route_layout(layout.clone())?;
+                if old == *layout {
+                    return Ok(None);
+                }
+                Self::RestoreLayout(old)
+            }
             Self::Create {
                 id,
                 view,

@@ -30,6 +30,7 @@ mod error;
 mod input_router;
 mod instantiation;
 mod keymap;
+mod layout;
 mod library;
 mod project_usage;
 mod property_edits;
@@ -64,6 +65,7 @@ pub use instantiation::instance_commands;
 pub use keymap::{
     EffectiveBinding, EffectiveKeymap, KeymapIssue, KeymapOverrides, ScopedShortcut, compile_keymap,
 };
+pub use layout::{LayoutAxis, LayoutChange, LayoutError, LayoutOperation, LayoutPlan, layout_plan};
 pub use library::{
     LibraryPublisher, LibrarySnapshot, Recommendation, VersionedLibraryStore, library_import,
 };

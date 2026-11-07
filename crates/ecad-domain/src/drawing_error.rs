@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// A drawing proposal violates units, identity, references, or role applicability.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DrawingError {
+    /// A requested coordinate or offset exceeds the signed document range.
+    CoordinateOverflow,
     /// Text sizes and stroke widths must be positive.
     ZeroLength,
     /// Required view/style/font/annotation text is blank.
@@ -40,6 +42,9 @@ pub enum DrawingError {
 impl fmt::Display for DrawingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::CoordinateOverflow => {
+                f.write_str("drawing coordinate exceeds the signed document range")
+            }
             Self::ZeroLength => f.write_str("drawing length must be positive"),
             Self::EmptyName => {
                 f.write_str("drawing names, font requests, and annotation text must not be blank")

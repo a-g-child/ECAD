@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// Route identity, attachment, or geometry validation failed before committing.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RouteError {
+    /// A layout restoration omits, duplicates, or adds touching route records.
+    LayoutRouteSetMismatch,
     /// Internal derived route ownership indexes disagree with stored records.
     InvalidIndexState,
     /// Placed anchor is unavailable.

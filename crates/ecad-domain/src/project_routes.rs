@@ -107,3 +107,21 @@ impl Project {
         self.drawing.restore_anchor_layout(layout)
     }
 }
+
+impl Project {
+    /// Move selected drawing terminal placements simultaneously without electrical mutation.
+    /// # Errors
+    /// Missing anchors, coordinate overflow, or invalid local route geometry leave state intact.
+    pub fn move_terminal_anchors(
+        &mut self,
+        positions: std::collections::BTreeMap<AnchorId, DrawingPoint>,
+    ) -> Result<RouteLayout, ModelError> {
+        self.drawing.move_terminal_anchors(positions)
+    }
+    /// Restore exact affected route geometry, preserving every electrical and style binding.
+    /// # Errors
+    /// Rejects incomplete/rebound layouts or invalid geometry without mutation.
+    pub fn restore_route_layout(&mut self, layout: RouteLayout) -> Result<RouteLayout, ModelError> {
+        self.drawing.restore_route_layout(layout)
+    }
+}

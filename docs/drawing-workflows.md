@@ -1,6 +1,6 @@
 # Drawing and editing workflows
 
-Status: Headless views, annotations, graphical polylines, electrically anchored whole conductor routes, portable defaults/styles, and property edits are implemented. Route commands support indexed vertex/segment editing and local first-leg/bend anchor movement with exact undo. Interactive tools, rendering, symbols, live label attachment, snapping, constraints, crossing/hop presentation, and the broader workflows below remain proposed. See [route decision 0012](decisions/0012-whole-conductor-routes.md). See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
+Status: Headless views, annotations, graphical polylines, electrically anchored whole conductor routes, portable defaults/styles, and property edits are implemented. Route commands support indexed vertex/segment editing and local first-leg/bend anchor movement with exact undo. Numeric origin translation/alignment/distribution and simultaneous connected-anchor movement are also implemented. Interactive tools, visual-bounds layout, rendering, symbols, live label attachment, snapping, constraints, crossing/hop presentation, and the broader workflows below remain proposed. See [route decision 0012](decisions/0012-whole-conductor-routes.md). See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
 
 ## Design intent
 
@@ -55,6 +55,8 @@ Candidate initial persistent relationships are locked positions, horizontal/vert
 If constraints cannot all be satisfied, report the conflict and retain the last valid state. Do not silently shift unrelated objects or discard constraints. Given the same document, settings, and operation inputs, committed geometry should be reproducible.
 
 ## Alignment and distribution
+
+Implemented headless subset: annotation positions, first vertices of graphical polylines, and placed-terminal positions act as explicit origins. Numeric alignment preserves the other axis. Distribution fixes the extreme origins, sorts coordinate ties by typed identity, and rounds fractional offsets down to micrometres; gaps differ by at most one micrometre. Complete selections are deduplicated and must belong to one view; unsupported targets are reported. Connected routes move through selected anchors. These operations create no persistent constraints and do not apply hidden grid rounding. See [decision 0013](decisions/0013-origin-layout-and-group-movement.md). The broader requirements below remain planned.
 
 Support left/right/top/bottom alignment, horizontal/vertical centres, equal centre spacing, and equal edge gaps. Let users choose whether alignment uses object bounds, origins, or meaningful anchors such as terminal rows. State the basis visibly.
 
