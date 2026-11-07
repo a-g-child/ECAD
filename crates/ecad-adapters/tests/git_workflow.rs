@@ -60,6 +60,91 @@ fn git(root: &Path, arguments: &[&str]) -> String {
 }
 
 #[test]
+fn known_usage_detects_git_checkout_without_touching_project_or_repository_state() {
+    use ecad_adapters::KnownProjects;
+    use ecad_app::UsageStatus;
+    use ecad_domain::{
+        DefinitionId, DefinitionRef, DefinitionRevisionId, Project, ProjectId, SubsystemId,
+        SubsystemRevision,
+    };
+    use std::sync::Arc;
+
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path();
+    git(root, &["init", "--quiet"]);
+    let path = root.join("project.json");
+    let store = JsonFile::new(&path);
+    let body = decode_project(include_str!("fixtures/sensor-module-v3.json")).unwrap();
+    let first = DefinitionRef::new(
+        DefinitionId::new(1).unwrap(),
+        DefinitionRevisionId::new(1).unwrap(),
+    );
+    let second = DefinitionRef::new(first.definition(), DefinitionRevisionId::new(2).unwrap());
+    let local_root = SubsystemId::new(10).unwrap();
+    let mut project = Project::new(ProjectId::new(77).unwrap());
+    project
+        .insert_definition(Arc::new(
+            SubsystemRevision::new(first, local_root, body.clone()).unwrap(),
+        ))
+        .unwrap();
+    store.save(&project).unwrap();
+    git(root, &["add", "project.json"]);
+    git(
+        root,
+        &["commit", "--quiet", "-m", "Initial bundled revision"],
+    );
+    let mut known = KnownProjects::default();
+    let key = known.register(&path).unwrap();
+    known.refresh(&key).unwrap();
+    git(root, &["checkout", "--quiet", "-b", "different-revision"]);
+    project.remove_definition(first).unwrap();
+    project
+        .insert_definition(Arc::new(
+            SubsystemRevision::new(second, local_root, body).unwrap(),
+        ))
+        .unwrap();
+    store.save(&project).unwrap();
+    git(root, &["add", "project.json"]);
+    git(
+        root,
+        &["commit", "--quiet", "-m", "Replace unused bundled revision"],
+    );
+    assert_eq!(known.check_freshness(&key).unwrap(), UsageStatus::Changed);
+    assert_eq!(
+        known
+            .index()
+            .known_uses(first.definition())
+            .next()
+            .unwrap()
+            .source,
+        first
+    );
+    known.refresh(&key).unwrap();
+    assert_eq!(
+        known
+            .index()
+            .known_uses(first.definition())
+            .next()
+            .unwrap()
+            .source,
+        second
+    );
+    git(root, &["checkout", "--quiet", "main"]);
+    assert_eq!(known.check_freshness(&key).unwrap(), UsageStatus::Changed);
+    known.refresh(&key).unwrap();
+    assert_eq!(
+        known
+            .index()
+            .known_uses(first.definition())
+            .next()
+            .unwrap()
+            .source,
+        first
+    );
+    assert_eq!(git(root, &["status", "--porcelain"]), "");
+}
+
+#[test]
 fn stable_saves_focused_diffs_and_branch_checkout_preserve_electrical_data() {
     let directory = tempfile::tempdir().unwrap();
     let root = directory.path();

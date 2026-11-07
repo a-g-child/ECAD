@@ -24,9 +24,11 @@ mod document_error;
 mod error;
 mod instantiation;
 mod library;
+mod project_usage;
 mod revision;
 mod session;
 mod transaction;
+mod usage_index;
 mod versioned_store;
 
 pub use adoption::{AdoptionPlan, adoption_plan};
@@ -38,8 +40,10 @@ pub use instantiation::instance_commands;
 pub use library::{
     LibraryPublisher, LibrarySnapshot, Recommendation, VersionedLibraryStore, library_import,
 };
+pub use project_usage::{ProjectUsage, RevisionUse};
 pub use revision::{Revision, SessionEpoch};
 pub use session::Session;
+pub use usage_index::{KnownUse, KnownUseIndex, RegisteredUsage, UsageRefreshError, UsageStatus};
 pub use versioned_store::{ProjectSnapshot, VersionedProjectStore};
 
 /// Low-level, unconditional IO boundary for fixtures/imports and standalone sessions.

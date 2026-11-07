@@ -1,6 +1,6 @@
 # Hierarchy, scale, and shared revisions
 
-Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Project-bundled immutable revisions, independent occurrences, and make-local ancestry are also implemented. Explicit adoption of exact pins is implemented. Local shared-library publication and explicit recommendations are implemented. Known-use discovery and local-variant merging below remain planned. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md).
+Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Project-bundled immutable revisions, independent occurrences, and make-local ancestry are also implemented. Explicit adoption of exact pins is implemented. Local shared-library publication and explicit recommendations are implemented. Explicit registered-file known-use discovery is implemented. Durable registries, broader discovery, and local-variant merging below remain planned. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md).
 
 ## Target and object boundaries
 
@@ -55,7 +55,7 @@ Placement currently caps each occurrence at 100,000 objects including terminals,
 
 `LibraryFile` uses a separate schema v1, a canonical-parent path/content token, and exclusive sidecar creation around the complete read/check/write sequence. It enforces append-only bodies at the storage boundary. Canonical parent aliases share a lock; destination symlinks are rejected. A retained writer lock is reported without automatic stealing. This coordinates cooperating local writers; hard-link aliases, uncooperative writers, cross-machine filesystem guarantees, power-loss recovery, and directory durability are outside the current contract.
 
-Explicit import bundles a chosen revision through ordinary project commands. Publication does not modify consuming projects, and project undo does not retract library history. Projects remain self-contained offline. The first executable workflow publishes standalone local hierarchies; extracting an arbitrary occurrence/local variant for publication and known-use indexing remain future work. See [decision 0007](decisions/0007-shared-subsystem-library.md).
+Explicit import bundles a chosen revision through ordinary project commands. Publication does not modify consuming projects, and project undo does not retract library history. Projects remain self-contained offline. The first executable workflow publishes standalone local hierarchies; extracting an arbitrary occurrence/local variant for publication and durable usage registries remain future work. See [decision 0007](decisions/0007-shared-subsystem-library.md).
 
 ## Editing and publishing workflow (broader UI planned)
 
@@ -71,6 +71,14 @@ Checking for other instances informs the choice; it is not the sole safeguard. A
 Publishing a library revision and updating projects are separate operations. The publish operation must either complete coherently or report failure. Project undo restores project edits; it must not pretend to erase a shared revision that another project may already have adopted. Define publication history/reversion separately, for example by publishing a subsequent revision or changing the recommended revision.
 
 ## Known-use discovery
+
+The first headless implementation registers explicit file locations and keeps a rebuildable in-memory usage index. `KnownProjects` loads validated project snapshots read-only through the existing versioned store. It records all bundled source references, distinguishing exact pin roots from local origins; empty sets mean bundled-only content, not placed electrical use. Query results are revision/location pairs, not unique-project or instance counts.
+
+Each registration exposes its last validated summary and most recent explicit operation status: unscanned, observed, matching observed bytes, changed, missing, or unavailable. Failed loads retain historical references and diagnostics; a valid later refresh can replace them. No watcher or continuous freshness guarantee is implied. Batch scans report attempted locations and per-file failures without aborting successful observations. Empty query results never imply global absence, especially when coverage is unscanned/unavailable.
+
+Existing file/parent aliases resolve to canonical keys. Different copies/worktrees retain separate locations even when their project IDs match. Moves need explicit new registration and removal of the old missing entry; the index does not guess whether a copy replaces another. Hard-link aliases are not deduplicated; dangling symlinks are rejected. It follows saved disk snapshots, not unsaved live documents or hidden Git branches. No persisted registry, recursive directory discovery, scan cancellation/budgets, wall-clock age tracking, or desktop lifecycle hooks exist yet. See [decision 0008](decisions/0008-registered-project-usage.md).
+
+The broader intended workflow follows:
 
 Maintain an optional local index of registered projects and their definition/revision references. Refresh it when projects open/save or through an explicit rescan of configured project/library roots. Read project metadata without changing consuming projects. Remote repository discovery and organization-wide catalogues are later capabilities, not requirements for local use.
 
@@ -105,4 +113,4 @@ Update selected project occurrences as a coherent command with validation, undo/
 
 ## Next decisions
 
-Choose the representative system and scale fixtures; extend occurrence parameters and structural variants; define nested dependency locks and local-variant update matching; and measure larger shared catalogs and design the first known-project indexing workflow. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.
+Choose the representative system and scale fixtures; extend occurrence parameters and structural variants; define nested dependency locks and local-variant update matching; and measure larger shared catalogs and extend registered-file usage with durable workspace configuration and measured scan budgets. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.

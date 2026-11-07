@@ -25,6 +25,7 @@ Read the relevant planning documents before implementation:
 - Distinguish reusable definitions, immutable revisions, and occurrences. Publish shared changes explicitly and keep consuming projects pinned until they adopt an update. Known-use discovery is advisory and may be incomplete.
 - New electrical mutators must respect indexed pinned-instance ownership. Make-local retains historical ancestry; forgetting it is explicit and undoable. Preserve exact instance state through transaction rollback and undo.
 - Keep shared-library publication outside project undo. Library writes preserve published bodies, validate recommendations, and coordinate cooperating writers; never infer adoption from a recommendation change or automatically steal retained locks.
+- Known-use discovery is read-only and advisory. Preserve labelled last-known references on failed scans, expose registration coverage/freshness, and keep copied file locations distinct from project lineage. Never interpret empty results as global absence.
 - Start with modules and crates needed by working features; avoid speculative plugin frameworks and empty scaffolding.
 
 ## Maintainability
