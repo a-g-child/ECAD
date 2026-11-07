@@ -12,7 +12,7 @@ impl DesktopBridge {
                     .checked_add(1)
                     .ok_or_else(|| BridgeError::new("move", "Movement identity exhausted"))?;
                 self.movement = None;
-                self.transform = None;
+                self.layout = None;
                 self.annotation = None;
                 self.path_draft = None;
                 let scene = self.snapshot().snapshot.expect("snapshot").scene;
@@ -81,11 +81,11 @@ impl DesktopBridge {
                     .checked_add(1)
                     .ok_or_else(|| BridgeError::new("transform", "Tool identity exhausted"))?;
                 self.movement = None;
-                self.transform = None;
+                self.layout = None;
                 self.annotation = None;
                 self.path_draft = None;
                 let scene = self.snapshot().snapshot.expect("snapshot").scene;
-                let transform = Transform::begin(
+                let transform = LayoutTool::begin(
                     self.document.session(),
                     context,
                     reference.object()?,
@@ -94,7 +94,7 @@ impl DesktopBridge {
                     scene,
                 )?;
                 let response = transform.response()?;
-                self.transform = Some(transform);
+                self.layout = Some(transform);
                 Ok(response)
             }
             Request::PreviewTransform {
@@ -103,13 +103,13 @@ impl DesktopBridge {
                 y,
                 operation,
             } => self
-                .transform
+                .layout
                 .as_mut()
                 .ok_or_else(|| BridgeError::new("transform", "No active transform"))?
                 .update(self.document.session(), &session, &x, &y, &operation),
             Request::CommitTransform { token, input } => {
                 let transform = self
-                    .transform
+                    .layout
                     .as_mut()
                     .ok_or_else(|| BridgeError::new("transform", "No active transform"))?;
                 let (context, action, preview) = transform.take(&token)?;
@@ -121,7 +121,7 @@ impl DesktopBridge {
                     context,
                     parameters: ActionParameters::CommitLayout(preview),
                 });
-                self.transform = None;
+                self.layout = None;
                 result
             }
             Request::BeginAnnotation { context } => {
@@ -131,7 +131,7 @@ impl DesktopBridge {
                     .checked_add(1)
                     .ok_or_else(|| BridgeError::new("annotation", "Tool identity exhausted"))?;
                 self.movement = None;
-                self.transform = None;
+                self.layout = None;
                 self.annotation = None;
                 self.path_draft = None;
                 let annotation =
@@ -171,7 +171,7 @@ impl DesktopBridge {
                     .checked_add(1)
                     .ok_or_else(|| BridgeError::new("path", "Tool identity exhausted"))?;
                 self.movement = None;
-                self.transform = None;
+                self.layout = None;
                 self.annotation = None;
                 self.path_draft = None;
                 let draft = PathDraft::begin(self.document.session(), context, self.move_serial)?;

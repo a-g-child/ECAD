@@ -173,6 +173,8 @@ pub(crate) fn snapshot(
                     | ActionHandler::MoveSelection
                     | ActionHandler::RotateSelection
                     | ActionHandler::MirrorSelection
+                    | ActionHandler::AlignSelection
+                    | ActionHandler::DistributeSelection
                     | ActionHandler::Undo
                     | ActionHandler::Redo
                     | ActionHandler::Save
@@ -192,6 +194,8 @@ pub(crate) fn snapshot(
                                 | ActionHandler::MoveSelection
                                 | ActionHandler::RotateSelection
                                 | ActionHandler::MirrorSelection
+                                | ActionHandler::AlignSelection
+                                | ActionHandler::DistributeSelection
                         )),
                 reason: if !supported {
                     Some("Tool UI is planned".into())

@@ -26,6 +26,8 @@ export function createShell(action: (id: string) => void) {
         ['Move selection', 'drawing.selection.move'],
         ['Rotate selection', 'drawing.selection.rotate'],
         ['Mirror selection', 'drawing.selection.mirror'],
+        ['Align drawing origins', 'drawing.selection.align'],
+        ['Distribute drawing origins', 'drawing.selection.distribute'],
       ],
     ],
     [

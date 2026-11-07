@@ -2,7 +2,7 @@ import './style.css';
 import { createShell } from './shell';
 import { DrawingCanvas } from './canvas';
 import { MovementTool } from './movement';
-import { TransformTool } from './transform';
+import { LayoutTool } from './layout';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
 import { renderProperties, renderReport, renderTree } from './panels';
@@ -11,6 +11,7 @@ import { chooseFile, errorText, inputId, native, send, syncInput } from './trans
 import { keyOf, type Context, type Reply, type Snapshot, type Target } from './types';
 const shell = createShell((id) => void action(id));
 let snapshot: Snapshot | null = null;
+let objectViews = new Map<string, string | null>();
 let selection: Target[] = [];
 let view: string | null = null;
 let selectionSequence = 0;
@@ -21,15 +22,15 @@ let focus = 'canvas';
 let paletteContext: Context | null = null;
 const drawing = new DrawingCanvas(shell, choose, selectMany);
 let movement: MovementTool | undefined;
-let transform: TransformTool | undefined;
+let layout: LayoutTool | undefined;
 let annotation: AnnotationTool | undefined;
 let path: PathTool | undefined;
 movement = new MovementTool(shell, drawing, apply, status, buttons, () => {
   movement?.clear();
   void action('placement.cancel');
 });
-transform = new TransformTool(shell, drawing, apply, status, buttons, () => {
-  transform?.clear();
+layout = new LayoutTool(shell, drawing, apply, status, buttons, () => {
+  layout?.clear();
   void action('placement.cancel');
 });
 annotation = new AnnotationTool(
@@ -57,11 +58,11 @@ path = new PathTool(
   },
 );
 function toolActive() {
-  return !!(movement?.active || transform?.active || annotation?.active || path?.active);
+  return !!(movement?.active || layout?.active || annotation?.active || path?.active);
 }
 function clearTools() {
   movement?.clear();
-  transform?.clear();
+  layout?.clear();
   annotation?.clear();
   path?.clear();
 }
@@ -86,22 +87,31 @@ function context(): Context {
   if (!snapshot) throw new Error('The document is not ready');
   return { revision: snapshot.revision, selection: [...selection], view, focus };
 }
+const layoutActions = new Set([
+  'drawing.selection.move',
+  'drawing.selection.rotate',
+  'drawing.selection.mirror',
+  'drawing.selection.align',
+  'drawing.selection.distribute',
+]);
+function availableAction(id: string, enabled: boolean) {
+  if (!enabled || (id === 'document.open' && !native)) return false;
+  if (id === 'selection.properties') return selection.length > 0;
+  if (layoutActions.has(id))
+    return (
+      selection.length >= (id === 'drawing.selection.distribute' ? 3 : 1) &&
+      selection.every(
+        (t) =>
+          ['anchor', 'label', 'polyline'].includes(t.kind) && objectViews.get(keyOf(t)) === view,
+      )
+    );
+  return true;
+}
 function buttons() {
   for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-action]')) {
     const id = button.dataset.action!;
     const definition = snapshot?.actions.find((a) => a.id === id);
-    button.disabled = busy || !definition?.enabled || (id === 'document.open' && !native);
-    if (id === 'selection.properties') button.disabled = busy || !selection.length;
-    if (
-      ['drawing.selection.move', 'drawing.selection.rotate', 'drawing.selection.mirror'].includes(
-        id,
-      )
-    )
-      button.disabled =
-        busy ||
-        !selection.length ||
-        selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind));
-    if (toolActive()) button.disabled = true;
+    button.disabled = busy || toolActive() || !availableAction(id, definition?.enabled ?? false);
     const label = button.dataset.tooltip ?? button.title;
     button.dataset.tooltip = label;
     const reasons: Record<string, string> = {
@@ -142,7 +152,8 @@ async function apply(reply: Reply) {
       selection = [];
       selectionSequence++;
     }
-    const liveTargets = new Set(next.objects.map((row) => keyOf(row.target)));
+    const liveTargets = new Map(next.objects.map((row) => [keyOf(row.target), row.view]));
+    objectViews = liveTargets;
     selection = selection.filter((target) => liveTargets.has(keyOf(target)));
     shell.selectionStatus.textContent = selection.length
       ? `${selection.length} selected`
@@ -175,8 +186,8 @@ async function apply(reply: Reply) {
   if (reply.request === 'path') await path?.begin(context());
   if (reply.request === 'annotation') await annotation?.begin(context());
   if (reply.request === 'move') await movement?.begin(context());
-  if (reply.request === 'rotate' || reply.request === 'mirror')
-    await transform?.begin(context(), reply.request);
+  if (reply.request && ['rotate', 'mirror', 'align', 'distribute'].includes(reply.request))
+    await layout?.begin(context(), reply.request);
   if (reply.request === 'cancel_move') {
     clearTools();
   }
@@ -311,7 +322,7 @@ function paletteResults() {
     `${a.label} ${a.id}`.toLowerCase().includes(shell.search.value.toLowerCase()),
   ) ?? []) {
     const button = element('button', 'palette-item');
-    button.disabled = !definition.enabled;
+    button.disabled = !availableAction(definition.id, definition.enabled);
     button.append(
       element('span', '', definition.label),
       element('kbd', '', definition.shortcuts.join(' / ')),
@@ -366,7 +377,7 @@ document.addEventListener('keydown', (event) => {
   }
   if (path?.key(event)) return;
   if (annotation?.key(event)) return;
-  if (transform?.key(event)) return;
+  if (layout?.key(event)) return;
   if (movement?.key(event)) return;
   const primary = navigator.platform.toLowerCase().includes('mac') ? event.metaKey : event.ctrlKey;
   const key = event.key.toLowerCase();

@@ -80,6 +80,8 @@ export interface TransformRow {
   y: string;
   operation: string;
   scene: SceneRow[];
+  valid: boolean;
+  changed: boolean;
 }
 export interface AnnotationRow extends MoveRow {
   text: string;

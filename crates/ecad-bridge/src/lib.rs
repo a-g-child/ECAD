@@ -3,12 +3,12 @@
 mod annotation;
 mod controller;
 mod dto;
+mod layout_tool;
 mod movement;
 mod path;
 mod placement;
 mod preview_scene;
 mod projection;
 mod properties;
-mod transform;
 pub use controller::DesktopBridge;
 pub use dto::{BridgeError, Request, Response};

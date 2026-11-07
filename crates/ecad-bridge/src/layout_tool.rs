@@ -1,9 +1,9 @@
-//! Retained orthogonal transform proposals with exact pivot strings and original action context.
+//! Retained exact layout proposals with explicit pivots/coordinates and original action context.
 use crate::{dto::*, preview_scene};
 use ecad_app::*;
 use ecad_domain::*;
 use std::collections::BTreeMap;
-pub(crate) struct Transform {
+pub(crate) struct LayoutTool {
     context: ActionContext,
     action: ActionId,
     session: String,
@@ -11,9 +11,10 @@ pub(crate) struct Transform {
     pivot: DrawingPoint,
     operation: String,
     preview: Option<LayoutPreview>,
+    issue: Option<String>,
     scene: BTreeMap<ObjectRef, SceneRow>,
 }
-impl Transform {
+impl LayoutTool {
     pub fn begin(
         session: &Session,
         context: ActionContext,
@@ -26,7 +27,7 @@ impl Transform {
         if !context.selection.contains(&reference) {
             return Err(BridgeError::new(
                 "transform",
-                "Pivot reference must be selected",
+                "Layout reference must be selected",
             ));
         }
         let pivot = match reference {
@@ -44,8 +45,31 @@ impl Transform {
         let (action, operation) = match kind {
             "rotate" => ("drawing.selection.rotate", "rotate_90"),
             "mirror" => ("drawing.selection.mirror", "mirror_vertical"),
+            "align" => ("drawing.selection.align", "align_x"),
+            "distribute" => ("drawing.selection.distribute", "distribute_x"),
             _ => return Err(BridgeError::new("transform", "Unknown transform kind")),
         };
+        // Validate the selection independently of the initial operation. An invalid
+        // seed can then remain editable without hiding selection/view errors.
+        let baseline = preview_move(
+            session,
+            context.selection.iter().copied(),
+            reference,
+            MovePlacement::Exact(pivot),
+        )
+        .map_err(|e| BridgeError::new("layout", e))?;
+        if context.view != Some(baseline.layout().view()) {
+            return Err(BridgeError::new(
+                "layout",
+                "Selection must belong to the active view",
+            ));
+        }
+        if kind == "distribute" && context.selection.len() < 3 {
+            return Err(BridgeError::new(
+                "layout",
+                "Distribution requires at least three selected origins",
+            ));
+        }
         let mut tool = Self {
             scene: preview_scene::capture(session, &context, scene)?,
             context,
@@ -59,8 +83,12 @@ impl Transform {
             pivot,
             operation: operation.into(),
             preview: None,
+            issue: None,
         };
-        tool.preview = Some(tool.prepare(session, pivot, operation)?);
+        match tool.prepare(session, pivot, operation) {
+            Ok(preview) => tool.preview = Some(preview),
+            Err(error) => tool.issue = Some(error.to_string()),
+        }
         Ok(tool)
     }
     fn prepare(
@@ -72,30 +100,54 @@ impl Transform {
         if self.context.revision != Some(session.revision()) {
             return Err(BridgeError::new(
                 "stale",
-                "Document changed during transformation",
+                "Document changed during layout review",
             ));
         }
-        let transform = match (self.action.as_str(), operation) {
-            ("drawing.selection.rotate", "rotate_90") => DrawingTransform::Rotate {
-                pivot,
-                turn: QuarterTurn::Positive90,
+        let operation = match (self.action.as_str(), operation) {
+            ("drawing.selection.rotate", "rotate_90") => {
+                LayoutOperation::Transform(DrawingTransform::Rotate {
+                    pivot,
+                    turn: QuarterTurn::Positive90,
+                })
+            }
+            ("drawing.selection.rotate", "rotate_180") => {
+                LayoutOperation::Transform(DrawingTransform::Rotate {
+                    pivot,
+                    turn: QuarterTurn::Half,
+                })
+            }
+            ("drawing.selection.rotate", "rotate_270") => {
+                LayoutOperation::Transform(DrawingTransform::Rotate {
+                    pivot,
+                    turn: QuarterTurn::Negative90,
+                })
+            }
+            ("drawing.selection.mirror", "mirror_vertical") => {
+                LayoutOperation::Transform(DrawingTransform::Mirror {
+                    pivot,
+                    axis: MirrorAxis::Vertical,
+                })
+            }
+            ("drawing.selection.mirror", "mirror_horizontal") => {
+                LayoutOperation::Transform(DrawingTransform::Mirror {
+                    pivot,
+                    axis: MirrorAxis::Horizontal,
+                })
+            }
+            ("drawing.selection.align", "align_x") => LayoutOperation::Align {
+                axis: LayoutAxis::X,
+                coordinate_um: pivot.x,
             },
-            ("drawing.selection.rotate", "rotate_180") => DrawingTransform::Rotate {
-                pivot,
-                turn: QuarterTurn::Half,
+            ("drawing.selection.align", "align_y") => LayoutOperation::Align {
+                axis: LayoutAxis::Y,
+                coordinate_um: pivot.x,
             },
-            ("drawing.selection.rotate", "rotate_270") => DrawingTransform::Rotate {
-                pivot,
-                turn: QuarterTurn::Negative90,
-            },
-            ("drawing.selection.mirror", "mirror_vertical") => DrawingTransform::Mirror {
-                pivot,
-                axis: MirrorAxis::Vertical,
-            },
-            ("drawing.selection.mirror", "mirror_horizontal") => DrawingTransform::Mirror {
-                pivot,
-                axis: MirrorAxis::Horizontal,
-            },
+            ("drawing.selection.distribute", "distribute_x") => {
+                LayoutOperation::Distribute(LayoutAxis::X)
+            }
+            ("drawing.selection.distribute", "distribute_y") => {
+                LayoutOperation::Distribute(LayoutAxis::Y)
+            }
             _ => {
                 return Err(BridgeError::new(
                     "transform",
@@ -103,12 +155,8 @@ impl Transform {
                 ));
             }
         };
-        let preview = preview_layout(
-            session,
-            self.context.selection.iter().copied(),
-            LayoutOperation::Transform(transform),
-        )
-        .map_err(|e| BridgeError::new("transform", e))?;
+        let preview = preview_layout(session, self.context.selection.iter().copied(), operation)
+            .map_err(|e| BridgeError::new("transform", e))?;
         if self.context.view != Some(preview.view()) {
             return Err(BridgeError::new(
                 "transform",
@@ -129,6 +177,7 @@ impl Transform {
             return Err(BridgeError::new("transform", "Transform was replaced"));
         }
         self.preview = None;
+        self.issue = None;
         self.serial = self
             .serial
             .checked_add(1)
@@ -137,7 +186,7 @@ impl Transform {
             s.parse::<i64>().map_err(|_| {
                 BridgeError::new(
                     "coordinate",
-                    "Enter a signed 64-bit integer micrometre pivot",
+                    "Enter a signed 64-bit integer micrometre coordinate",
                 )
             })
         };
@@ -164,14 +213,17 @@ impl Transform {
         let preview = self
             .preview
             .take()
-            .ok_or_else(|| BridgeError::new("transform", "No valid transform preview"))?;
+            .ok_or_else(|| BridgeError::new("transform", "No valid layout preview"))?;
         Ok((self.context.clone(), self.action.clone(), preview))
     }
     pub fn response(&self) -> Result<Response, BridgeError> {
-        let preview = self
-            .preview
-            .as_ref()
-            .ok_or_else(|| BridgeError::new("transform", "No valid transform preview"))?;
+        let preview = self.preview.as_ref();
+        let scene = preview
+            .map(|p| preview_scene::project(p, &self.scene))
+            .transpose()?
+            .unwrap_or_default();
+        let changed = preview
+            .is_some_and(|p| !p.geometry_changed().is_empty() || !p.affected_routes().is_empty());
         Ok(Response {
             transform: Some(TransformRow {
                 session: self.session.clone(),
@@ -179,8 +231,11 @@ impl Transform {
                 x: self.pivot.x.to_string(),
                 y: self.pivot.y.to_string(),
                 operation: self.operation.clone(),
-                scene: preview_scene::project(preview, &self.scene)?,
+                scene,
+                valid: preview.is_some(),
+                changed,
             }),
+            message: self.issue.clone(),
             ..Response::default()
         })
     }

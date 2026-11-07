@@ -161,22 +161,22 @@ pub enum Request {
         /// Shared monotonic host input identity.
         input: String,
     },
-    /// Begin an orthogonal transform with an explicit reference-origin seed pivot.
+    /// Begin exact layout with an explicit reference-origin seed pivot/coordinate.
     BeginTransform {
         /// Captured original selection/view/revision.
         context: serde_json::Value,
         /// Selected reference whose exact origin seeds the visible pivot fields.
         reference: serde_json::Value,
-        /// Registered rotate or mirror handler kind.
+        /// Registered rotate, mirror, align or distribute handler kind.
         kind: String,
     },
     /// Replace a held transform, invalidating prior proposals before validation.
     PreviewTransform {
         /// Opaque tool lifetime.
         session: String,
-        /// Exact micrometre pivot x.
+        /// Exact pivot x, or the alignment coordinate for either axis.
         x: String,
-        /// Exact micrometre pivot y.
+        /// Exact pivot y; unused by alignment/distribution.
         y: String,
         /// Explicit quarter-turn or reflection policy.
         operation: String,
@@ -355,6 +355,8 @@ pub(crate) struct TransformRow {
     pub y: String,
     pub operation: String,
     pub scene: Vec<SceneRow>,
+    pub valid: bool,
+    pub changed: bool,
 }
 
 #[derive(Clone, Debug, Serialize)]

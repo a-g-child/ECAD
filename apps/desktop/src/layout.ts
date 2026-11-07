@@ -1,10 +1,10 @@
-/** Reviewed pivot-based rotation/reflection; Rust owns every proposed geometry record. */
+/** Reviewed exact layout; Rust owns pivots, alignment, spacing and proposed geometry. */
 import type { Context, Reply, TransformRow } from './types';
 import type { Shell } from './shell';
 import type { DrawingCanvas } from './canvas';
 import { element } from './ui';
 import { send, inputId, errorText } from './transport';
-export class TransformTool {
+export class LayoutTool {
   active = false;
   private generation = 0;
   private row: TransformRow | null = null;
@@ -13,10 +13,13 @@ export class TransformTool {
   private pumping = false;
   private committing = false;
   private pending: object | null = null;
-  private bar = element('div', 'move-bar transform-bar moving');
+  private bar = element('div', 'move-bar layout-bar moving');
   private x = element('input', 'move-coordinate');
   private y = element('input', 'move-coordinate');
-  private operation = element('select', 'transform-operation');
+  private xLabel = element('span', '', 'Pivot X');
+  private yLabel = element('span', '', 'Y');
+  private note = element('span', 'move-note');
+  private operation = element('select', 'layout-operation');
   private applyButton = element('button', 'plain', 'Apply');
   private cancelButton = element('button', 'plain', 'Cancel');
   constructor(
@@ -50,22 +53,22 @@ export class TransformTool {
     this.cancelButton.addEventListener('click', () => this.cancelAction());
     this.bar.append(
       this.operation,
-      element('span', '', 'Pivot X'),
+      this.xLabel,
       this.x,
-      element('span', '', 'Y'),
+      this.yLabel,
       this.y,
       this.applyButton,
       this.cancelButton,
-      element('span', 'move-note', 'µm · explicit pivot'),
+      this.note,
     );
     shell.placement.append(this.bar);
     this.controls();
   }
   private controls() {
     this.bar.hidden = !this.active;
-    this.shell.placement.classList.toggle('transform-active', this.active);
+    this.shell.placement.classList.toggle('layout-active', this.active);
     this.shell.app.querySelector('[data-tool="select"]')?.classList.toggle('active', !this.active);
-    for (const name of ['rotate', 'mirror'])
+    for (const name of ['rotate', 'mirror', 'align', 'distribute'])
       this.shell.app
         .querySelector(`.tool[data-action="drawing.selection.${name}"]`)
         ?.classList.toggle('active', this.active && this.kind === name);
@@ -83,17 +86,49 @@ export class TransformTool {
     this.active = true;
     this.kind = kind;
     const generation = this.generation;
-    const options =
-      kind === 'rotate'
-        ? [
-            ['rotate_90', '90° clockwise'],
-            ['rotate_180', '180°'],
-            ['rotate_270', '90° anticlockwise'],
-          ]
-        : [
-            ['mirror_vertical', 'Vertical axis'],
-            ['mirror_horizontal', 'Horizontal axis'],
-          ];
+    const policies: Record<string, string[][]> = {
+      rotate: [
+        ['rotate_90', '90° clockwise'],
+        ['rotate_180', '180°'],
+        ['rotate_270', '90° anticlockwise'],
+      ],
+      mirror: [
+        ['mirror_vertical', 'Vertical axis'],
+        ['mirror_horizontal', 'Horizontal axis'],
+      ],
+      align: [
+        ['align_x', 'X origins'],
+        ['align_y', 'Y origins'],
+      ],
+      distribute: [
+        ['distribute_x', 'X spacing'],
+        ['distribute_y', 'Y spacing'],
+      ],
+    };
+    const options = policies[kind];
+    const arrange = kind === 'align' || kind === 'distribute';
+    this.bar.dataset.kind = kind;
+    this.operation.setAttribute(
+      'aria-label',
+      kind === 'align'
+        ? 'Alignment axis'
+        : kind === 'distribute'
+          ? 'Distribution axis'
+          : 'Transform operation',
+    );
+    this.x.setAttribute(
+      'aria-label',
+      kind === 'align' ? 'Alignment coordinate (µm)' : 'Pivot X (µm)',
+    );
+    this.xLabel.textContent = kind === 'align' ? 'At' : 'Pivot X';
+    this.x.hidden = this.xLabel.hidden = kind === 'distribute';
+    this.y.hidden = this.yLabel.hidden = arrange;
+    this.note.textContent =
+      kind === 'align'
+        ? 'µm · exact origin coordinate'
+        : kind === 'distribute'
+          ? 'Equal origin spacing · extrema retained'
+          : 'µm · explicit pivot';
     this.operation.replaceChildren(
       ...options.map(([value, text]) => {
         const option = element('option', '', text);
@@ -161,18 +196,34 @@ export class TransformTool {
   private accept(reply: Reply) {
     if (!reply.transform) throw new Error('Missing transform preview');
     this.row = reply.transform;
-    this.valid = true;
+    this.valid = this.row.valid;
     if (document.activeElement !== this.x) this.x.value = this.row.x;
     if (document.activeElement !== this.y) this.y.value = this.row.y;
-    this.drawing.preview(this.row.scene, [Number(this.row.x) / 1000, Number(this.row.y) / 1000]);
+    const pivot = this.kind === 'rotate' || this.kind === 'mirror';
+    this.drawing.preview(
+      this.row.scene,
+      pivot && this.row.valid ? [Number(this.row.x) / 1000, Number(this.row.y) / 1000] : undefined,
+    );
+    const labels: Record<string, string> = {
+      rotate: 'Rotation',
+      mirror: 'Mirror',
+      align: 'Origin alignment',
+      distribute: 'Origin distribution',
+    };
     this.status(
-      `${this.kind === 'rotate' ? 'Rotation' : 'Mirror'} preview · Apply or Escape to cancel`,
+      reply.message ??
+        (this.row.changed
+          ? `${labels[this.kind]} preview · Apply or Escape to cancel`
+          : 'Layout already matches · Apply to close without document changes'),
+      !this.row.valid,
     );
     this.controls();
   }
   async commit() {
     if (!this.active || !this.valid || this.pumping || this.pending || !this.row || this.committing)
       return;
+    const changed = this.row.changed;
+    const kind = this.kind;
     this.committing = true;
     this.controls();
     try {
@@ -183,7 +234,15 @@ export class TransformTool {
       });
       this.clear();
       await this.apply(reply);
-      this.status('Selection transformed · one undo operation');
+      this.status(
+        !changed
+          ? 'Layout already matches · no document changes'
+          : kind === 'align'
+            ? 'Origins aligned · one undo operation'
+            : kind === 'distribute'
+              ? 'Origins distributed · one undo operation'
+              : 'Selection transformed · one undo operation',
+      );
     } catch (error) {
       this.clear();
       this.status(errorText(error), true);

@@ -1,7 +1,7 @@
 //! Guarded document ownership and one shared action/key routing path for desktop requests.
 use crate::{
-    annotation::Annotation, dto::*, movement::Movement, path::PathDraft, projection, properties,
-    transform::Transform,
+    annotation::Annotation, dto::*, layout_tool::LayoutTool, movement::Movement, path::PathDraft,
+    projection, properties,
 };
 use ecad_adapters::JsonFile;
 use ecad_app::*;
@@ -25,7 +25,7 @@ pub struct DesktopBridge {
     last_input: u64,
     clock: std::time::Instant,
     movement: Option<Movement>,
-    transform: Option<Transform>,
+    layout: Option<LayoutTool>,
     annotation: Option<Annotation>,
     path_draft: Option<PathDraft>,
     move_serial: u64,
@@ -61,7 +61,7 @@ impl DesktopBridge {
             last_input: 0,
             clock: std::time::Instant::now(),
             movement: None,
-            transform: None,
+            layout: None,
             annotation: None,
             path_draft: None,
             move_serial: 0,
@@ -97,7 +97,7 @@ impl DesktopBridge {
             Document::open(JsonFile::new(path)).map_err(|e| BridgeError::new("open", e))?;
         self.document = document;
         self.movement = None;
-        self.transform = None;
+        self.layout = None;
         self.annotation = None;
         self.path_draft = None;
         self.demo = false;
@@ -183,7 +183,7 @@ impl DesktopBridge {
             view,
             focus,
             tool_active: self.movement.is_some()
-                || self.transform.is_some()
+                || self.layout.is_some()
                 || self.annotation.is_some()
                 || self.path_draft.is_some(),
             ..ActionContext::default()
@@ -211,12 +211,14 @@ impl DesktopBridge {
                         ActionRequestKind::PolylinePlacement => "path",
                         ActionRequestKind::RotateSelection => "rotate",
                         ActionRequestKind::MirrorSelection => "mirror",
+                        ActionRequestKind::AlignSelection => "align",
+                        ActionRequestKind::DistributeSelection => "distribute",
                         ActionRequestKind::CancelPlacement => {
                             let message = if self.path_draft.take().is_some() {
                                 "Path cancelled"
                             } else if self.annotation.take().is_some() {
                                 "Annotation cancelled"
-                            } else if self.transform.take().is_some() {
+                            } else if self.layout.take().is_some() {
                                 "Transform cancelled"
                             } else {
                                 "Move cancelled"

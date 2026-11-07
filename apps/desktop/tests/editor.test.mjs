@@ -12,6 +12,7 @@ import { registerAnnotationTests } from './annotations.mjs';
 import { registerMultilineTests } from './multiline.mjs';
 import { registerPathTests } from './paths.mjs';
 import { registerRibbonTests } from './ribbons.mjs';
+import { registerArrangementTests } from './arrangement.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -427,3 +428,14 @@ registerPathTests({
 });
 
 registerRibbonTests({ page, tree, button, input, until, bounds, root, project: () => project });
+
+registerArrangementTests({
+  page,
+  tree,
+  button,
+  until,
+  pressAction,
+  bounds,
+  root,
+  project: () => project,
+});

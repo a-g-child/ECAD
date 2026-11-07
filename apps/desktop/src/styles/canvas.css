@@ -140,11 +140,11 @@
   flex-direction: column;
   min-width: 0;
 }
-.transform-bar[hidden],
-.transform-active > .move-bar:not(.transform-bar) {
+.layout-bar[hidden],
+.layout-active > .move-bar:not(.layout-bar) {
   display: none;
 }
-.transform-operation {
+.layout-operation {
   width: 128px;
   min-width: 80px;
 }
@@ -206,4 +206,16 @@
   .path-count {
     display: none;
   }
+}
+
+.layout-bar[data-kind='align'] .layout-operation {
+  flex: 0 0 90px;
+  width: 90px;
+}
+.layout-bar[data-kind='align'] .move-coordinate {
+  flex: 0 0 76px;
+}
+.layout-bar .move-note {
+  flex: 1;
+  min-width: 0;
 }
