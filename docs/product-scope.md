@@ -24,7 +24,7 @@ The initial target is a complete equipment system at roughly the scale of a car,
 - Use a document-based editing model with undo and redo.
 - Build defaults, shared drawing styles, and explicit overrides into the document model from the beginning.
 - Provide consistent, complete property access and bulk editing across both similar and mixed selections.
-- Use a stable desktop workspace with shared UI controls and explicit layout contracts for panes, toolbars, inspectors, and notifications.
+- Use a stable desktop workspace with shared UI controls and explicit layout contracts for panes, toolbars, inspectors, and notifications. Organise tools into File, Drawing and Library ribbons, preserving the canvas when switching.
 - Treat routes, connected drawing paths, groups, and image attachments as coherent editable objects, with deterministic placement and explicit connectivity behavior.
 - Make version control an important product capability, with Git accessible through the application interface.
 - Prefer a deterministic, text-based authoritative project format suitable for Git review and merging.

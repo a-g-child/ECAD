@@ -102,6 +102,16 @@ function buttons() {
         !selection.length ||
         selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind));
     if (toolActive()) button.disabled = true;
+    const label = button.dataset.tooltip ?? button.title;
+    button.dataset.tooltip = label;
+    const reasons: Record<string, string> = {
+      'Tool UI is planned': 'This tool is planned',
+      NothingToUndo: 'No changes to undo',
+      NothingToRedo: 'No changes to redo',
+    };
+    button.title = [label, !definition?.enabled ? reasons[definition?.reason ?? ''] : undefined]
+      .filter(Boolean)
+      .join('\n');
   }
 }
 async function apply(reply: Reply) {
@@ -254,10 +264,16 @@ async function run(operation: () => Promise<void>) {
 }
 async function action(id: string, captured?: Context) {
   if (!snapshot || (toolActive() && id !== 'placement.cancel')) return;
+  const target = captured ?? context();
+  // Explicit menus/ribbons/palette actions target the drawing while retaining
+  // the captured revision, view and selection. Keyboard routing keeps its focus rules.
+  const drawingAction = id.startsWith('drawing.');
+  if (drawingAction) shell.canvas.focus();
+  const invocationContext = drawingAction ? { ...target, focus: 'canvas' } : target;
   await run(async () => {
     const reply = await send({
       type: 'action',
-      context: captured ?? context(),
+      context: invocationContext,
       action: id,
       input: inputId(),
     });

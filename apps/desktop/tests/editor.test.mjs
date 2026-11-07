@@ -11,6 +11,7 @@ import { registerTransformTests } from './transforms.mjs';
 import { registerAnnotationTests } from './annotations.mjs';
 import { registerMultilineTests } from './multiline.mjs';
 import { registerPathTests } from './paths.mjs';
+import { registerRibbonTests } from './ribbons.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -424,3 +425,5 @@ registerPathTests({
   root,
   project: () => project,
 });
+
+registerRibbonTests({ page, tree, button, input, until, bounds, root, project: () => project });

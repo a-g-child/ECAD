@@ -94,6 +94,7 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Integrate T annotation placement with generated UUIDs, real text presets, literal previews, snapping/exact input, one-step creation/save/history, deleted-selection cleanup and control-focus regressions.
 - [x] Make text multiline-capable without object conversion: shared textarea controls, explicit line/blank-space rendering, complete selection/Fit bounds, multiline captions/reports, and creation/property/history regressions.
 - [x] Integrate P retained graphical paths with accepted/tentative geometry, exact/snapped vertices, draft Backspace/cancel, queued click intents, one-step creation/history and stroke-preset/save/whole-object regressions.
+- [x] Group commands into fixed File/Drawing/Library ribbons with quick access, accessible tab navigation, draft/viewport preservation, shared action dispatch and explicit planned library/Git controls.
 - [ ] Add interactive wire/symbol placement, sub-element hit testing/selection, docking/splitters, and broader native interaction.
 - [x] Verify browser edit-to-core-to-render agreement, failed-edit focus retention, one-step undo, real saves/conflicts, report values, and fixed pane bounds using Chromium with the real Rust bridge.
 - [ ] Verify interactive tool preview/commit agreement and cancellation in the native UI.

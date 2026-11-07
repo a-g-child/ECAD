@@ -55,7 +55,7 @@ button .icon {
 }
 #app {
   display: grid;
-  grid-template-rows: 30px 42px minmax(0, 1fr) 25px;
+  grid-template-rows: 30px var(--ribbon-height) minmax(0, 1fr) 25px;
   min-width: 880px;
 }
 .menubar {
@@ -121,15 +121,6 @@ button .icon {
   padding: 7px 10px;
   border: 0;
 }
-.toolbar {
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  gap: 4px;
-  border-bottom: 1px solid var(--line);
-  background: #f1f3f4;
-  min-width: 0;
-}
 .tool {
   display: flex;
   align-items: center;
@@ -143,21 +134,6 @@ button .icon {
   background: #e0eae5;
   border-color: #b9d0c5;
   color: #23654f;
-}
-.separator {
-  height: 20px;
-  width: 1px;
-  background: var(--line);
-  margin: 0 7px;
-}
-.toolbar-hint {
-  margin-left: auto;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #7a8790;
-  font-size: 10px;
-  padding-left: 20px;
 }
 .workspace {
   display: grid;

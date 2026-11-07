@@ -1,11 +1,12 @@
 /** The shell owns every pane boundary. Content scrolls inside its own grid cell. */
-import { element, icon, tool, separator } from './ui';
+import { element, icon } from './ui';
+import { createQuickAccess, createRibbon } from './ribbon';
 export function createShell(action: (id: string) => void) {
   const app = document.querySelector<HTMLDivElement>('#app')!;
   const menu = element('header', 'menubar');
   const brand = element('div', 'brand');
   brand.append(icon('properties'), element('strong', '', 'ECAD'));
-  menu.append(brand);
+  menu.append(brand, createQuickAccess(action));
   const menus = [
     [
       'File',
@@ -54,50 +55,7 @@ export function createShell(action: (id: string) => void) {
   }
   const title = element('div', 'document-title');
   menu.append(title);
-  const toolbar = element('div', 'toolbar');
-  for (const [label, name, id] of [
-    ['Open project', 'open', 'document.open'],
-    ['Save project', 'save', 'document.save'],
-    ['Undo', 'undo', 'document.undo'],
-    ['Redo', 'redo', 'document.redo'],
-  ]) {
-    const button = tool(label, name, () => action(id));
-    button.dataset.action = id;
-    toolbar.append(button);
-  }
-  toolbar.append(separator());
-  const select = tool('Select objects · Shift to add', 'select', () => canvas.focus());
-  select.classList.add('active');
-  select.dataset.tool = 'select';
-  toolbar.append(select);
-  const move = tool('Move selection · M', 'move', () => action('drawing.selection.move'));
-  move.dataset.action = 'drawing.selection.move';
-  toolbar.append(move);
-  for (const [label, name, id] of [
-    ['Create annotation · T', 'text', 'drawing.label.create'],
-    ['Create graphical path · P', 'path', 'drawing.polyline.create'],
-    ['Rotate selection · R', 'rotate', 'drawing.selection.rotate'],
-    ['Mirror selection', 'mirror', 'drawing.selection.mirror'],
-  ]) {
-    const button = tool(label, name, () => action(id));
-    button.dataset.action = id;
-    toolbar.append(button);
-  }
-  const fit = tool('Fit drawing · F', 'fit', () => action('drawing.view.fit'));
-  fit.dataset.action = 'drawing.view.fit';
-  toolbar.append(fit, separator());
-  const properties = tool('Properties · E', 'properties', () => action('selection.properties'));
-  properties.dataset.action = 'selection.properties';
-  toolbar.append(properties);
-  const report = tool('Connection reports', 'report', () => action('reports.connections'));
-  report.dataset.action = 'reports.connections';
-  toolbar.append(report);
-  const hint = element(
-    'span',
-    'toolbar-hint',
-    'Drag window / crossing selection · Shift scroll X · Ctrl scroll Y · Scroll zoom',
-  );
-  toolbar.append(hint);
+  const ribbon = createRibbon(action, () => canvas.focus());
   const workspace = element('main', 'workspace');
   const left = element('aside', 'pane project-pane');
   left.dataset.focus = 'tree';
@@ -162,7 +120,7 @@ export function createShell(action: (id: string) => void) {
   search.setAttribute('aria-label', 'Search commands');
   const results = element('div', 'palette-results');
   palette.append(search, results);
-  app.append(menu, toolbar, workspace, status, palette);
+  app.append(menu, ribbon, workspace, status, palette);
   return {
     app,
     title,

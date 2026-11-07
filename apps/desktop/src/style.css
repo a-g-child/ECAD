@@ -1,5 +1,6 @@
 @import './styles/base.css';
 @import './styles/chrome.css';
+@import './styles/ribbon.css';
 @import './styles/canvas.css';
 @import './styles/explorer.css';
 @import './styles/properties.css';

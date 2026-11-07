@@ -2,6 +2,8 @@
 
 Status: a headless action registry, shared invocation dispatcher, logical-key router, and canonical keymap schema v1 are implemented. The first desktop prototype routes supported keyboard/menu/tool/palette actions through this core and protects typing. Comprehensive native accelerators, shortcut editor, and the broader interaction requirements below remain planned. See [decision 0011](decisions/0011-action-registry-and-keymaps.md).
 
+Ribbon tabs use ArrowLeft/Right and Home/End with native control focus. File/Drawing ribbon commands, menus and palette share dispatch; explicit drawing actions target the canvas with captured revision/view/selection retained. Tab changes are transient workspace presentation and do not enter project history. See [fixed ribbons](decisions/0024-fixed-tool-ribbons.md).
+
 ## Implemented first slice
 
 | Action | Shipped shortcut | Scope |

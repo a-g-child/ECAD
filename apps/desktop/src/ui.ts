@@ -10,6 +10,14 @@ export function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 const icons: Record<string, string> = {
+  git: 'M6 4v16 M6 8h8a4 4 0 0 1 4 4v8 M4 2h4v4H4z M4 18h4v4H4z M16 18h4v4h-4z',
+  wire: 'M2 6h6v12h8V6h6 M2 4v4 M22 4v4',
+  align: 'M3 3v18 M7 5h12v4H7z M7 14h8v4H7z',
+  distribute: 'M3 3v18 M21 3v18 M6 7h3v10H6z M15 7h3v10h-3z M10 12h4',
+  symbols: 'M3 12h4 M17 12h4 M7 6h10v12H7z',
+  parts: 'M5 5h14v14H5z M8 2v3 M16 2v3 M8 19v3 M16 19v3 M2 8h3 M19 8h3 M2 16h3 M19 16h3',
+  blocks: 'M3 3h7v7H3z M14 3h7v7h-7z M8 15h8v6H8z M6 10v3h12v-3 M12 13v2',
+  revisions: 'M5 4h14v16H5z M9 8h6 M9 12h6 M9 16h3',
   open: 'M2 6h6l2 2h12v12H2z M2 6V3h7l2 3',
   save: 'M4 3h14l3 3v15H3V3z M7 3v6h10V3 M7 21v-8h10v8',
   undo: 'M8 5 3 10l5 5 M3 10h10a7 7 0 0 1 7 7',
@@ -43,7 +51,4 @@ export function tool(label: string, name: string, callback: () => void) {
   button.append(icon(name));
   button.addEventListener('click', callback);
   return button;
-}
-export function separator() {
-  return element('span', 'separator');
 }
