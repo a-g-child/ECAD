@@ -35,6 +35,7 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
           command('Open', 'Open project', 'open', 'document.open'),
           command('Save', 'Save project', 'save', 'document.save'),
           command('Information', 'Project information', 'properties', 'document.metadata.edit'),
+          command('Profiles', 'Company / contact profiles', 'properties', 'workspace.profiles'),
         ],
       },
       {

@@ -1,6 +1,6 @@
 # Drawing sheets, layouts and metadata
 
-Status: included product feature. The first slice implements project-owned metadata and its editor; sheet geometry, table editing, profiles and placeholder placement remain planned.
+Status: included product feature. Project-owned metadata, reusable company/contact profiles and reviewed selective imports are implemented. Sheet geometry, table editing and placeholder placement remain planned.
 
 ## Scope and ownership
 
@@ -39,11 +39,19 @@ Project metadata has eight catalogued fields: company.name, company.address, eng
 
 Project schema v7 adds a strict canonical metadata map. V2–v6 load with empty metadata; v1 remains an explicit migration. Updates use one reversible metadata command and a shared registered project-settings action. No-op edits preserve redo and checkpoints. Unknown persisted fields and duplicate metadata keys are rejected. Metadata is excluded explicitly from electrical subsystem bodies rather than silently discarded.
 
+## Reusable company/contact profiles
+
+File → Profiles opens the shared profile manager. Save multiple named profiles, update or rename them while retaining stable identity, then select fields for a reviewed import. Profiles contain company.name, company.address and engineer.name only. Project title, contract, issue and author/checker/approver roles are excluded. All text, including names and addresses, remains multiline-capable.
+
+Saving a profile is outside project undo and does not dirty a project or clear redo. Preview shows exact old/new project values. Populated fields are selected initially; empty fields are unselected and clear project entries only if explicitly selected. Apply commits the closed revision-bound copy as one project edit. Close/Escape cancels the retained proposal. Changing field choices or editing a profile invalidates the UI review; save edits before previewing again. Reload profiles explicitly discards profile drafts and refreshes external file changes.
+
+Native profiles live in company-profiles.json under the Tauri-provided per-user application configuration directory. Startup/configuration and missing-file reads do not create it; explicit Save profile creates directories and writes it. Projects retain copied values and never reference this path. The browser test harness uses a separate file alongside its temporary project; ECAD_UI_PROFILES can explicitly override its location. Profile schema v1 is separate from project schema v7. Saves use observed-byte/location checks and staged replacement; concurrent uncooperative writers can still race between check and rename. Automatic default-profile selection, deletion, profile import/export packaging and logos remain future work.
+
 ## Delivery checklist
 
 - [x] Include the feature and define scope, variable ownership and portability rules.
 - [x] Add project metadata, stable field catalog, exact history, versioned persistence and a bounded multiline editor.
-- [ ] Add personal/company profile storage and explicit previewed copy/update into a project.
+- [x] Add personal/company profile storage and explicit previewed copy/update into a project.
 - [ ] Add sheets, paper settings, numbering, drawing-set order and one view placement per sheet.
 - [ ] Add table/cell geometry and editing with stable identities and bulk properties.
 - [ ] Add bindings, sheet-local values, missing/required diagnostics and override/reset behavior.

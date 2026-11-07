@@ -10,6 +10,7 @@ mod movement;
 mod path;
 mod placement;
 mod preview_scene;
+mod profiles;
 mod projection;
 mod properties;
 pub use controller::DesktopBridge;

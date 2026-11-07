@@ -40,6 +40,8 @@ pub enum ActionHandler {
     DrawingSettings,
     /// Inspect or replace portable project metadata.
     ProjectMetadata,
+    /// Manage reusable company/contact profiles.
+    CompanyProfiles,
     /// Request the registry-generated command palette.
     Palette,
     /// Request cancellation of host-owned transient placement.

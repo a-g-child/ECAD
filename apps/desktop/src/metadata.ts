@@ -36,7 +36,7 @@ export class MetadataDialog {
       element(
         'p',
         'settings-note',
-        'These values travel with this project. Engineer/contact is separate from drawn, checked or approved responsibilities. Profile import and sheet templates are planned.',
+        'These values travel with this project. Engineer/contact is separate from drawn, checked or approved responsibilities. Reusable defaults are available under File → Profiles; sheet templates are planned.',
       ),
       this.body,
       this.error,

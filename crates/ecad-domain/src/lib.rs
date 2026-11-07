@@ -49,7 +49,7 @@ pub use drawing_style::{
 pub use drawing_values::{DrawingColour, DrawingLength, DrawingPoint, FontFamily};
 pub use error::ModelError;
 pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};
-pub use identity::{AnchorId, RouteId};
+pub use identity::{AnchorId, ProfileId, RouteId};
 pub use identity::{
     CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, IdError, InterfacePortId,
     ProjectId, SubsystemId, TerminalId,

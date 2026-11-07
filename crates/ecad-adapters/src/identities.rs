@@ -12,6 +12,12 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a personal/company profile identity.
+    /// # Errors
+    /// Returns the OS entropy error without a weak fallback.
+    pub fn profile() -> Result<ecad_domain::ProfileId, getrandom::Error> {
+        Ok(ecad_domain::ProfileId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
     /// Generate a placed terminal-anchor identity.
     /// # Errors
     /// Returns the OS entropy error without weak fallback.

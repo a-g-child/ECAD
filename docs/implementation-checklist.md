@@ -179,7 +179,7 @@ Current test owners:
 - [x] Include reusable sheets/title-block tables, scoped variables, company profiles and standard/draft/cover/contents layouts in [the feature scope](sheets-and-templates.md).
 - [x] Implement eight typed project metadata fields, literal multiline values, exact history/rollback, strict schema v7 and v2–v6 empty-metadata upgrades.
 - [x] Integrate File/menu/palette project-information editing with fixed modal bounds, portable saved fields, cancel/no-op redo behavior and local Rust/browser regressions.
-- [ ] Add personal/company profile persistence and explicit reviewed copy/update into project values.
+- [x] Add personal/company profile persistence and explicit reviewed selective copy/update into project values, with independent history, observed-file conflict checks and native/test host path isolation.
 - [ ] Add sheets, paper/margins, drawing sets, numbering and view placements.
 - [ ] Add stable table/cell identities, split/merge/resize and bulk formatting.
 - [ ] Add field bindings, sheet-specific entries, override/reset and missing/required-field diagnostics.

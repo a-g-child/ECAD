@@ -86,3 +86,35 @@
 .metadata-group {
   padding-top: 4px;
 }
+
+.profiles-dialog {
+  width: min(760px, calc(100vw - 40px));
+  height: min(600px, calc(100vh - 48px));
+}
+.profiles-dialog .settings-actions {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.profiles-dialog .settings-field input[type='checkbox'] {
+  margin: 0 6px 0 0;
+}
+.profile-review {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.profile-change {
+  padding: 8px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.profile-change > div {
+  max-height: 80px;
+  overflow: auto;
+}
+
+.profiles-dialog .settings-error {
+  color: var(--muted);
+}
+.profiles-dialog .settings-error.error {
+  color: #a63838;
+}

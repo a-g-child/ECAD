@@ -45,7 +45,9 @@ export function registerMetadataTests({
       rect.x >= 0 && rect.x + rect.width <= 960 && rect.y >= 0 && rect.y + rect.height <= 640,
     );
     assert.ok(actions.y + actions.height <= rect.y + rect.height);
-    await p.locator('.metadata-fields').evaluate((node) => (node.scrollTop = 0));
+    await dialog(p)
+      .locator('.metadata-fields')
+      .evaluate((node) => (node.scrollTop = 0));
     await p.screenshot({ path: resolve(root, 'target/ui/project-information.png') });
     await apply(p).click();
     await dialog(p).waitFor({ state: 'hidden' });

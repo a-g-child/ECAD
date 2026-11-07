@@ -14,6 +14,7 @@ export function createShell(action: (id: string) => void) {
         ['Open project…', 'document.open'],
         ['Save', 'document.save'],
         ['Project information…', 'document.metadata.edit'],
+        ['Company / contact profiles…', 'workspace.profiles'],
       ],
     ],
     [

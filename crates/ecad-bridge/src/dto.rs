@@ -121,6 +121,41 @@ pub enum Request {
         /// Literal editable value, never an inferred identity.
         value: String,
     },
+    /// Discard the retained profile-copy proposal without editing the project.
+    CancelProfileImport {},
+    /// Reload the host-configured profile file, invalidating old observations/proposals.
+    LoadProfiles {},
+    /// Save a new or existing company/contact profile outside document history.
+    SaveProfile {
+        /// Current profile-file observation token.
+        token: String,
+        /// Existing profile identity; None generates a new identity.
+        id: Option<String>,
+        /// Nonblank literal display name.
+        name: String,
+        /// Company/contact keys only, with literal multiline text.
+        values: std::collections::BTreeMap<String, String>,
+        /// Shared monotonic host input identity.
+        input: String,
+    },
+    /// Prepare a closed project-copy proposal from saved profile values.
+    PreviewProfileImport {
+        /// Captured document context/revision.
+        context: serde_json::Value,
+        /// Current profile-file observation token.
+        token: String,
+        /// Saved profile identity.
+        id: String,
+        /// Explicit selected field keys; selecting an empty value deliberately clears it.
+        fields: Vec<String>,
+    },
+    /// Apply exactly the reviewed profile copy as one undoable project edit.
+    CommitProfileImport {
+        /// Retained immutable proposal identity.
+        token: String,
+        /// Shared monotonic host input identity.
+        input: String,
+    },
     /// Replace portable project metadata as one registered document edit.
     UpdateMetadata {
         /// Original project revision and action context.
@@ -292,6 +327,8 @@ pub struct Response {
     pub(crate) path: Option<PathRow>,
     pub(crate) defaults: Option<crate::defaults::DefaultsRow>,
     pub(crate) metadata: Option<Vec<crate::metadata::MetadataRow>>,
+    pub(crate) profiles: Option<crate::profiles::ProfileCatalog>,
+    pub(crate) profile_import: Option<crate::profiles::ImportRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {

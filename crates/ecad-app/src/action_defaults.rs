@@ -27,6 +27,16 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "workspace.profiles",
+                "Company / contact profiles",
+                "Workspace",
+                "Save reusable company/contact defaults and review copying selected fields into a project",
+                Handler::CompanyProfiles,
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "document.metadata.edit",
                 "Project information",
                 "Document",

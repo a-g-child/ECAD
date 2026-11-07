@@ -87,6 +87,8 @@ pub enum ActionParameters {
     DrawingSettings(DrawingSettings),
     /// Reviewed complete project-owned metadata.
     ProjectMetadata(ecad_domain::ProjectMetadata),
+    /// Exact reviewed company/contact copy into the project.
+    ProfileImport(ProfileImportPreview),
 }
 /// A single request shared by all action surfaces, with original targets and input identity.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -131,6 +133,8 @@ pub enum ActionRequestKind {
     DrawingSettings,
     /// Open project-owned company/contact and project fields.
     ProjectMetadata,
+    /// Manage reusable company/contact profiles outside document history.
+    CompanyProfiles,
     /// Open the registry-generated searchable palette.
     Palette,
     /// Cancel host-owned transient placement without a document edit.

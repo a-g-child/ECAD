@@ -24,6 +24,7 @@ mod action_registry;
 mod action_types;
 mod adoption;
 mod command;
+mod company_profile;
 mod connection_records;
 mod connection_report;
 mod document;
@@ -117,3 +118,8 @@ pub use connection_records::{
     ConnectionSubsystem, ConnectionTerminal,
 };
 pub use connection_report::ConnectionReport;
+
+pub use company_profile::{
+    CompanyProfile, PROFILE_FIELDS, ProfileError, ProfileFieldChange, ProfileImportPreview,
+    preview_profile_import,
+};

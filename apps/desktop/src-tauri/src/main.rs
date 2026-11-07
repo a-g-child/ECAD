@@ -64,6 +64,15 @@ fn main() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(Host(Mutex::new(controller)))
+        .setup(|app| {
+            let path = app.path().app_config_dir()?.join("company-profiles.json");
+            app.state::<Host>()
+                .0
+                .lock()
+                .map_err(|_| std::io::Error::other("The document controller is unavailable"))?
+                .configure_profile_store(path);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![bridge, choose_file])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

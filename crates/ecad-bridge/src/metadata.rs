@@ -10,7 +10,13 @@ pub(crate) struct MetadataRow {
     value: String,
 }
 pub(crate) fn project(metadata: &ProjectMetadata) -> Vec<MetadataRow> {
-    MetadataField::ALL
+    selected(metadata, MetadataField::ALL)
+}
+pub(crate) fn selected(
+    metadata: &ProjectMetadata,
+    fields: impl IntoIterator<Item = MetadataField>,
+) -> Vec<MetadataRow> {
+    fields
         .into_iter()
         .map(|field| MetadataRow {
             key: field.key(),

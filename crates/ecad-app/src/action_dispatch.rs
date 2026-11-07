@@ -246,6 +246,19 @@ impl ActionDispatcher {
             (ActionHandler::CreatePolyline, ActionParameters::None) => {
                 request(ActionRequestKind::PolylinePlacement, None)
             }
+            (ActionHandler::CompanyProfiles, ActionParameters::None) => {
+                request(ActionRequestKind::CompanyProfiles, None)
+            }
+            (ActionHandler::ProjectMetadata, ActionParameters::ProfileImport(preview)) => {
+                if preview.revision() != revision {
+                    return Err(ActionDispatchError::WrongParameters);
+                }
+                ActionOutcome::Edited(
+                    document
+                        .execute(revision, Command::ProjectMetadata(preview.proposed))
+                        .map_err(ActionDispatchError::Edit)?,
+                )
+            }
             (ActionHandler::ProjectMetadata, ActionParameters::None) => {
                 request(ActionRequestKind::ProjectMetadata, None)
             }

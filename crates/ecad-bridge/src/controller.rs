@@ -11,6 +11,8 @@ use std::{
     num::NonZeroU64,
     path::{Path, PathBuf},
 };
+#[path = "settings_requests.rs"]
+mod settings_requests;
 #[path = "tools.rs"]
 mod tools;
 /// One desktop document controller, independent of Tauri/windowing and testable locally.
@@ -29,6 +31,7 @@ pub struct DesktopBridge {
     annotation: Option<Annotation>,
     path_draft: Option<PathDraft>,
     move_serial: u64,
+    profiles: crate::profiles::ProfilePanel,
 }
 impl DesktopBridge {
     /// Start an explicitly unsaved demonstration backed by the real electrical/drawing model.
@@ -65,7 +68,12 @@ impl DesktopBridge {
             annotation: None,
             path_draft: None,
             move_serial: 0,
+            profiles: crate::profiles::ProfilePanel::default(),
         })
+    }
+    /// Configure per-user profile storage without performing IO or modifying the document.
+    pub fn configure_profile_store(&mut self, path: impl Into<PathBuf>) {
+        self.profiles.configure(path.into());
     }
     /// Opaque current session token for guarding asynchronous native file choosers.
     pub fn revision_key(&self) -> String {
@@ -96,6 +104,7 @@ impl DesktopBridge {
         let document =
             Document::open(JsonFile::new(path)).map_err(|e| BridgeError::new("open", e))?;
         self.document = document;
+        self.profiles.invalidate();
         self.movement = None;
         self.layout = None;
         self.annotation = None;
@@ -203,6 +212,10 @@ impl DesktopBridge {
             ActionOutcome::Request(r) => {
                 response.request = Some(
                     match r.kind {
+                        ActionRequestKind::CompanyProfiles => {
+                            response.profiles = self.profiles.load()?.profiles;
+                            "profiles"
+                        }
                         ActionRequestKind::ProjectMetadata => {
                             response.metadata = Some(metadata::project(
                                 self.document.session().project().metadata(),
@@ -309,6 +322,8 @@ impl DesktopBridge {
         | Request::CommitMove { input, .. }
         | Request::CommitTransform { input, .. }
         | Request::CommitAnnotation { input, .. }
+        | Request::SaveProfile { input, .. }
+        | Request::CommitProfileImport { input, .. }
         | Request::UpdateMetadata { input, .. }
         | Request::UpdateDefaults { input, .. }
         | Request::CommitPath { input, .. } = &request
@@ -335,63 +350,13 @@ impl DesktopBridge {
             | Request::BackPathVertex { .. }
             | Request::CommitPath { .. }) => self.tool(request),
             Request::Snapshot {} => Ok(self.snapshot()),
-            Request::UpdateMetadata {
-                context,
-                values,
-                input,
-            } => {
-                let context = self.context(context)?;
-                let values = metadata::parse(values)?;
-                let revision = self.document.session().revision();
-                let invocation = ActionInvocation {
-                    input_id: input_id(&input)?,
-                    action: ActionId::new("document.metadata.edit").expect("builtin"),
-                    source: InvocationSource::Toolbar,
-                    repeat: false,
-                    context,
-                    parameters: ActionParameters::ProjectMetadata(values),
-                };
-                let mut response = self.invoke(invocation)?;
-                response.message = Some(
-                    if self.document.session().revision() == revision {
-                        "Project information already matches · no document changes"
-                    } else {
-                        "Project information updated · one undo operation"
-                    }
-                    .into(),
-                );
-                Ok(response)
-            }
-            Request::UpdateDefaults {
-                context,
-                defaults,
-                input,
-            } => {
-                let context = self.context(context)?;
-                let settings = defaults::replace(
-                    self.document.session().project().drawing().settings(),
-                    defaults,
-                )?;
-                let revision = self.document.session().revision();
-                let invocation = ActionInvocation {
-                    input_id: input_id(&input)?,
-                    action: ActionId::new("drawing.styles.edit").expect("builtin"),
-                    source: InvocationSource::Toolbar,
-                    repeat: false,
-                    context,
-                    parameters: ActionParameters::DrawingSettings(settings),
-                };
-                let mut response = self.invoke(invocation)?;
-                response.message = Some(
-                    if self.document.session().revision() == revision {
-                        "Drawing defaults already match · no document changes"
-                    } else {
-                        "Drawing defaults updated · one undo operation"
-                    }
-                    .into(),
-                );
-                Ok(response)
-            }
+            request @ (Request::UpdateMetadata { .. }
+            | Request::UpdateDefaults { .. }
+            | Request::CancelProfileImport {}
+            | Request::LoadProfiles {}
+            | Request::SaveProfile { .. }
+            | Request::PreviewProfileImport { .. }
+            | Request::CommitProfileImport { .. }) => self.settings_request(request),
             Request::Inspect { context } => {
                 let context = self.context(context)?;
                 Ok(Response {

@@ -15,6 +15,7 @@ import { registerRibbonTests } from './ribbons.mjs';
 import { registerArrangementTests } from './arrangement.mjs';
 import { registerDefaultsTests } from './defaults.mjs';
 import { registerMetadataTests } from './metadata.mjs';
+import { registerProfileTests } from './profiles.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -445,3 +446,5 @@ registerArrangementTests({
 registerDefaultsTests({ page, button, until, bounds, root, project: () => project, pressAction });
 
 registerMetadataTests({ page, button, until, bounds, root, project: () => project, pressAction });
+
+registerProfileTests({ page, button, until, bounds, root, project: () => project, pressAction });

@@ -104,7 +104,23 @@ export interface MetadataRow {
   label: string;
   value: string;
 }
+export interface ProfileRow {
+  id: string;
+  name: string;
+  values: Record<string, string>;
+}
+export interface ProfileCatalog {
+  token: string;
+  entries: ProfileRow[];
+  fields: MetadataRow[];
+}
+export interface ProfileImport {
+  token: string;
+  changes: { key: string; label: string; before: string | null; after: string | null }[];
+}
 export interface Reply {
+  profiles: ProfileCatalog | null;
+  profile_import: ProfileImport | null;
   metadata: MetadataRow[] | null;
   defaults: DrawingDefaults | null;
   path: PathRow | null;

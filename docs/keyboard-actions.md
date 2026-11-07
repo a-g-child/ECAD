@@ -131,3 +131,5 @@ Choose the first keymap, sequence leader and feedback, hover-selection policy, s
 The desktop drawing-defaults editor is available through `drawing.styles.edit` from Drawing, Edit and command search, or Primary+K then S. The modal owns text and Escape input; Apply submits one guarded settings command and returns focus to the canvas. Named-style and creation-preset editing remain future UI work.
 
 Project information uses `document.metadata.edit`, unbound by default and available from File, its menu and command search. The modal owns text input; Enter adds a line, Ctrl/Cmd+Enter applies, and Escape cancels. This edits project-owned values, with no implicit personal-profile lookup.
+
+Company/contact profiles use `workspace.profiles`, unbound by default and available from File, its menu and command search. Profile text owns keyboard input; explicit Save profile, Preview import and Apply import controls distinguish personal settings from project edits. Close/Escape cancels the retained import preview. Project imports dispatch through `document.metadata.edit` with a closed revision-bound proposal.

@@ -8,6 +8,15 @@ use std::{
 };
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let project = std::env::var_os("ECAD_UI_PROJECT");
+    let profile_path = std::env::var_os("ECAD_UI_PROFILES")
+        .map(std::path::PathBuf::from)
+        .or_else(|| {
+            project.as_ref().and_then(|p| {
+                Path::new(p)
+                    .parent()
+                    .map(|p| p.join("company-profiles.json"))
+            })
+        });
     let mut bridge = if let Some(path) = project {
         {
             let path = Path::new(&path);
@@ -22,6 +31,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         DesktopBridge::demo()?
     };
+    if let Some(path) = profile_path {
+        bridge.configure_profile_store(path);
+    }
     let listener = TcpListener::bind("127.0.0.1:3838")?;
     println!("Browser harness listening on 127.0.0.1:3838; only the local Vite origin may call it");
     for stream in listener.incoming() {

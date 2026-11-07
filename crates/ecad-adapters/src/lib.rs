@@ -14,6 +14,7 @@ mod known_projects;
 mod library_error;
 mod library_file;
 mod library_json;
+mod profile_file;
 mod schema;
 mod schema_definition;
 mod schema_drawing;
@@ -37,3 +38,5 @@ pub use library_json::{decode_library, encode_library};
 pub use versioned_file::FileVersion;
 
 pub use connection_csv::{ConnectionCsvKind, encode_connection_csv, encode_current_connection_csv};
+
+pub use profile_file::{ProfileFile, ProfileFileError, ProfileSnapshot};

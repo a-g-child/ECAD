@@ -118,6 +118,11 @@ identity!(
     "Identity of one whole conductor route in a drawing view."
 );
 
+identity!(
+    ProfileId,
+    "Identity of a reusable personal/company profile outside project history."
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;
