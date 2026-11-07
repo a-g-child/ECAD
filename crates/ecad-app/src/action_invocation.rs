@@ -141,6 +141,8 @@ pub struct ActionRequest {
 }
 /// Observable action outcome; presentation requests are separate from document edits.
 pub enum ActionOutcome {
+    /// Read-only current electrical report; presentation/export does not mutate the document.
+    ConnectionReport(Box<ConnectionReport>),
     /// Exact transient geometry for alignment, distribution, rotation, mirroring, or movement.
     LayoutPreview(Box<LayoutPreview>),
     /// Exact transient geometry and ranked snap targets, with no document mutation.

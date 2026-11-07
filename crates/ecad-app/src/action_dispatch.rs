@@ -76,6 +76,11 @@ impl ActionDispatcher {
             .revision
             .expect("document availability checked revision");
         let outcome = match (handler, invocation.parameters) {
+            (ActionHandler::ConnectionReport, ActionParameters::None) => {
+                ActionOutcome::ConnectionReport(Box::new(ConnectionReport::from_session(
+                    document.session(),
+                )))
+            }
             (ActionHandler::Undo, ActionParameters::None) => {
                 ActionOutcome::Edited(document.undo(revision).map_err(ActionDispatchError::Edit)?)
             }

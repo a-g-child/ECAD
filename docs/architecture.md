@@ -110,6 +110,10 @@ Do not require a synchronous round trip for every pointer movement. Allow local 
 
 Long-running indexing, loading, imports, and geometry work must not block the interactive event loop. Define cancellation and progress at operation boundaries, and discard stale results rather than applying them to a changed document. Do not introduce async into pure domain functions without a concrete need.
 
+## Derived electrical reports
+
+`ConnectionReport` captures a revision-bound immutable projection of actual electrical occurrences, terminals, conductors, cables, and hierarchy. All attached ends remain explicit; drawing copies and unplaced source bodies do not duplicate engineering objects. App-owned records keep identity and display labels separate. The CSV adapter formats wire, terminal, and cable views from the same report without adding persisted fields or alternate electrical state. Current-value encoding checks original session freshness; historical encoding is deliberate. See [decision 0016](decisions/0016-electrical-connection-reports.md). Placed live labels, automatic view refresh, and native export lifecycle remain future work.
+
 ## Persistence and external services
 
 The authoritative document is the in-memory validated project; the authoritative saved form is a versioned text project plus its referenced assets. A SQLite index, renderer cache, or frontend projection must be reconstructible and identified by the revision it represents.

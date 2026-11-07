@@ -8,6 +8,8 @@ mod hierarchy;
 mod layout;
 #[path = "support/properties.rs"]
 mod properties;
+#[path = "support/reports.rs"]
+mod reports;
 #[path = "support/reuse.rs"]
 mod reuse;
 #[path = "support/routes.rs"]
@@ -43,6 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let route_cases = routes::cases()?;
     let layout_cases = layout::cases()?;
     let snap_cases = snapping::cases()?;
+    let report_cases = reports::cases()?;
     let rustc = Process::new("rustc").arg("--version").output()?;
     if !rustc.status.success() {
         return Err("could not identify rustc".into());
@@ -74,8 +77,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 12,
-        "recipe": "orthogonal-transforms-v12",
+        "report_version": 13,
+        "recipe": "connection-reports-v13",
         "project_schema": 6,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
@@ -95,6 +98,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "route_cases": route_cases,
         "layout_cases": layout_cases,
         "snap_cases": snap_cases,
+        "report_cases": report_cases,
     });
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/scale");
     std::fs::create_dir_all(&root)?;

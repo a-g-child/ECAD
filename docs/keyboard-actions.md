@@ -9,6 +9,7 @@ Status: a headless action registry, shared invocation dispatcher, logical-key ro
 | Undo | Primary+Z | Document |
 | Redo | Primary+Shift+Z | Document |
 | Guarded save | Primary+S | Document |
+| Electrical connection reports | Unbound; remappable | Document |
 | Properties | E | Canvas/project tree |
 | Annotation input/creation | T | Canvas |
 | Graphical polyline input/creation | P | Canvas |
@@ -28,6 +29,8 @@ All layout handlers accept generic exact preview/commit parameters, checked agai
 The M handler also accepts exact/pointer preview parameters and a closed preview for commit. Its preview result exposes candidate targets and exact geometry without changing history. Commit checks original revision, selection, and view; it never substitutes a fresh revision for the preview. Native preview/cycling controls remain unimplemented.
 
 Layout requests retain the complete original selection. Supported origins belong to annotations, graphical polylines, and terminal anchors in the active view. Routes move through anchors; electrical objects have no inferred drawing origin. Unsupported/mixed-view selections disable the actions, and distribution requires three distinct objects. Layout parameters are validated in the core, including overflow and connected-route geometry; native controls/previews remain planned.
+
+The connection-report action is read-only and requires a current document context, with no selection or drawing view. It returns the actual terminal/wire/cable projection at that revision. It performs no save or export file IO; native report controls and file dialogs remain planned.
 
 The registry exposes stable IDs, descriptions/categories/search terms, requirements, availability reasons, optional checked state, repeat policy, and suggested bindings or an explicit unbound policy. Current built-ins are non-toggle actions. Every registered action can be remapped or explicitly unbound; underlying model functions are not automatically user actions. Preserve one action implementation for menu/toolbar/palette/context-menu/keyboard/native accelerator invocation. Typed requests retain the original revision/selection/view/optional anchor; replies get new input IDs and revalidate before commands execute.
 

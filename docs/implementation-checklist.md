@@ -101,7 +101,9 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Retain labelled historical usage after failed scans, distinguish copied locations from project lineage, and detect Git checkouts/content changes.
 - [ ] Add durable usage registries, directory discovery/watchers, scan budgets/cancellation, cross-machine library coordination, and local-variant revision merging.
 - [ ] Add a Git adapter and document lifecycle orchestration for status, commits, branches, conflicts, and reload. Existing tests demonstrate interoperability, not this application feature.
-- [ ] Add basic connection/cable outputs and verify a small system can be built from its documentation.
+- [x] Add a revision-bound electrical connection projection and shared read-only report action, retaining all terminal attachments, self-loops, spare ends, empty cables, actual cores, and overview endpoints.
+- [x] Export deterministic wire lists, terminal tables, and cable schedules as CSV with freshness guards, stable IDs, explicit draft states, Unicode/quoted/multiline labels, hierarchy paths, and independent golden fixtures.
+- [ ] Add placed live pinout labels/templates, user-facing report/export controls, physical wire attributes/numbers, and verify a small system can be built from its documentation.
 
 ## 7. Scale and platform validation
 
@@ -116,6 +118,7 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Measure grouped fixed-degree anchor movement and separate layout preflight/commit/undo over 20/200/2,000 annotation origins.
 - [x] Probe deterministic endpoint/midpoint snap queries over 100/1,000/10,000 graphical paths, documenting the initial linear scan and separate native/UI limits.
 - [x] Measure 1,000 fixed-degree two-anchor half turns through 10,000 routes and quarter-turn annotation-position preview/commit/undo through 2,000 objects.
+- [x] Measure report construction and three in-memory CSV encoders at 100/1,000/10,000 paired devices with individual cables; verify attachment coverage and deterministic round-trip outputs.
 - [ ] Expand probes to large bound keymaps, nested reusable dependencies, visible rendering, libraries, and assets.
 - [ ] Measure memory, cache invalidation, object visits, save/load IO, native frame times, and foreground response during background work.
 - [ ] Add bounded soak/cancellation/failure cases and establish stable performance regression gates from measured variance.
@@ -136,6 +139,7 @@ Current test owners:
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
 - Action/keymap contracts: [registry/router tests](../crates/ecad-app/tests/action_contract.rs), [real invocation workflows](../crates/ecad-adapters/tests/action_workflow.rs), and [keymap persistence](../crates/ecad-adapters/tests/keymap_persistence.rs).
+- Electrical reports and CSV outputs: [projection/workflows](../crates/ecad-adapters/tests/connection_report_workflow.rs), [golden/escaping/persistence contracts](../crates/ecad-adapters/tests/reports/persistence.rs), and [shared action](../crates/ecad-adapters/tests/reports/actions.rs).
 - Orthogonal transforms: [coordinate rules](../crates/ecad-domain/tests/transform_contract.rs), [connected workflows](../crates/ecad-adapters/tests/transform_workflow.rs), [failure/rollback cases](../crates/ecad-adapters/tests/transforms/failures.rs), and [shared action previews](../crates/ecad-adapters/tests/transforms/actions.rs).
 - Snapping and exact previews: [snap rules](../crates/ecad-domain/tests/snap_contract.rs), [placement workflows](../crates/ecad-adapters/tests/placement_workflow.rs), and [shared M preview/commit](../crates/ecad-adapters/tests/placement/actions.rs).
 - Origin layout and group movement: [layout workflows](../crates/ecad-adapters/tests/layout_workflow.rs), [failure/rollback regressions](../crates/ecad-adapters/tests/layout/failures.rs), and [shared action workflows](../crates/ecad-adapters/tests/layout/actions.rs).

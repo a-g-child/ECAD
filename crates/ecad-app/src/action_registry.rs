@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Inspect a revision-bound report of actual terminals, conductors, and cable memberships.
+    ConnectionReport,
     /// Request an exact quarter-turn and explicit pivot for the drawing selection.
     RotateSelection,
     /// Request an explicit reflection axis and pivot for the drawing selection.

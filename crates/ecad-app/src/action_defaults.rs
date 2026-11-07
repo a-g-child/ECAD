@@ -27,6 +27,16 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "reports.connections",
+                "Connection reports",
+                "Reports",
+                "Inspect actual terminal links and wire/cable memberships, including unconnected drafts",
+                Handler::ConnectionReport,
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "drawing.selection.rotate",
                 "Rotate drawing selection",
                 "Drawing",

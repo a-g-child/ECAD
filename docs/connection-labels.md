@@ -1,6 +1,6 @@
 # Pinouts and connection labels
 
-Status: proposed requirements based on inspection of the existing Pinout Generator. No integration or code migration has been performed.
+Status: connector profiles, templates, placed live labels, and existing Pinout Generator integration remain proposed. A revision-bound electrical connection projection and CSV schedules are now implemented as the value-source foundation; no generator code migration has been performed. See [connection reports](connection-reports.md).
 
 ## Existing work reviewed
 
@@ -53,6 +53,12 @@ Generic devices can use profiles before any manufacturer part is assigned. Assig
 Create project-local definitions without forcing global library publication. Adapting a shared definition creates a deliberate local revision or copy; it does not mutate unrelated projects. Projects retain the versions they use and adopt library updates explicitly.
 
 Profiles and templates are reusable independently. For example, one company-standard table layout can display many connector families, and one connector arrangement can appear in several documentation layouts.
+
+## Implemented value-source foundation
+
+`ConnectionReport` captures current real device occurrences, all terminals, every attached conductor end, cable membership, and functional hierarchy by stable identity. A terminal with several wires retains all of them; a self-loop retains both ordered ends, and an unconnected terminal remains present. Cable overview endpoints and actual individual core terminations remain separate. Reports ignore drawing copies and unplaced immutable library bodies.
+
+Reports are immutable observations at a session revision. Requery after model edits to refresh values; current-value export rejects stale or different-session snapshots. Old snapshots remain explicitly available for historical output. These contracts prepare the shared value source for future labels without implementing placed field bindings, automatic UI refresh, connector geometry, templates, orientation, or legacy import. CSV outputs provide wire lists, terminal tables, and cable schedules now; they are derived snapshots rather than editable project storage.
 
 ## Live values and editing
 

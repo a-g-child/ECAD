@@ -4,6 +4,7 @@
 //! Domain structs are not serialized directly. See [`JsonFile`] for save guarantees
 //! and [`encode_project`] for deterministic text suitable for Git.
 
+mod connection_csv;
 mod error;
 mod identities;
 mod instance_ids;
@@ -33,3 +34,5 @@ pub use library_error::LibraryFileError;
 pub use library_file::LibraryFile;
 pub use library_json::{decode_library, encode_library};
 pub use versioned_file::FileVersion;
+
+pub use connection_csv::{ConnectionCsvKind, encode_connection_csv, encode_current_connection_csv};

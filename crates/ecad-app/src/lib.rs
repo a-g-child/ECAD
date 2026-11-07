@@ -24,6 +24,8 @@ mod action_registry;
 mod action_types;
 mod adoption;
 mod command;
+mod connection_records;
+mod connection_report;
 mod document;
 mod document_error;
 mod drawing_command;
@@ -109,3 +111,9 @@ pub trait ProjectStore {
     /// Reports IO or encoding failures. Durability guarantees are adapter-specific.
     fn save(&self, project: &ecad_domain::Project) -> Result<(), Self::Error>;
 }
+
+pub use connection_records::{
+    ConductorEnd, ConnectionCable, ConnectionConductor, ConnectionDevice, ConnectionState,
+    ConnectionSubsystem, ConnectionTerminal,
+};
+pub use connection_report::ConnectionReport;
