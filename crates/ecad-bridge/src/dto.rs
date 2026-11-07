@@ -207,6 +207,35 @@ pub enum Request {
         /// Shared host input identity.
         input: String,
     },
+    /// Begin one retained graphical path in the captured drawing view.
+    BeginPath {
+        /// Original view and revision, retained for normal P commit.
+        context: serde_json::Value,
+    },
+    /// Preview the cursor without accepting a vertex or mutating the document.
+    PreviewPath {
+        /// Opaque draft lifetime.
+        session: String,
+        /// Strict exact/pointer coordinate and snap-choice envelope.
+        placement: serde_json::Value,
+    },
+    /// Accept the current reviewed cursor as one draft vertex, consuming its token.
+    AddPathVertex {
+        /// Current acknowledged proposal identity.
+        token: String,
+    },
+    /// Remove the last accepted draft vertex without touching document history.
+    BackPathVertex {
+        /// Current acknowledged proposal identity.
+        token: String,
+    },
+    /// Finish only the accepted vertices as one ordinary P creation operation.
+    CommitPath {
+        /// Current accepted-path proposal.
+        token: String,
+        /// Shared host input identity.
+        input: String,
+    },
     /// Route one logical keyboard event using the core keymap and protected-input policy.
     Key {
         /// Captured targets/focus/revision.
@@ -242,6 +271,7 @@ pub struct Response {
     pub(crate) movement: Option<MoveRow>,
     pub(crate) transform: Option<TransformRow>,
     pub(crate) annotation: Option<AnnotationRow>,
+    pub(crate) path: Option<PathRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
@@ -344,4 +374,14 @@ pub(crate) struct AnnotationInput {
     pub suppressed: bool,
     pub candidate: Option<usize>,
     pub tolerance_um: u32,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub(crate) struct PathRow {
+    #[serde(flatten)]
+    pub placement: MoveRow,
+    pub vertices: Vec<[String; 2]>,
+    pub rubber: Option<SceneRow>,
+    pub can_add: bool,
+    pub can_finish: bool,
 }

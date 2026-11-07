@@ -10,6 +10,7 @@ import { registerControlsTests } from './controls.mjs';
 import { registerTransformTests } from './transforms.mjs';
 import { registerAnnotationTests } from './annotations.mjs';
 import { registerMultilineTests } from './multiline.mjs';
+import { registerPathTests } from './paths.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -409,6 +410,17 @@ registerMultilineTests({
   pressAction,
   changed,
   bounds,
+  root,
+  project: () => project,
+});
+
+registerPathTests({
+  page,
+  button,
+  until,
+  pressAction,
+  bounds,
+  input,
   root,
   project: () => project,
 });

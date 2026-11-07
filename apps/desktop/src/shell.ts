@@ -21,6 +21,7 @@ export function createShell(action: (id: string) => void) {
         ['Redo', 'document.redo'],
         ['Properties', 'selection.properties'],
         ['Create annotation', 'drawing.label.create'],
+        ['Create graphical path', 'drawing.polyline.create'],
         ['Move selection', 'drawing.selection.move'],
         ['Rotate selection', 'drawing.selection.rotate'],
         ['Mirror selection', 'drawing.selection.mirror'],
@@ -74,6 +75,7 @@ export function createShell(action: (id: string) => void) {
   toolbar.append(move);
   for (const [label, name, id] of [
     ['Create annotation · T', 'text', 'drawing.label.create'],
+    ['Create graphical path · P', 'path', 'drawing.polyline.create'],
     ['Rotate selection · R', 'rotate', 'drawing.selection.rotate'],
     ['Mirror selection', 'mirror', 'drawing.selection.mirror'],
   ]) {

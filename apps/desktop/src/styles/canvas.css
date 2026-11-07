@@ -171,3 +171,39 @@
 .caption-bounds {
   pointer-events: none;
 }
+.path-bar[hidden],
+.path-active > .move-bar:not(.path-bar) {
+  display: none;
+}
+.path-rubber {
+  stroke-dasharray: 1.5 1;
+  pointer-events: none;
+}
+.path-vertex {
+  fill: #fff;
+  stroke: #176ca3;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.path-count {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.path-bar button {
+  white-space: nowrap;
+}
+
+.path-cursor {
+  fill: none;
+  stroke: #697784;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .path-count {
+    display: none;
+  }
+}

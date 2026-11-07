@@ -85,7 +85,14 @@ export interface AnnotationRow extends MoveRow {
   text: string;
   valid: boolean;
 }
+export interface PathRow extends MoveRow {
+  vertices: [string, string][];
+  rubber: SceneRow | null;
+  can_add: boolean;
+  can_finish: boolean;
+}
 export interface Reply {
+  path: PathRow | null;
   annotation: AnnotationRow | null;
   transform: TransformRow | null;
   movement: MoveRow | null;

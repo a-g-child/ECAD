@@ -4,6 +4,7 @@ import { DrawingCanvas } from './canvas';
 import { MovementTool } from './movement';
 import { TransformTool } from './transform';
 import { AnnotationTool } from './annotation';
+import { PathTool } from './path';
 import { renderProperties, renderReport, renderTree } from './panels';
 import { element } from './ui';
 import { chooseFile, errorText, inputId, native, send, syncInput } from './transport';
@@ -22,6 +23,7 @@ const drawing = new DrawingCanvas(shell, choose, selectMany);
 let movement: MovementTool | undefined;
 let transform: TransformTool | undefined;
 let annotation: AnnotationTool | undefined;
+let path: PathTool | undefined;
 movement = new MovementTool(shell, drawing, apply, status, buttons, () => {
   movement?.clear();
   void action('placement.cancel');
@@ -42,13 +44,26 @@ annotation = new AnnotationTool(
     void action('placement.cancel');
   },
 );
+path = new PathTool(
+  shell,
+  drawing,
+  apply,
+  status,
+  buttons,
+  (target) => choose(target, false),
+  () => {
+    path?.clear();
+    void action('placement.cancel');
+  },
+);
 function toolActive() {
-  return !!(movement?.active || transform?.active || annotation?.active);
+  return !!(movement?.active || transform?.active || annotation?.active || path?.active);
 }
 function clearTools() {
   movement?.clear();
   transform?.clear();
   annotation?.clear();
+  path?.clear();
 }
 drawing.startMove = async (target, point) => {
   if (!snapshot || busy || toolActive()) return null;
@@ -147,6 +162,7 @@ async function apply(reply: Reply) {
   if (reply.properties) renderProperties(shell, reply.properties, selection.length, edit);
   if (reply.report) renderReport(shell, reply.report);
   if (reply.message) status(reply.message);
+  if (reply.request === 'path') await path?.begin(context());
   if (reply.request === 'annotation') await annotation?.begin(context());
   if (reply.request === 'move') await movement?.begin(context());
   if (reply.request === 'rotate' || reply.request === 'mirror')
@@ -332,6 +348,7 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     return;
   }
+  if (path?.key(event)) return;
   if (annotation?.key(event)) return;
   if (transform?.key(event)) return;
   if (movement?.key(event)) return;
@@ -371,11 +388,13 @@ document.addEventListener('keyup', (event) => {
   if (event.key === 'Alt') {
     movement?.releaseAlt();
     annotation?.releaseAlt();
+    path?.releaseAlt();
   }
 });
 window.addEventListener('blur', () => {
   movement?.releaseAlt();
   annotation?.releaseAlt();
+  path?.releaseAlt();
 });
 shell.tree.addEventListener('contextmenu', () => void action('selection.properties'));
 shell.canvas.addEventListener('contextmenu', (event) => {

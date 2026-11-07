@@ -81,70 +81,20 @@ impl Annotation {
         if input.text.trim().is_empty() {
             return Err(BridgeError::new("text", "Enter nonblank annotation text"));
         }
-        let parse = |text: &str| {
-            text.parse::<i64>().map_err(|_| {
-                BridgeError::new(
-                    "coordinate",
-                    "Enter a signed 64-bit integer micrometre coordinate",
-                )
-            })
-        };
-        let mut position = DrawingPoint {
-            x: parse(&input.x)?,
-            y: parse(&input.y)?,
-        };
+        let cursor = crate::placement::resolve(
+            session,
+            self.context.view.expect("checked at begin"),
+            crate::placement::CursorInput {
+                x: input.x,
+                y: input.y,
+                exact: input.exact,
+                suppressed: input.suppressed,
+                candidate: input.candidate,
+                tolerance_um: input.tolerance_um,
+            },
+        )?;
+        let position = cursor.position;
         let view = self.context.view.expect("checked at begin");
-        let candidates = if input.exact || input.suppressed {
-            vec![]
-        } else {
-            session
-                .project()
-                .drawing()
-                .snap_candidates(&SnapQuery {
-                    view,
-                    position,
-                    excluded: Default::default(),
-                    settings: SnapSettings {
-                        tolerance_um: input.tolerance_um,
-                        terminals: true,
-                        endpoints: true,
-                        midpoints: true,
-                        grid: Some(DrawingGrid {
-                            origin: DrawingPoint { x: 0, y: 0 },
-                            spacing: DrawingLength::new(5000).expect("constant"),
-                        }),
-                    },
-                })
-                .map_err(|e| BridgeError::new("snap", e))?
-        };
-        let chosen = if input.exact || input.suppressed {
-            None
-        } else {
-            match input.candidate {
-                Some(index) if index >= candidates.len() => {
-                    return Err(BridgeError::new(
-                        "snap",
-                        "Snap candidate is no longer available",
-                    ));
-                }
-                Some(index) => Some(index),
-                None => (!candidates.is_empty()).then_some(0),
-            }
-        };
-        let snap = chosen.map(|index| {
-            position = candidates[index].position;
-            match candidates[index].target {
-                SnapTarget::Terminal(_) => "Terminal",
-                SnapTarget::RouteEndpoint { .. } | SnapTarget::PolylineEndpoint { .. } => {
-                    "Endpoint"
-                }
-                SnapTarget::RouteMidpoint { .. } | SnapTarget::PolylineMidpoint { .. } => {
-                    "Midpoint"
-                }
-                SnapTarget::Grid => "Grid",
-            }
-            .to_string()
-        });
         let project = session.project();
         let label = DrawingLabel {
             id: self.id,
@@ -165,9 +115,9 @@ impl Annotation {
                 x: position.x.to_string(),
                 y: position.y.to_string(),
                 scene: vec![projection::label(&candidate, &label)],
-                candidates: candidates.len(),
-                chosen,
-                snap,
+                candidates: cursor.candidates,
+                chosen: cursor.chosen,
+                snap: cursor.snap,
             },
             text: label.text.clone(),
             valid: true,

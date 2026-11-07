@@ -16,6 +16,7 @@ const icons: Record<string, string> = {
   redo: 'm16 5 5 5-5 5 M21 10H11a7 7 0 0 0-7 7',
   fit: 'M3 8V3h5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5 M7 7h10v10H7z',
   properties: 'M4 5h16 M4 12h16 M4 19h16 M8 3v4 M16 10v4 M10 17v4',
+  path: 'M3 18 9 5l6 11 6-12 M2 17h2v2H2z M8 4h2v2H8z M14 15h2v2h-2z M20 3h2v2h-2z',
   text: 'M4 4h16 M12 4v17 M8 21h8 M4 4v4 M20 4v4',
   rotate: 'M5 7a9 9 0 1 1-1 9 M5 2v5h5',
   mirror: 'M12 2v20 M3 6v12l6-6z M21 6v12l-6-6z',

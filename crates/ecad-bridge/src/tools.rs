@@ -14,6 +14,7 @@ impl DesktopBridge {
                 self.movement = None;
                 self.transform = None;
                 self.annotation = None;
+                self.path_draft = None;
                 let scene = self.snapshot().snapshot.expect("snapshot").scene;
                 let movement = Movement::begin(
                     self.document.session(),
@@ -82,6 +83,7 @@ impl DesktopBridge {
                 self.movement = None;
                 self.transform = None;
                 self.annotation = None;
+                self.path_draft = None;
                 let scene = self.snapshot().snapshot.expect("snapshot").scene;
                 let transform = Transform::begin(
                     self.document.session(),
@@ -131,6 +133,7 @@ impl DesktopBridge {
                 self.movement = None;
                 self.transform = None;
                 self.annotation = None;
+                self.path_draft = None;
                 let annotation =
                     Annotation::begin(self.document.session(), context, self.move_serial)?;
                 let reply = annotation.response();
@@ -159,6 +162,53 @@ impl DesktopBridge {
                     parameters,
                 });
                 self.annotation = None;
+                result
+            }
+            Request::BeginPath { context } => {
+                let context = self.context(context)?;
+                self.move_serial = self
+                    .move_serial
+                    .checked_add(1)
+                    .ok_or_else(|| BridgeError::new("path", "Tool identity exhausted"))?;
+                self.movement = None;
+                self.transform = None;
+                self.annotation = None;
+                self.path_draft = None;
+                let draft = PathDraft::begin(self.document.session(), context, self.move_serial)?;
+                let reply = draft.response();
+                self.path_draft = Some(draft);
+                Ok(reply)
+            }
+            Request::PreviewPath { session, placement } => self
+                .path_draft
+                .as_mut()
+                .ok_or_else(|| BridgeError::new("path", "No active path"))?
+                .update(self.document.session(), &session, placement),
+            Request::AddPathVertex { token } => self
+                .path_draft
+                .as_mut()
+                .ok_or_else(|| BridgeError::new("path", "No active path"))?
+                .add(self.document.session(), &token),
+            Request::BackPathVertex { token } => self
+                .path_draft
+                .as_mut()
+                .ok_or_else(|| BridgeError::new("path", "No active path"))?
+                .back(self.document.session(), &token),
+            Request::CommitPath { token, input } => {
+                let draft = self
+                    .path_draft
+                    .as_mut()
+                    .ok_or_else(|| BridgeError::new("path", "No active path"))?;
+                let (context, parameters) = draft.take(&token)?;
+                let result = self.invoke(ActionInvocation {
+                    input_id: input_id(&input)?,
+                    action: ActionId::new("drawing.polyline.create").expect("builtin"),
+                    source: InvocationSource::Toolbar,
+                    repeat: false,
+                    context,
+                    parameters,
+                });
+                self.path_draft = None;
                 result
             }
             _ => Err(BridgeError::new("tool", "Unsupported tool request")),

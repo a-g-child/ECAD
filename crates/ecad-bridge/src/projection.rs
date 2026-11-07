@@ -103,18 +103,7 @@ pub(crate) fn snapshot(
             Some(ObjectRef::View(p.view)),
             Some(p.view),
         ));
-        let (colour, width) = properties::stroke(project, target);
-        scene.push(SceneRow {
-            target: target.into(),
-            view: p.view.to_string(),
-            label: "Graphical path".into(),
-            shape: "path".into(),
-            points: p.points.iter().copied().map(mm).collect(),
-            colour,
-            width,
-            text_height: 0.0,
-            font: String::new(),
-        });
+        scene.push(polyline(project, p));
     }
     for r in drawing.routes() {
         let target = ObjectRef::Route(r.id);
@@ -179,6 +168,7 @@ pub(crate) fn snapshot(
                 d.handler,
                 ActionHandler::OpenProject
                     | ActionHandler::CreateLabel
+                    | ActionHandler::CreatePolyline
                     | ActionHandler::FitDrawing
                     | ActionHandler::MoveSelection
                     | ActionHandler::RotateSelection
@@ -349,5 +339,21 @@ pub(crate) fn label(project: &Project, l: &DrawingLabel) -> SceneRow {
         width,
         text_height: height,
         font,
+    }
+}
+
+pub(crate) fn polyline(project: &Project, p: &DrawingPolyline) -> SceneRow {
+    let target = ObjectRef::Polyline(p.id);
+    let (colour, width) = properties::stroke(project, target);
+    SceneRow {
+        target: target.into(),
+        view: p.view.to_string(),
+        label: "Graphical path".into(),
+        shape: "path".into(),
+        points: p.points.iter().copied().map(mm).collect(),
+        colour,
+        width,
+        text_height: 0.0,
+        font: String::new(),
     }
 }

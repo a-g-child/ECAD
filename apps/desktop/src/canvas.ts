@@ -41,6 +41,44 @@ export class DrawingCanvas {
       this.shell.svg.append(marker);
     }
   }
+  pathPreview(
+    rows: SceneRow[],
+    rubber: SceneRow | null,
+    vertices: [string, string][],
+    cursor: [number, number],
+    snapped: boolean,
+  ) {
+    this.preview(rows, snapped ? cursor : undefined);
+    const ns = 'http://www.w3.org/2000/svg';
+    if (!snapped) {
+      const marker = document.createElementNS(ns, 'circle');
+      marker.setAttribute('cx', String(cursor[0]));
+      marker.setAttribute('cy', String(cursor[1]));
+      marker.setAttribute('r', '0.8');
+      marker.setAttribute('class', 'path-cursor');
+      this.shell.svg.append(marker);
+    }
+    if (rubber) {
+      const line = document.createElementNS(ns, 'polyline');
+      for (const [name, value] of Object.entries({
+        points: rubber.points.map((p) => p.join(',')).join(' '),
+        fill: 'none',
+        stroke: rubber.colour,
+        'stroke-width': rubber.width,
+        class: 'path-rubber',
+      }))
+        line.setAttribute(name, String(value));
+      this.shell.svg.append(line);
+    }
+    for (const [x, y] of vertices) {
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', String(Number(x) / 1000));
+      dot.setAttribute('cy', String(Number(y) / 1000));
+      dot.setAttribute('r', '0.65');
+      dot.setAttribute('class', 'path-vertex');
+      this.shell.svg.append(dot);
+    }
+  }
   clearPreview() {
     this.render(this.rows);
   }

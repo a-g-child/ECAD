@@ -4,6 +4,8 @@ mod annotation;
 mod controller;
 mod dto;
 mod movement;
+mod path;
+mod placement;
 mod preview_scene;
 mod projection;
 mod properties;
