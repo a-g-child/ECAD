@@ -1,6 +1,7 @@
 //! Boundary exposure and cross-scope connectivity over real terminal identities.
 
 use super::Project;
+use crate::reuse::OwnedObject;
 use crate::{InterfacePort, InterfacePortId, ModelError, SubsystemId, TerminalId};
 use std::collections::BTreeSet;
 
@@ -18,6 +19,7 @@ impl Project {
     /// # Errors
     /// Rejects duplicates, reused names, foreign terminals, or missing child exposures.
     pub fn insert_port(&mut self, port: InterfacePort) -> Result<(), ModelError> {
+        self.ensure_editable(OwnedObject::Subsystem(port.subsystem()))?;
         if self.ports.contains_key(&port.id()) {
             return Err(ModelError::DuplicatePort(port.id()));
         }
@@ -44,6 +46,7 @@ impl Project {
     /// # Errors
     /// Missing ports or invalidated outer interfaces, conductors, or cable ends restore it.
     pub fn remove_port(&mut self, id: InterfacePortId) -> Result<InterfacePort, ModelError> {
+        self.ensure_editable(OwnedObject::Port(id))?;
         let port = self.ports.remove(&id).ok_or(ModelError::MissingPort(id))?;
         let key = (port.subsystem(), port.terminal());
         let ids = self

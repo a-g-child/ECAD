@@ -19,12 +19,20 @@ mod hierarchy;
 mod identity;
 mod objects;
 mod project;
+mod reuse;
+mod reuse_error;
 
 pub use cable::{Cable, CableEndpoint};
 pub use error::ModelError;
 pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};
 pub use identity::{
-    CableId, ConductorId, DeviceId, IdError, InterfacePortId, ProjectId, SubsystemId, TerminalId,
+    CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, IdError, InterfacePortId,
+    ProjectId, SubsystemId, TerminalId,
 };
 pub use objects::{Conductor, Device, End, Terminal};
 pub use project::Project;
+pub use reuse::{
+    DefinitionRef, InstanceBinding, InstanceIds, InstanceLimits, InstancePlan, InstanceState,
+    MAX_INSTANCE_OBJECTS, SubsystemRevision,
+};
+pub use reuse_error::ReuseError;

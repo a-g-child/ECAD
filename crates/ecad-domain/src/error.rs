@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// A proposed edit violates structural validity. Rejected edits leave state intact.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ModelError {
+    /// Reusable content, mapping, or instance immutability validation failed.
+    Reuse(crate::ReuseError),
     /// A required name, designation, or terminal number contains only whitespace.
     EmptyLabel,
     /// A device identity is already present.
@@ -61,6 +63,7 @@ pub enum ModelError {
 impl fmt::Display for ModelError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Reuse(error) => error.fmt(f),
             Self::EmptyLabel => {
                 f.write_str("required name, designation, or terminal number cannot be blank")
             }
@@ -113,4 +116,16 @@ impl fmt::Display for ModelError {
     }
 }
 
-impl Error for ModelError {}
+impl Error for ModelError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Reuse(error) => Some(error),
+            _ => None,
+        }
+    }
+}
+impl From<crate::ReuseError> for ModelError {
+    fn from(error: crate::ReuseError) -> Self {
+        Self::Reuse(error)
+    }
+}

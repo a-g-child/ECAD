@@ -15,13 +15,13 @@ pub(crate) struct VersionEnvelope {
 #[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct ProjectData {
-    schema_version: u32,
-    project_id: String,
-    subsystems: Vec<SubsystemData>,
-    devices: Vec<DeviceData>,
-    ports: Vec<PortData>,
-    conductors: Vec<ConductorData>,
-    cables: Vec<CableData>,
+    pub(crate) schema_version: u32,
+    pub(crate) project_id: String,
+    pub(crate) subsystems: Vec<SubsystemData>,
+    pub(crate) devices: Vec<DeviceData>,
+    pub(crate) ports: Vec<PortData>,
+    pub(crate) conductors: Vec<ConductorData>,
+    pub(crate) cables: Vec<CableData>,
 }
 
 #[derive(Deserialize)]
@@ -61,7 +61,7 @@ impl LegacyProjectData {
 
 #[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-struct DeviceData {
+pub(crate) struct DeviceData {
     id: String,
     designation: String,
     terminals: Vec<TerminalData>,
@@ -109,7 +109,7 @@ struct TerminalData {
 
 #[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-struct ConductorData {
+pub(crate) struct ConductorData {
     id: String,
     a: Option<String>,
     b: Option<String>,
@@ -156,6 +156,9 @@ impl TryFrom<ProjectData> for Project {
     type Error = ProjectFileError;
 
     fn try_from(data: ProjectData) -> Result<Self, Self::Error> {
+        if data.schema_version != 3 {
+            return Err(ProjectFileError::UnsupportedVersion(data.schema_version));
+        }
         let mut project = Project::new(data.project_id.parse()?);
         load_subsystems(&mut project, data.subsystems)?;
         for device in data.devices {

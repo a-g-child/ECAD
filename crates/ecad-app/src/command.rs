@@ -4,10 +4,29 @@ use ecad_domain::{
     Cable, CableId, Conductor, ConductorId, Device, DeviceId, End, InterfacePort, InterfacePortId,
     ModelError, Project, Subsystem, SubsystemId, TerminalId,
 };
+use ecad_domain::{DefinitionRef, InstanceBinding, InstanceState, SubsystemRevision};
+use std::sync::Arc;
 
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Bundle one immutable reusable revision into the project.
+    InsertDefinition(Arc<SubsystemRevision>),
+    /// Remove a bundled revision only when no occurrence pins it.
+    RemoveDefinition(DefinitionRef),
+    /// Pin an already-materialized occurrence after exact correspondence checks.
+    BindInstance(InstanceBinding),
+    /// Make one occurrence project-local while retaining its objects and wiring.
+    DetachInstance(SubsystemId),
+    /// Deliberately forget a local variant's source ancestry without changing objects.
+    ForgetLocalOrigin(SubsystemId),
+    /// Reversible validated link/provenance transition, used by lifecycle undo.
+    SetInstanceState {
+        /// Placed root whose state changes.
+        root: SubsystemId,
+        /// Desired pin, local ancestry, or deliberate unlinking.
+        state: InstanceState,
+    },
     /// Insert a project-local functional block.
     InsertSubsystem(Subsystem),
     /// Remove an empty unreferenced block.
@@ -57,6 +76,41 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::InsertDefinition(revision) => {
+                if !project.insert_definition(Arc::clone(revision))? {
+                    return Ok(None);
+                }
+                Self::RemoveDefinition(revision.source())
+            }
+            Self::RemoveDefinition(source) => {
+                Self::InsertDefinition(project.remove_definition(*source)?)
+            }
+            Self::BindInstance(binding) => {
+                let previous = project.instance_state(binding.root());
+                project.bind_instance(binding.clone())?;
+                Self::SetInstanceState {
+                    root: binding.root(),
+                    state: previous,
+                }
+            }
+            Self::DetachInstance(root) => Self::SetInstanceState {
+                root: *root,
+                state: InstanceState::Pinned(project.detach_instance(*root)?),
+            },
+            Self::ForgetLocalOrigin(root) => Self::SetInstanceState {
+                root: *root,
+                state: InstanceState::Local(project.forget_local_origin(*root)?),
+            },
+            Self::SetInstanceState { root, state } => {
+                let previous = project.set_instance_state(*root, state.clone())?;
+                if previous == *state {
+                    return Ok(None);
+                }
+                Self::SetInstanceState {
+                    root: *root,
+                    state: previous,
+                }
+            }
             Self::InsertSubsystem(subsystem) => {
                 project.insert_subsystem(subsystem.clone())?;
                 Self::RemoveSubsystem(subsystem.id())

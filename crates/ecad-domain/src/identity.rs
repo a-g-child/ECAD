@@ -86,6 +86,14 @@ identity!(
     CableId,
     "Identity of a cable assembly grouping existing conductors."
 );
+identity!(
+    DefinitionId,
+    "Lineage identity of a reusable subsystem definition."
+);
+identity!(
+    DefinitionRevisionId,
+    "Identity of one immutable reusable subsystem revision."
+);
 
 #[cfg(test)]
 mod tests {

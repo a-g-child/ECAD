@@ -1,15 +1,24 @@
 //! Project ownership and atomic, invariant-preserving single-object operations.
 
+use crate::reuse::OwnedObject;
 use crate::{
     Cable, CableId, Conductor, ConductorId, Device, DeviceId, End, InterfacePort, InterfacePortId,
     ModelError, ProjectId, Subsystem, SubsystemId, TerminalId,
 };
+use crate::{DefinitionRef, InstanceBinding, SubsystemRevision};
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
 
 #[path = "project_cables.rs"]
 mod cables;
 #[path = "project_hierarchy.rs"]
 mod hierarchy;
+#[path = "project_instance_checks.rs"]
+mod instance_checks;
+#[path = "project_instance_states.rs"]
+mod instance_states;
+#[path = "project_instances.rs"]
+mod instances;
 #[path = "project_interfaces.rs"]
 mod interfaces;
 
@@ -25,6 +34,10 @@ pub struct Project {
     exports: BTreeMap<(SubsystemId, TerminalId), BTreeSet<InterfacePortId>>,
     cables: BTreeMap<CableId, Cable>,
     conductor_cables: BTreeMap<ConductorId, CableId>,
+    definitions: BTreeMap<DefinitionRef, Arc<SubsystemRevision>>,
+    instances: BTreeMap<SubsystemId, InstanceBinding>,
+    local_origins: BTreeMap<SubsystemId, InstanceBinding>,
+    instance_owners: BTreeMap<OwnedObject, SubsystemId>,
 }
 
 impl Project {
@@ -41,6 +54,10 @@ impl Project {
             exports: BTreeMap::new(),
             cables: BTreeMap::new(),
             conductor_cables: BTreeMap::new(),
+            definitions: BTreeMap::new(),
+            instances: BTreeMap::new(),
+            local_origins: BTreeMap::new(),
+            instance_owners: BTreeMap::new(),
         }
     }
 
@@ -78,6 +95,7 @@ impl Project {
     /// # Errors
     /// Duplicate device or terminal identities reject the entire insertion.
     pub fn insert_device(&mut self, device: Device) -> Result<(), ModelError> {
+        self.ensure_local_parent(device.subsystem())?;
         self.require_subsystem(device.subsystem())?;
         if self.devices.contains_key(&device.id()) {
             return Err(ModelError::DuplicateDevice(device.id()));
@@ -99,6 +117,7 @@ impl Project {
     /// Missing, connected, or interface/cable-referenced devices are rejected without mutation.
     /// Currently scans conductors; the scale harness should inform a reverse index.
     pub fn remove_device(&mut self, id: DeviceId) -> Result<Device, ModelError> {
+        self.ensure_editable(OwnedObject::Device(id))?;
         let device = self.devices.get(&id).ok_or(ModelError::MissingDevice(id))?;
         for conductor in self.conductors.values() {
             for end in [End::A, End::B] {
@@ -146,6 +165,7 @@ impl Project {
     /// # Errors
     /// Returns a missing-conductor or cable-membership error without mutation.
     pub fn remove_conductor(&mut self, id: ConductorId) -> Result<Conductor, ModelError> {
+        self.ensure_editable(OwnedObject::Conductor(id))?;
         if self.conductor_cables.contains_key(&id) {
             return Err(ModelError::ConductorInCable(id));
         }
@@ -168,6 +188,9 @@ impl Project {
             .conductors
             .get(&id)
             .ok_or(ModelError::MissingConductor(id))?;
+        if current.endpoint(end) != terminal {
+            self.ensure_editable(OwnedObject::Conductor(id))?;
+        }
         let mut candidate = current.clone();
         candidate.set_endpoint(end, terminal);
         self.check_conductor(&candidate)?;
@@ -191,6 +214,7 @@ impl Project {
         for cable in self.cables.values() {
             self.check_cable(cable)?;
         }
+        self.validate_instances()?;
         Ok(())
     }
 
@@ -208,6 +232,7 @@ impl Project {
             self.check_terminal(conductor.endpoint(end))?;
         }
         self.check_boundaries(conductor.endpoint(End::A), conductor.endpoint(End::B))?;
+        self.check_instance_wire(conductor)?;
         if let Some(cable_id) = self.conductor_cables.get(&conductor.id()) {
             let cable = self
                 .cables

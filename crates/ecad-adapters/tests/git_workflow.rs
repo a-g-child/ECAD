@@ -65,7 +65,7 @@ fn stable_saves_focused_diffs_and_branch_checkout_preserve_electrical_data() {
     let root = directory.path();
     git(root, &["init", "--quiet"]);
     let store = JsonFile::new(root.join("project.json"));
-    let original = decode_project(include_str!("fixtures/minimal-v3.json")).unwrap();
+    let original = decode_project(include_str!("fixtures/minimal-v4.json")).unwrap();
     let mut session = Session::new(original.clone());
     store.save(session.project()).unwrap();
     git(root, &["add", "project.json"]);
@@ -112,7 +112,7 @@ fn branch_checkout_is_detected_and_reload_invalidates_the_previous_session() {
     let root = directory.path();
     git(root, &["init", "--quiet"]);
     let store = JsonFile::new(root.join("project.json"));
-    let original = decode_project(include_str!("fixtures/minimal-v3.json")).unwrap();
+    let original = decode_project(include_str!("fixtures/minimal-v4.json")).unwrap();
     store.save(&original).unwrap();
     git(root, &["add", "project.json"]);
     git(root, &["commit", "--quiet", "-m", "Initial project"]);

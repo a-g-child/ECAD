@@ -1,6 +1,6 @@
 # Hierarchy, scale, and shared revisions
 
-Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Shared definitions, revision publication/adoption, and associated identity/storage policies below remain planned. See [decision 0004](decisions/0004-local-hierarchy-and-cables.md).
+Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Project-bundled immutable revisions, independent occurrences, and make-local ancestry are also implemented. External publication, known-use discovery, and update adoption below remain planned. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md).
 
 ## Target and object boundaries
 
@@ -35,13 +35,21 @@ Probe usable capacity through representative workloads, controlled growth sweeps
 | Instance/occurrence ID | Identifies one placed use in a particular project and hierarchy. |
 | Definition-local object ID | Identifies a terminal, component, or interface element across compatible revisions. |
 
-The same definition can appear in two projects, or several times within one project. Each occurrence has distinct electrical identity even when it shares the same definition revision. Renaming a subsystem must not change its identity. Exact identity encoding and nested-occurrence addressing remain an architecture decision.
+The same definition can appear in two projects, or several times within one project. Each occurrence has distinct electrical identity even when it shares the same definition revision. Renaming a subsystem must not change its identity. Typed IDs use canonical 128-bit hexadecimal encoding; complete per-kind mappings relate definition-local IDs to independently placed IDs. Nested reusable dependencies are currently rejected.
 
 Each project records the resolved revisions and enough dependency/asset data to reopen without a central library. A mutable "default" pointer may recommend a revision for new adoption; it is not a substitute for a project's revision lock. Existing occurrences never silently follow the latest default.
 
 Separate occurrence parameters, such as a permitted designation or configured option, from structural edits to a reusable design. Do not treat arbitrary changes to internal wiring as an unexplained parameter override. Define supported overrides and variant behavior before implementing update propagation.
 
-## Editing and publishing workflow
+## Implemented reuse boundary
+
+A revision contains one self-contained local hierarchy. Placement materializes independently editable electrical identities and binds them to that immutable source. Pinned internals are locked; root name and parent are occurrence parameters, and external conductors must use root-exposed terminals. One compound command places the complete occurrence, with exact rollback and undo.
+
+Make-local removes the lock while retaining the original source and ID mapping, including IDs of subsequently deleted internal objects. This is historical ancestry, not a promise that the occurrence still matches its source. Forgetting ancestry is a separate undoable operation. Bundled sources cannot be overwritten or removed while a pin or local origin references them. Importing another revision changes no existing occurrence.
+
+Placement currently caps each occurrence at 100,000 objects including terminals, with a caller-selectable lower limit. This provisional guard is not a project-wide memory budget. Definitions share an immutable body, but occurrence content is materialized; whole-project validation checks it against the source. Ownership indexes keep ordinary mutation guards local; placement and full validation still perform broad scans. The scale probe covers 1/10/100 repeated instances and does not establish production capacity.
+
+## Editing and publishing workflow (planned)
 
 When changing reusable content, make its scope explicit. Offer:
 
@@ -85,4 +93,4 @@ Update selected project occurrences as a coherent command with validation, undo/
 
 ## Next decisions
 
-Choose the representative system and scale fixtures; specify occurrence parameters versus structural variants; define revision addressing and dependency locks; and decide the first shared-library storage and known-project indexing workflow. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.
+Choose the representative system and scale fixtures; extend occurrence parameters and structural variants; define nested dependency locks and update matching; and decide the first shared-library storage and known-project indexing workflow. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.

@@ -1,6 +1,7 @@
 //! Containment edits and iterative bounded traversal, kept separate from geometry.
 
 use super::Project;
+use crate::reuse::OwnedObject;
 use crate::{
     CableEndpoint, DeviceId, End, MAX_SUBSYSTEM_DEPTH, ModelError, Subsystem, SubsystemId,
 };
@@ -29,6 +30,7 @@ impl Project {
     /// # Errors
     /// Rejects duplicates, missing parents, cycles, or depth overflow atomically.
     pub fn insert_subsystem(&mut self, subsystem: Subsystem) -> Result<(), ModelError> {
+        self.ensure_local_parent(subsystem.parent())?;
         if self.subsystems.contains_key(&subsystem.id()) {
             return Err(ModelError::DuplicateSubsystem(subsystem.id()));
         }
@@ -46,6 +48,10 @@ impl Project {
     /// # Errors
     /// Missing blocks or any children, devices, ports, or cable ends reject removal.
     pub fn remove_subsystem(&mut self, id: SubsystemId) -> Result<Subsystem, ModelError> {
+        self.ensure_editable(OwnedObject::Subsystem(id))?;
+        if self.local_origins.contains_key(&id) {
+            return Err(crate::ReuseError::LocalOriginExists(id).into());
+        }
         self.require_subsystem(Some(id))?;
         if self.subsystems.values().any(|s| s.parent() == Some(id))
             || self.devices.values().any(|d| d.subsystem() == Some(id))
@@ -72,6 +78,22 @@ impl Project {
         id: SubsystemId,
         parent: Option<SubsystemId>,
     ) -> Result<Option<SubsystemId>, ModelError> {
+        let previous = self
+            .subsystems
+            .get(&id)
+            .ok_or(ModelError::MissingSubsystem(id))?
+            .parent();
+        if previous == parent {
+            return Ok(previous);
+        }
+        if self
+            .instance_owners
+            .get(&OwnedObject::Subsystem(id))
+            .is_some_and(|root| *root != id)
+        {
+            self.ensure_editable(OwnedObject::Subsystem(id))?;
+        }
+        self.ensure_local_parent(parent)?;
         self.require_subsystem(parent)?;
         let block = self
             .subsystems
@@ -97,6 +119,16 @@ impl Project {
         id: DeviceId,
         subsystem: Option<SubsystemId>,
     ) -> Result<Option<SubsystemId>, ModelError> {
+        let previous = self
+            .devices
+            .get(&id)
+            .ok_or(ModelError::MissingDevice(id))?
+            .subsystem();
+        if previous == subsystem {
+            return Ok(previous);
+        }
+        self.ensure_editable(OwnedObject::Device(id))?;
+        self.ensure_local_parent(subsystem)?;
         self.require_subsystem(subsystem)?;
         let device = self
             .devices

@@ -1,6 +1,7 @@
 //! Cable membership ownership and consistency between overview ends and core wiring.
 
 use super::Project;
+use crate::reuse::OwnedObject;
 use crate::{Cable, CableEndpoint, CableId, Conductor, ConductorId, End, ModelError};
 
 impl Project {
@@ -36,6 +37,7 @@ impl Project {
     /// # Errors
     /// Returns a missing-cable error without mutation when absent.
     pub fn remove_cable(&mut self, id: CableId) -> Result<Cable, ModelError> {
+        self.ensure_editable(OwnedObject::Cable(id))?;
         let cable = self
             .cables
             .remove(&id)
@@ -47,6 +49,7 @@ impl Project {
     }
 
     pub(super) fn check_cable(&self, cable: &Cable) -> Result<(), ModelError> {
+        self.check_instance_cable(cable)?;
         for end in [End::A, End::B] {
             match cable.endpoint(end) {
                 CableEndpoint::Device(id) if !self.devices.contains_key(&id) => {

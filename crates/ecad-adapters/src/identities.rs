@@ -1,7 +1,8 @@
 //! Fallible OS-random UUID-v4 generation outside the dependency-free domain.
 
 use ecad_domain::{
-    CableId, ConductorId, DeviceId, InterfacePortId, ProjectId, SubsystemId, TerminalId,
+    CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, InterfacePortId, ProjectId,
+    SubsystemId, TerminalId,
 };
 
 /// Generate typed persistent IDs from OS entropy, without timestamps or counters.
@@ -11,6 +12,18 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a reusable definition lineage identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn definition() -> Result<DefinitionId, getrandom::Error> {
+        Ok(DefinitionId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+    /// Generate an immutable definition snapshot identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn definition_revision() -> Result<DefinitionRevisionId, getrandom::Error> {
+        Ok(DefinitionRevisionId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
     /// Generate a placed subsystem occurrence ID, not a reusable definition ID.
     /// # Errors
     /// Returns the OS entropy error.

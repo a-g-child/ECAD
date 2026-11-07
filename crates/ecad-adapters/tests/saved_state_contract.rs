@@ -99,7 +99,7 @@ fn reopened_documents_start_clean_with_empty_history_and_a_new_epoch() {
 fn compound_rollback_and_no_ops_preserve_a_clean_checkpoint_and_redo() {
     let directory = tempfile::tempdir().unwrap();
     let store = JsonFile::new(directory.path().join("project.json"));
-    let original = decode_project(include_str!("fixtures/minimal-v3.json")).unwrap();
+    let original = decode_project(include_str!("fixtures/minimal-v4.json")).unwrap();
     store.save(&original).unwrap();
     let mut session = Session::open(&store).unwrap();
     session.execute(session.revision(), device(3)).unwrap();

@@ -2,6 +2,8 @@
 
 #[path = "support/hierarchy.rs"]
 mod hierarchy;
+#[path = "support/reuse.rs"]
+mod reuse;
 
 use ecad_adapters::{decode_project, encode_project};
 use ecad_app::{Command, Session};
@@ -22,6 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         cases.push(probe(count)?);
     }
     let hierarchy_cases = hierarchy::cases()?;
+    let reuse_cases = reuse::cases()?;
     let rustc = Process::new("rustc").arg("--version").output()?;
     if !rustc.status.success() {
         return Err("could not identify rustc".into());
@@ -53,9 +56,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 3,
-        "recipe": "unique-device-chain-and-hierarchy-v3",
-        "project_schema": 3,
+        "report_version": 4,
+        "recipe": "electrical-hierarchy-and-reuse-v4",
+        "project_schema": 4,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
         "os": std::env::consts::OS,
@@ -67,6 +70,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "cache": "fresh in-memory project per case; no persistent index",
         "cases": cases,
         "hierarchy_cases": hierarchy_cases,
+        "reuse_cases": reuse_cases,
     });
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/scale");
     std::fs::create_dir_all(&root)?;

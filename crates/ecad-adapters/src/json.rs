@@ -1,5 +1,6 @@
 //! Canonical JSON encoding and same-directory temporary-file replacement.
 
+use crate::schema_reuse::ReusableProjectData;
 use crate::{
     ProjectFileError,
     schema::{FlatProjectData, LegacyProjectData, ProjectData, VersionEnvelope},
@@ -12,14 +13,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Encode v3 JSON in identity order, with two-space indentation and a final LF.
+/// Encode v4 JSON in identity order, with two-space indentation and a final LF.
 ///
 /// No timestamps, session history, or platform line endings are embedded.
 /// # Errors
 /// Returns a structured model or JSON encoding error without changing the project.
 pub fn encode_project(project: &Project) -> Result<String, ProjectFileError> {
     project.validate()?;
-    Ok(serde_json::to_string_pretty(&ProjectData::from(project))? + "\n")
+    Ok(serde_json::to_string_pretty(&ReusableProjectData::from(project))? + "\n")
 }
 
 /// Decode and validate a complete project without exposing intermediate objects.
@@ -37,12 +38,15 @@ pub fn decode_project(text: &str) -> Result<Project, ProjectFileError> {
     if envelope.schema_version == 2 {
         return serde_json::from_str::<FlatProjectData>(text)?.upgrade();
     }
-    if envelope.schema_version != 3 {
+    if envelope.schema_version == 3 {
+        return Project::try_from(serde_json::from_str::<ProjectData>(text)?);
+    }
+    if envelope.schema_version != 4 {
         return Err(ProjectFileError::UnsupportedVersion(
             envelope.schema_version,
         ));
     }
-    let data: ProjectData = serde_json::from_str(text)?;
+    let data: ReusableProjectData = serde_json::from_str(text)?;
     Project::try_from(data)
 }
 
