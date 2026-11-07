@@ -38,6 +38,8 @@ pub enum ActionHandler {
     CreatePolyline,
     /// Inspect/edit portable drawing settings.
     DrawingSettings,
+    /// Inspect or replace portable project metadata.
+    ProjectMetadata,
     /// Request the registry-generated command palette.
     Palette,
     /// Request cancellation of host-owned transient placement.
@@ -60,6 +62,8 @@ pub enum ActionInputRequirement {
     PolylinePlacement,
     /// Settings can be supplied or requested through an editor.
     DrawingSettings,
+    /// Inspect or replace portable project metadata.
+    ProjectMetadata,
 }
 /// Host key-repeat policy, separate from command undo grouping.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -113,6 +117,7 @@ impl ActionDefinition {
             ActionHandler::CreateLabel => ActionInputRequirement::LabelPlacement,
             ActionHandler::CreatePolyline => ActionInputRequirement::PolylinePlacement,
             ActionHandler::DrawingSettings => ActionInputRequirement::DrawingSettings,
+            ActionHandler::ProjectMetadata => ActionInputRequirement::ProjectMetadata,
             _ => ActionInputRequirement::None,
         }
     }

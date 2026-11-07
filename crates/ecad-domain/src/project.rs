@@ -36,6 +36,7 @@ mod routes;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Project {
     id: ProjectId,
+    pub(crate) metadata: crate::ProjectMetadata,
     drawing: crate::DrawingDocument,
     devices: BTreeMap<DeviceId, Device>,
     terminal_owners: BTreeMap<TerminalId, DeviceId>,
@@ -57,6 +58,7 @@ impl Project {
     pub fn new(id: ProjectId) -> Self {
         Self {
             id,
+            metadata: crate::ProjectMetadata::default(),
             drawing: crate::DrawingDocument::default(),
             devices: BTreeMap::new(),
             terminal_owners: BTreeMap::new(),

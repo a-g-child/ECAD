@@ -99,7 +99,13 @@ export interface DrawingDefaults {
   stroke_width: string;
   colour: string;
 }
+export interface MetadataRow {
+  key: string;
+  label: string;
+  value: string;
+}
 export interface Reply {
+  metadata: MetadataRow[] | null;
   defaults: DrawingDefaults | null;
   path: PathRow | null;
   annotation: AnnotationRow | null;

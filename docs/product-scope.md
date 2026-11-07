@@ -35,6 +35,10 @@ The initial target is a complete equipment system at roughly the scale of a car,
 
 Tauri with a Rust core is a preferred candidate, subject to interaction and rendering prototypes. SQLite is a candidate for indexing and caching; its role is not settled. Neither choice is a finalized architecture.
 
+## Drawing sheets and reusable layouts
+
+Include structured sheet layouts and title-block tables with row/cell split/merge, multiline entries, bulk formatting, scoped variables and explicit local overrides. Personal/company profiles supply copied project values; sheet-local and derived values remain distinct. Plan standard, draft, cover and generated contents layouts, pinned template revisions, paper-space sizing, portable logos and reproducible issued output. See [sheets and templates](sheets-and-templates.md) for the feature contract and delivery checklist.
+
 ## Core concepts
 
 | Concept | Meaning |

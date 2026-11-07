@@ -59,6 +59,9 @@ impl SubsystemRevision {
         content: Project,
     ) -> Result<Self, ModelError> {
         content.validate()?;
+        if !content.metadata().values().is_empty() {
+            return Err(crate::ReuseError::ProjectMetadataUnsupported.into());
+        }
         if content.drawing() != &crate::DrawingDocument::default() {
             return Err(crate::DrawingError::ReusableDrawingsUnsupported.into());
         }

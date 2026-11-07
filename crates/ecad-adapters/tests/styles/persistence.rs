@@ -8,7 +8,7 @@ fn save_reopen_preserves_equal_override_intent_defaults_and_document_checkpoint_
     let session = setup();
     assert_eq!(
         encode_project(session.project()).unwrap(),
-        include_str!("../fixtures/styled-overview-v6.json")
+        include_str!("../fixtures/styled-overview-v7.json")
     );
     let directory = tempfile::tempdir().unwrap();
     let store = JsonFile::new(directory.path().join("styled.json"));
@@ -54,7 +54,7 @@ fn v2_v3_v4_upgrade_preserves_electrical_identity_and_gives_portable_empty_drawi
         let current = encode_project(&project).unwrap();
         assert_eq!(
             serde_json::from_str::<Value>(&current).unwrap()["schema_version"],
-            6
+            7
         );
         assert_eq!(decode_project(&current).unwrap(), project);
     }
@@ -112,7 +112,7 @@ fn strict_drawing_schema_rejects_unknowns_duplicates_zero_lengths_missing_refs_a
         );
     }
     let mut invalid = data.clone();
-    invalid["schema_version"] = json!(7);
+    invalid["schema_version"] = json!(8);
     assert!(decode_project(&invalid.to_string()).is_err());
     let mut invalid = data.clone();
     invalid.as_object_mut().unwrap().remove("drawing");

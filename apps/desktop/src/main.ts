@@ -4,6 +4,7 @@ import { DrawingCanvas } from './canvas';
 import { MovementTool } from './movement';
 import { LayoutTool } from './layout';
 import { DefaultsDialog } from './defaults';
+import { MetadataDialog } from './metadata';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
 import { renderProperties, renderReport, renderTree } from './panels';
@@ -59,6 +60,7 @@ path = new PathTool(
   },
 );
 const defaults = new DefaultsDialog(shell, apply, status);
+const metadata = new MetadataDialog(shell, apply, status);
 function toolActive() {
   return !!(movement?.active || layout?.active || annotation?.active || path?.active);
 }
@@ -195,6 +197,7 @@ async function apply(reply: Reply) {
   }
   if (reply.request === 'fit') drawing.fit();
   if (reply.request === 'palette') openPalette();
+  if (reply.request === 'metadata' && reply.metadata) metadata.open(context(), reply.metadata);
   if (reply.request === 'defaults' && reply.defaults) defaults.open(context(), reply.defaults);
   if (reply.request === 'save_as' || reply.request === 'open') {
     const result = await chooseFile(reply.request === 'save_as');
@@ -372,7 +375,8 @@ document.addEventListener('keydown', (event) => {
     event.isComposing ||
     target.matches('input,textarea,select,button,[contenteditable="true"]') ||
     shell.palette.open ||
-    defaults.active
+    defaults.active ||
+    metadata.active
   )
     return;
   if (event.key === 'Escape' && drawing.cancelGesture()) {

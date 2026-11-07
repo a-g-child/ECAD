@@ -121,6 +121,15 @@ pub enum Request {
         /// Literal editable value, never an inferred identity.
         value: String,
     },
+    /// Replace portable project metadata as one registered document edit.
+    UpdateMetadata {
+        /// Original project revision and action context.
+        context: serde_json::Value,
+        /// Stable catalog keys to literal text; empty values remove entries.
+        values: std::collections::BTreeMap<String, String>,
+        /// Shared monotonic host input identity.
+        input: String,
+    },
     /// Replace project fallbacks, retaining every creation preset and named style.
     UpdateDefaults {
         /// Captured document revision and action context.
@@ -282,6 +291,7 @@ pub struct Response {
     pub(crate) annotation: Option<AnnotationRow>,
     pub(crate) path: Option<PathRow>,
     pub(crate) defaults: Option<crate::defaults::DefaultsRow>,
+    pub(crate) metadata: Option<Vec<crate::metadata::MetadataRow>>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {

@@ -158,8 +158,8 @@ Current test owners:
 - Orthogonal transforms: [coordinate rules](../crates/ecad-domain/tests/transform_contract.rs), [connected workflows](../crates/ecad-adapters/tests/transform_workflow.rs), [failure/rollback cases](../crates/ecad-adapters/tests/transforms/failures.rs), and [shared action previews](../crates/ecad-adapters/tests/transforms/actions.rs).
 - Snapping and exact previews: [snap rules](../crates/ecad-domain/tests/snap_contract.rs), [placement workflows](../crates/ecad-adapters/tests/placement_workflow.rs), and [shared M preview/commit](../crates/ecad-adapters/tests/placement/actions.rs).
 - Origin layout and group movement: [layout workflows](../crates/ecad-adapters/tests/layout_workflow.rs), [failure/rollback regressions](../crates/ecad-adapters/tests/layout/failures.rs), and [shared action workflows](../crates/ecad-adapters/tests/layout/actions.rs).
-- Whole conductor routes: [workflow contracts](../crates/ecad-adapters/tests/route_workflow.rs), [persistence/action/adoption regressions](../crates/ecad-adapters/tests/routes/persistence.rs), and [routed fixture](../crates/ecad-adapters/tests/fixtures/routed-conveyor-v6.json).
-- Drawing defaults/styles: [workflow contracts](../crates/ecad-adapters/tests/style_workflow.rs), [persistence/compatibility contracts](../crates/ecad-adapters/tests/styles/persistence.rs), and [styled golden fixture](../crates/ecad-adapters/tests/fixtures/styled-overview-v6.json).
+- Whole conductor routes: [workflow contracts](../crates/ecad-adapters/tests/route_workflow.rs), [persistence/action/adoption regressions](../crates/ecad-adapters/tests/routes/persistence.rs), and [routed fixture](../crates/ecad-adapters/tests/fixtures/routed-conveyor-v7.json).
+- Drawing defaults/styles: [workflow contracts](../crates/ecad-adapters/tests/style_workflow.rs), [persistence/compatibility contracts](../crates/ecad-adapters/tests/styles/persistence.rs), and [styled golden fixture](../crates/ecad-adapters/tests/fixtures/styled-overview-v7.json).
 - Electrical properties: [inspection and bulk workflows](../crates/ecad-adapters/tests/property_workflow.rs) and [restriction/rollback contracts](../crates/ecad-adapters/tests/properties/restrictions.rs).
 - Known-use indexing: [headless read contracts](../crates/ecad-app/tests/usage_index_contract.rs), [registered-file discovery](../crates/ecad-adapters/tests/known_usage.rs), and the existing Git workflow regression.
 - Shared-library publication and persistence: [library contracts](../crates/ecad-adapters/tests/library_contract.rs) and [consuming-project workflows](../crates/ecad-adapters/tests/library/workflow.rs).
@@ -173,6 +173,18 @@ Current test owners:
 - Persistence fixtures and rejection cases: [persistence tests](../crates/ecad-adapters/tests/persistence_contract.rs).
 - Git interoperability: [local Git workflow](../crates/ecad-adapters/tests/git_workflow.rs).
 - Scale correctness and measurements: [scale example](../crates/ecad-adapters/examples/scale.rs).
+
+## Drawing sheets and templates
+
+- [x] Include reusable sheets/title-block tables, scoped variables, company profiles and standard/draft/cover/contents layouts in [the feature scope](sheets-and-templates.md).
+- [x] Implement eight typed project metadata fields, literal multiline values, exact history/rollback, strict schema v7 and v2–v6 empty-metadata upgrades.
+- [x] Integrate File/menu/palette project-information editing with fixed modal bounds, portable saved fields, cancel/no-op redo behavior and local Rust/browser regressions.
+- [ ] Add personal/company profile persistence and explicit reviewed copy/update into project values.
+- [ ] Add sheets, paper/margins, drawing sets, numbering and view placements.
+- [ ] Add stable table/cell identities, split/merge/resize and bulk formatting.
+- [ ] Add field bindings, sheet-specific entries, override/reset and missing/required-field diagnostics.
+- [ ] Add shared standard/draft/cover/contents templates, generated contents pagination and pinned template adoption.
+- [ ] Add portable logos, output preflight and reproducible historical issue output.
 
 ## Later scope
 

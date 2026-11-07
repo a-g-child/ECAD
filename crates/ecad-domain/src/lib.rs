@@ -27,6 +27,7 @@ mod identity;
 mod library;
 mod objects;
 mod project;
+mod project_metadata;
 mod property;
 mod property_error;
 mod property_registry;
@@ -75,3 +76,5 @@ pub use route_error::RouteError;
 pub use snapping::{DrawingGrid, SnapCandidate, SnapEnd, SnapQuery, SnapSettings, SnapTarget};
 
 pub use drawing_transform::{DrawingTransform, MirrorAxis, QuarterTurn};
+
+pub use project_metadata::{MetadataField, ProjectMetadata};

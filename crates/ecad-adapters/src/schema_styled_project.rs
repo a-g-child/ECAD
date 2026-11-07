@@ -14,17 +14,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct StyledProjectData<D = DrawingData> {
-    schema_version: u32,
-    project_id: String,
-    subsystems: Vec<SubsystemData>,
-    devices: Vec<DeviceData>,
-    ports: Vec<PortData>,
-    conductors: Vec<ConductorData>,
-    cables: Vec<CableData>,
-    definitions: Vec<DefinitionData>,
-    instances: Vec<InstanceData>,
-    local_origins: Vec<InstanceData>,
-    drawing: D,
+    pub(crate) schema_version: u32,
+    pub(crate) project_id: String,
+    pub(crate) subsystems: Vec<SubsystemData>,
+    pub(crate) devices: Vec<DeviceData>,
+    pub(crate) ports: Vec<PortData>,
+    pub(crate) conductors: Vec<ConductorData>,
+    pub(crate) cables: Vec<CableData>,
+    pub(crate) definitions: Vec<DefinitionData>,
+    pub(crate) instances: Vec<InstanceData>,
+    pub(crate) local_origins: Vec<InstanceData>,
+    pub(crate) drawing: D,
 }
 pub(crate) type RoutedProjectData = StyledProjectData<crate::schema_routes::RoutedDrawingData>;
 impl From<&Project> for RoutedProjectData {

@@ -50,3 +50,39 @@
   justify-content: end;
   gap: 12px;
 }
+
+.metadata-dialog {
+  width: min(600px, calc(100vw - 40px));
+  height: min(560px, calc(100vh - 48px));
+  overflow: hidden;
+}
+.metadata-dialog .settings-form {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.metadata-fields {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 8px;
+}
+.metadata-fields .property-text {
+  height: 48px;
+  min-height: 48px;
+}
+.metadata-key {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.metadata-dialog .settings-error {
+  flex: 0 0 40px;
+}
+.metadata-group {
+  padding-top: 4px;
+}

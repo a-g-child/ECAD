@@ -10,6 +10,7 @@ Read the relevant planning documents before implementation:
 - [Testing and platform strategy](docs/testing-strategy.md)
 - [Implementation checklist](docs/implementation-checklist.md)
 - [Drawing workflows](docs/drawing-workflows.md) for editor work
+- [Drawing sheets and templates](docs/sheets-and-templates.md) for paper layouts, metadata, profiles and title-block/table work
 - [Connection labels](docs/connection-labels.md) for pinout/library work
 - [Keyboard and action model](docs/keyboard-actions.md) for user actions and input handling
 - [Hierarchy, scale, and shared revisions](docs/hierarchy-and-revisions.md) for subsystem reuse, identity, and scale work

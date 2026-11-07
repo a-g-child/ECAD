@@ -5,6 +5,7 @@ mod controller;
 mod defaults;
 mod dto;
 mod layout_tool;
+mod metadata;
 mod movement;
 mod path;
 mod placement;

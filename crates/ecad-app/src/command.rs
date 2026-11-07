@@ -10,6 +10,8 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Replace portable project metadata with an exact localized inverse.
+    ProjectMetadata(ecad_domain::ProjectMetadata),
     /// Whole-route geometry and placed-terminal layout with exact local inverses.
     Route(crate::RouteCommand),
     /// Drawing content, shared styles, and creation settings with localized inverses.
@@ -105,6 +107,13 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::ProjectMetadata(value) => {
+                let previous = project.replace_metadata(value.clone());
+                if previous == *value {
+                    return Ok(None);
+                }
+                Self::ProjectMetadata(previous)
+            }
             Self::Route(command) => return Ok(command.apply(project)?.map(Self::Route)),
             Self::Drawing(command) => return Ok(command.apply(project)?.map(Self::Drawing)),
             Self::SetPropertyState {

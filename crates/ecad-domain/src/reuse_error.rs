@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// A reusable revision or occurrence would violate identity or immutability rules.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ReuseError {
+    /// Project-wide metadata cannot be published inside an electrical subsystem body.
+    ProjectMetadataUnsupported,
     /// A reusable body must contain exactly one rooted hierarchy and no root-level devices.
     InvalidDefinitionRoot,
     /// Nested reusable references are deferred; local nested blocks remain supported.
@@ -46,6 +48,9 @@ pub enum ReuseError {
 impl fmt::Display for ReuseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::ProjectMetadataUnsupported => {
+                write!(f, "project metadata is not subsystem content")
+            }
             Self::IncompatibleAdoption => {
                 f.write_str("adoption must preserve lineage and compatible object identities")
             }

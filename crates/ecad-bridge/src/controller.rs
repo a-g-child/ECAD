@@ -1,7 +1,7 @@
 //! Guarded document ownership and one shared action/key routing path for desktop requests.
 use crate::{
-    annotation::Annotation, defaults, dto::*, layout_tool::LayoutTool, movement::Movement,
-    path::PathDraft, projection, properties,
+    annotation::Annotation, defaults, dto::*, layout_tool::LayoutTool, metadata,
+    movement::Movement, path::PathDraft, projection, properties,
 };
 use ecad_adapters::JsonFile;
 use ecad_app::*;
@@ -203,6 +203,12 @@ impl DesktopBridge {
             ActionOutcome::Request(r) => {
                 response.request = Some(
                     match r.kind {
+                        ActionRequestKind::ProjectMetadata => {
+                            response.metadata = Some(metadata::project(
+                                self.document.session().project().metadata(),
+                            ));
+                            "metadata"
+                        }
                         ActionRequestKind::DrawingSettings => {
                             response.defaults = Some(defaults::project(
                                 r.settings.as_ref().expect("settings request"),
@@ -303,6 +309,7 @@ impl DesktopBridge {
         | Request::CommitMove { input, .. }
         | Request::CommitTransform { input, .. }
         | Request::CommitAnnotation { input, .. }
+        | Request::UpdateMetadata { input, .. }
         | Request::UpdateDefaults { input, .. }
         | Request::CommitPath { input, .. } = &request
         {
@@ -328,6 +335,33 @@ impl DesktopBridge {
             | Request::BackPathVertex { .. }
             | Request::CommitPath { .. }) => self.tool(request),
             Request::Snapshot {} => Ok(self.snapshot()),
+            Request::UpdateMetadata {
+                context,
+                values,
+                input,
+            } => {
+                let context = self.context(context)?;
+                let values = metadata::parse(values)?;
+                let revision = self.document.session().revision();
+                let invocation = ActionInvocation {
+                    input_id: input_id(&input)?,
+                    action: ActionId::new("document.metadata.edit").expect("builtin"),
+                    source: InvocationSource::Toolbar,
+                    repeat: false,
+                    context,
+                    parameters: ActionParameters::ProjectMetadata(values),
+                };
+                let mut response = self.invoke(invocation)?;
+                response.message = Some(
+                    if self.document.session().revision() == revision {
+                        "Project information already matches · no document changes"
+                    } else {
+                        "Project information updated · one undo operation"
+                    }
+                    .into(),
+                );
+                Ok(response)
+            }
             Request::UpdateDefaults {
                 context,
                 defaults,

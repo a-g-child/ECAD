@@ -246,6 +246,16 @@ impl ActionDispatcher {
             (ActionHandler::CreatePolyline, ActionParameters::None) => {
                 request(ActionRequestKind::PolylinePlacement, None)
             }
+            (ActionHandler::ProjectMetadata, ActionParameters::None) => {
+                request(ActionRequestKind::ProjectMetadata, None)
+            }
+            (ActionHandler::ProjectMetadata, ActionParameters::ProjectMetadata(values)) => {
+                ActionOutcome::Edited(
+                    document
+                        .execute(revision, Command::ProjectMetadata(values))
+                        .map_err(ActionDispatchError::Edit)?,
+                )
+            }
             (ActionHandler::DrawingSettings, ActionParameters::None) => request(
                 ActionRequestKind::DrawingSettings,
                 Some(document.session().project().drawing().settings().clone()),

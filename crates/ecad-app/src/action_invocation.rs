@@ -85,6 +85,8 @@ pub enum ActionParameters {
     },
     /// Reviewed complete portable drawing settings.
     DrawingSettings(DrawingSettings),
+    /// Reviewed complete project-owned metadata.
+    ProjectMetadata(ecad_domain::ProjectMetadata),
 }
 /// A single request shared by all action surfaces, with original targets and input identity.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -127,6 +129,8 @@ pub enum ActionRequestKind {
     PolylinePlacement,
     /// Open portable drawing settings for review/edit.
     DrawingSettings,
+    /// Open project-owned company/contact and project fields.
+    ProjectMetadata,
     /// Open the registry-generated searchable palette.
     Palette,
     /// Cancel host-owned transient placement without a document edit.

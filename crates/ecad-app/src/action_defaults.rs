@@ -27,6 +27,16 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "document.metadata.edit",
+                "Project information",
+                "Document",
+                "Edit portable company, contact, project and engineering issue fields for sheet variables",
+                Handler::ProjectMetadata,
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "document.open",
                 "Open project",
                 "Document",
