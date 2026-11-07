@@ -90,7 +90,8 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Integrate M with host-retained closed previews, explicit reference choice, exact numeric placement, terminal/endpoint/midpoint/grid feedback, cycling/suppression, and one-step connected-route movement.
 - [x] Verify preview/commit agreement, cancellation, invalid proposals, saved geometry/history, and frontend-clock reload protection through local bridge/browser tests.
 - [x] Establish CAD wheel controls, directional/additive marquee selection with stroke/text bounds, direct group dragging with preserved grab offset, and asynchronous release/cancellation regressions.
-- [ ] Add interactive wire/symbol placement, sub-element hit testing/selection, rotate previews, docking/splitters, and broader native interaction.
+- [x] Integrate R rotation and mirror controls with exact pivot fields, shared preview geometry, invalid/stale/cancelled proposal guards, one-step history, and saved-file/browser regressions.
+- [ ] Add interactive wire/symbol placement, sub-element hit testing/selection, docking/splitters, and broader native interaction.
 - [x] Verify browser edit-to-core-to-render agreement, failed-edit focus retention, one-step undo, real saves/conflicts, report values, and fixed pane bounds using Chromium with the real Rust bridge.
 - [ ] Verify interactive tool preview/commit agreement and cancellation in the native UI.
 - [ ] Add native UI automation appropriate to each platform and representative rendering tests.
@@ -146,7 +147,7 @@ Current test owners:
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
 - Action/keymap contracts: [registry/router tests](../crates/ecad-app/tests/action_contract.rs), [real invocation workflows](../crates/ecad-adapters/tests/action_workflow.rs), and [keymap persistence](../crates/ecad-adapters/tests/keymap_persistence.rs).
-- Desktop bridge and frontend: [bridge contracts](../crates/ecad-bridge/tests/document_bridge.rs), [move lifecycle](../crates/ecad-bridge/tests/move_bridge.rs), [browser workflows](../apps/desktop/tests/editor.test.mjs), and [core host requests](../crates/ecad-app/tests/desktop_surface_contract.rs).
+- Desktop bridge and frontend: [bridge contracts](../crates/ecad-bridge/tests/document_bridge.rs), [move lifecycle](../crates/ecad-bridge/tests/move_bridge.rs), [transform lifecycle](../crates/ecad-bridge/tests/transform_bridge.rs), [browser workflows](../apps/desktop/tests/editor.test.mjs), and [core host requests](../crates/ecad-app/tests/desktop_surface_contract.rs).
 - Electrical reports and CSV outputs: [projection/workflows](../crates/ecad-adapters/tests/connection_report_workflow.rs), [golden/escaping/persistence contracts](../crates/ecad-adapters/tests/reports/persistence.rs), and [shared action](../crates/ecad-adapters/tests/reports/actions.rs).
 - Orthogonal transforms: [coordinate rules](../crates/ecad-domain/tests/transform_contract.rs), [connected workflows](../crates/ecad-adapters/tests/transform_workflow.rs), [failure/rollback cases](../crates/ecad-adapters/tests/transforms/failures.rs), and [shared action previews](../crates/ecad-adapters/tests/transforms/actions.rs).
 - Snapping and exact previews: [snap rules](../crates/ecad-domain/tests/snap_contract.rs), [placement workflows](../crates/ecad-adapters/tests/placement_workflow.rs), and [shared M preview/commit](../crates/ecad-adapters/tests/placement/actions.rs).

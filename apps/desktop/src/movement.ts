@@ -84,7 +84,7 @@ export class MovementTool {
       this.cancelButton,
       this.note,
     );
-    shell.canvas.before(this.bar);
+    shell.placement.append(this.bar);
     this.controls();
   }
   private controls() {

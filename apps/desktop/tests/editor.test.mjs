@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { registerControlsTests } from './controls.mjs';
+import { registerTransformTests } from './transforms.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -359,3 +360,15 @@ test('pointer move uses visible terminal snapping, cycling and temporary suppres
 });
 
 registerControlsTests({ page, tree, button, until, pressAction, root, route, label });
+
+registerTransformTests({
+  page,
+  tree,
+  button,
+  until,
+  pressAction,
+  bounds,
+  root,
+  route,
+  project: () => project,
+});

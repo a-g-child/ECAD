@@ -1,5 +1,5 @@
 //! Guarded document ownership and one shared action/key routing path for desktop requests.
-use crate::{dto::*, movement::Movement, projection, properties};
+use crate::{dto::*, movement::Movement, projection, properties, transform::Transform};
 use ecad_adapters::JsonFile;
 use ecad_app::*;
 
@@ -8,6 +8,8 @@ use std::{
     num::NonZeroU64,
     path::{Path, PathBuf},
 };
+#[path = "tools.rs"]
+mod tools;
 /// One desktop document controller, independent of Tauri/windowing and testable locally.
 pub struct DesktopBridge {
     document: Document<JsonFile>,
@@ -20,6 +22,7 @@ pub struct DesktopBridge {
     last_input: u64,
     clock: std::time::Instant,
     movement: Option<Movement>,
+    transform: Option<Transform>,
     move_serial: u64,
 }
 impl DesktopBridge {
@@ -53,6 +56,7 @@ impl DesktopBridge {
             last_input: 0,
             clock: std::time::Instant::now(),
             movement: None,
+            transform: None,
             move_serial: 0,
         })
     }
@@ -86,6 +90,7 @@ impl DesktopBridge {
             Document::open(JsonFile::new(path)).map_err(|e| BridgeError::new("open", e))?;
         self.document = document;
         self.movement = None;
+        self.transform = None;
         self.demo = false;
         self.path = Some(path.into());
         self.router.cancel_pending();
@@ -168,7 +173,7 @@ impl DesktopBridge {
             selection,
             view,
             focus,
-            tool_active: self.movement.is_some(),
+            tool_active: self.movement.is_some() || self.transform.is_some(),
             ..ActionContext::default()
         })
     }
@@ -190,9 +195,16 @@ impl DesktopBridge {
                         ActionRequestKind::OpenProject => "open",
                         ActionRequestKind::FitDrawing => "fit",
                         ActionRequestKind::MoveSelection => "move",
+                        ActionRequestKind::RotateSelection => "rotate",
+                        ActionRequestKind::MirrorSelection => "mirror",
                         ActionRequestKind::CancelPlacement => {
+                            let message = if self.transform.take().is_some() {
+                                "Transform cancelled"
+                            } else {
+                                "Move cancelled"
+                            };
                             self.movement = None;
-                            response.message = Some("Move cancelled".into());
+                            response.message = Some(message.into());
                             "cancel_move"
                         }
                         _ => "unsupported",
@@ -262,7 +274,8 @@ impl DesktopBridge {
     pub fn handle(&mut self, request: Request) -> Result<Response, BridgeError> {
         if let Request::Action { input, .. }
         | Request::Key { input, .. }
-        | Request::CommitMove { input, .. } = &request
+        | Request::CommitMove { input, .. }
+        | Request::CommitTransform { input, .. } = &request
         {
             let id = input_id(input)?.get();
             if id <= self.last_input {
@@ -271,68 +284,12 @@ impl DesktopBridge {
             self.last_input = id;
         }
         match request {
-            Request::BeginMove { context, reference } => {
-                let context = self.context(context)?;
-                let reference: Target = serde_json::from_value(reference)
-                    .map_err(|e| BridgeError::new("reference", e))?;
-                self.move_serial = self
-                    .move_serial
-                    .checked_add(1)
-                    .ok_or_else(|| BridgeError::new("move", "Movement identity exhausted"))?;
-                self.movement = None;
-                let scene = self.snapshot().snapshot.expect("snapshot").scene;
-                let movement = Movement::begin(
-                    self.document.session(),
-                    context,
-                    reference.object()?,
-                    self.move_serial,
-                    scene,
-                )?;
-                let reply = movement.response()?;
-                self.movement = Some(movement);
-                Ok(reply)
-            }
-            Request::PreviewMove {
-                session,
-                x,
-                y,
-                exact,
-                suppressed,
-                candidate,
-                tolerance_um,
-            } => {
-                let movement = self
-                    .movement
-                    .as_mut()
-                    .ok_or_else(|| BridgeError::new("move", "No active movement"))?;
-                movement.update(
-                    self.document.session(),
-                    &session,
-                    &x,
-                    &y,
-                    exact,
-                    suppressed,
-                    candidate,
-                    tolerance_um,
-                )
-            }
-            Request::CommitMove { token, input } => {
-                let movement = self
-                    .movement
-                    .as_mut()
-                    .ok_or_else(|| BridgeError::new("move", "No active movement"))?;
-                let (context, preview) = movement.take(&token)?;
-                let result = self.invoke(ActionInvocation {
-                    input_id: input_id(&input)?,
-                    action: ActionId::new("drawing.selection.move").expect("builtin"),
-                    source: InvocationSource::Toolbar,
-                    repeat: false,
-                    context,
-                    parameters: ActionParameters::CommitMove(preview),
-                });
-                self.movement = None;
-                result
-            }
+            request @ (Request::BeginMove { .. }
+            | Request::PreviewMove { .. }
+            | Request::CommitMove { .. }
+            | Request::BeginTransform { .. }
+            | Request::PreviewTransform { .. }
+            | Request::CommitTransform { .. }) => self.tool(request),
             Request::Snapshot {} => Ok(self.snapshot()),
             Request::Inspect { context } => {
                 let context = self.context(context)?;

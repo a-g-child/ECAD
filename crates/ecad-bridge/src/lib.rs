@@ -3,7 +3,9 @@
 mod controller;
 mod dto;
 mod movement;
+mod preview_scene;
 mod projection;
 mod properties;
+mod transform;
 pub use controller::DesktopBridge;
 pub use dto::{BridgeError, Request, Response};

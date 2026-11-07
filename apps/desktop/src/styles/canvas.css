@@ -133,3 +133,17 @@
   stroke: #318458;
   stroke-dasharray: 5 3;
 }
+.placement-pane {
+  flex: 0 0 40px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.transform-bar[hidden],
+.transform-active > .move-bar:not(.transform-bar) {
+  display: none;
+}
+.transform-operation {
+  width: 128px;
+  min-width: 80px;
+}

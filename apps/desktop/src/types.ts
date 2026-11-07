@@ -73,7 +73,16 @@ export interface MoveRow {
   chosen: number | null;
   snap: string | null;
 }
+export interface TransformRow {
+  session: string;
+  token: string;
+  x: string;
+  y: string;
+  operation: string;
+  scene: SceneRow[];
+}
 export interface Reply {
+  transform: TransformRow | null;
   movement: MoveRow | null;
   snapshot: Snapshot | null;
   properties: PropertyRow[] | null;

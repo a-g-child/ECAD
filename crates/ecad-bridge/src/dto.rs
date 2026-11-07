@@ -161,6 +161,33 @@ pub enum Request {
         /// Shared monotonic host input identity.
         input: String,
     },
+    /// Begin an orthogonal transform with an explicit reference-origin seed pivot.
+    BeginTransform {
+        /// Captured original selection/view/revision.
+        context: serde_json::Value,
+        /// Selected reference whose exact origin seeds the visible pivot fields.
+        reference: serde_json::Value,
+        /// Registered rotate or mirror handler kind.
+        kind: String,
+    },
+    /// Replace a held transform, invalidating prior proposals before validation.
+    PreviewTransform {
+        /// Opaque tool lifetime.
+        session: String,
+        /// Exact micrometre pivot x.
+        x: String,
+        /// Exact micrometre pivot y.
+        y: String,
+        /// Explicit quarter-turn or reflection policy.
+        operation: String,
+    },
+    /// Apply only the reviewed retained transform through its original action.
+    CommitTransform {
+        /// Current proposal token.
+        token: String,
+        /// Shared host input identity.
+        input: String,
+    },
     /// Route one logical keyboard event using the core keymap and protected-input policy.
     Key {
         /// Captured targets/focus/revision.
@@ -194,6 +221,7 @@ pub struct Response {
     pub(crate) request: Option<String>,
     pub(crate) message: Option<String>,
     pub(crate) movement: Option<MoveRow>,
+    pub(crate) transform: Option<TransformRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
@@ -267,4 +295,14 @@ pub(crate) struct MoveRow {
     pub candidates: usize,
     pub chosen: Option<usize>,
     pub snap: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub(crate) struct TransformRow {
+    pub session: String,
+    pub token: String,
+    pub x: String,
+    pub y: String,
+    pub operation: String,
+    pub scene: Vec<SceneRow>,
 }

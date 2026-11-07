@@ -205,6 +205,8 @@ pub(crate) fn snapshot(
                 ActionHandler::OpenProject
                     | ActionHandler::FitDrawing
                     | ActionHandler::MoveSelection
+                    | ActionHandler::RotateSelection
+                    | ActionHandler::MirrorSelection
                     | ActionHandler::Undo
                     | ActionHandler::Redo
                     | ActionHandler::Save
@@ -220,7 +222,10 @@ pub(crate) fn snapshot(
                     && (state.enabled()
                         || matches!(
                             d.handler,
-                            ActionHandler::Properties | ActionHandler::MoveSelection
+                            ActionHandler::Properties
+                                | ActionHandler::MoveSelection
+                                | ActionHandler::RotateSelection
+                                | ActionHandler::MirrorSelection
                         )),
                 reason: if !supported {
                     Some("Tool UI is planned".into())

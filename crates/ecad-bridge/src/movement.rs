@@ -39,24 +39,7 @@ impl Movement {
                 "Selection must belong to the active drawing view",
             ));
         }
-        // A zero-offset seed has no changed route records. Capture the full touching
-        // union now, because later destinations can change any of these routes.
-        let mut targets = context.selection.clone();
-        let anchors = context.selection.iter().filter_map(|target| match target {
-            ObjectRef::Anchor(id) => Some(*id),
-            _ => None,
-        });
-        let touching = drawing
-            .route_layout(anchors)
-            .map_err(|e| BridgeError::new("move", e))?;
-        targets.extend(touching.routes.iter().map(|r| ObjectRef::Route(r.id)));
-        let scene = scene
-            .into_iter()
-            .filter_map(|row| {
-                let target = row.target.object().ok()?;
-                targets.contains(&target).then_some((target, row))
-            })
-            .collect();
+        let scene = crate::preview_scene::capture(session, &context, scene)?;
         Ok(Self {
             context,
             reference,
@@ -162,23 +145,7 @@ impl Movement {
             .preview
             .as_ref()
             .ok_or_else(|| BridgeError::new("move", "No valid preview"))?;
-        let mut scene = Vec::new();
-        for object in preview.layout().objects() {
-            let (target, points) = match object {
-                PreviewObject::Label(v) => (ObjectRef::Label(v.id), vec![v.position]),
-                PreviewObject::Polyline(v) => (ObjectRef::Polyline(v.id), v.points.clone()),
-                PreviewObject::Anchor(v) => (ObjectRef::Anchor(v.id), vec![v.position]),
-                PreviewObject::Route(v) => (ObjectRef::Route(v.id), v.points.clone()),
-            };
-            let mut row = self.scene.get(&target).cloned().ok_or_else(|| {
-                BridgeError::new("move", "Preview object is missing from the scene")
-            })?;
-            row.points = points
-                .iter()
-                .map(|p| [p.x as f64 / 1000.0, p.y as f64 / 1000.0])
-                .collect();
-            scene.push(row);
-        }
+        let scene = crate::preview_scene::project(preview.layout(), &self.scene)?;
         let chosen = preview
             .chosen()
             .and_then(|c| preview.candidates().iter().position(|v| v == c));

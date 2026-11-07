@@ -2,6 +2,7 @@ import './style.css';
 import { createShell } from './shell';
 import { DrawingCanvas } from './canvas';
 import { MovementTool } from './movement';
+import { TransformTool } from './transform';
 import { renderProperties, renderReport, renderTree } from './panels';
 import { element } from './ui';
 import { chooseFile, errorText, inputId, native, send, syncInput } from './transport';
@@ -18,12 +19,17 @@ let focus = 'canvas';
 let paletteContext: Context | null = null;
 const drawing = new DrawingCanvas(shell, choose, selectMany);
 let movement: MovementTool | undefined;
+let transform: TransformTool | undefined;
 movement = new MovementTool(shell, drawing, apply, status, buttons, () => {
   movement?.clear();
   void action('placement.cancel');
 });
+transform = new TransformTool(shell, drawing, apply, status, buttons, () => {
+  transform?.clear();
+  void action('placement.cancel');
+});
 drawing.startMove = async (target, point) => {
-  if (!snapshot || busy || movement?.active) return null;
+  if (!snapshot || busy || movement?.active || transform?.active) return null;
   if (selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind))) {
     status(
       'Drag terminal anchors to move connected routes. Labels and graphical paths can be dragged directly.',
@@ -49,12 +55,16 @@ function buttons() {
     const definition = snapshot?.actions.find((a) => a.id === id);
     button.disabled = busy || !definition?.enabled || (id === 'document.open' && !native);
     if (id === 'selection.properties') button.disabled = busy || !selection.length;
-    if (id === 'drawing.selection.move')
+    if (
+      ['drawing.selection.move', 'drawing.selection.rotate', 'drawing.selection.mirror'].includes(
+        id,
+      )
+    )
       button.disabled =
         busy ||
         !selection.length ||
         selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind));
-    if (movement?.active) button.disabled = true;
+    if (movement?.active || transform?.active) button.disabled = true;
   }
 }
 async function apply(reply: Reply) {
@@ -78,7 +88,10 @@ async function apply(reply: Reply) {
     const replaced = snapshot?.revision.epoch !== next.revision.epoch;
     const oldView = view;
     snapshot = next;
-    if (changed) movement?.clear();
+    if (changed) {
+      movement?.clear();
+      transform?.clear();
+    }
     if (replaced) {
       selection = [];
       selectionSequence++;
@@ -109,7 +122,12 @@ async function apply(reply: Reply) {
   if (reply.report) renderReport(shell, reply.report);
   if (reply.message) status(reply.message);
   if (reply.request === 'move') await movement?.begin(context());
-  if (reply.request === 'cancel_move') movement?.clear();
+  if (reply.request === 'rotate' || reply.request === 'mirror')
+    await transform?.begin(context(), reply.request);
+  if (reply.request === 'cancel_move') {
+    movement?.clear();
+    transform?.clear();
+  }
   if (reply.request === 'fit') drawing.fit();
   if (reply.request === 'palette') openPalette();
   if (reply.request === 'save_as' || reply.request === 'open') {
@@ -126,7 +144,7 @@ async function inspect() {
     renderProperties(shell, reply.properties, selection.length, edit);
 }
 function choose(target: Target | null, add: boolean) {
-  if (!snapshot || busy || movement?.active) return;
+  if (!snapshot || busy || movement?.active || transform?.active) return;
   if (!target) {
     if (!add) selection = [];
   } else {
@@ -149,7 +167,7 @@ function choose(target: Target | null, add: boolean) {
   selectionChanged();
 }
 function selectMany(targets: Target[], add: boolean) {
-  if (!snapshot || busy || movement?.active) return;
+  if (!snapshot || busy || movement?.active || transform?.active) return;
   selection = [
     ...new Map(
       (add ? [...selection, ...targets] : targets).map((target) => [keyOf(target), target]),
@@ -193,7 +211,7 @@ async function run(operation: () => Promise<void>) {
   }
 }
 async function action(id: string, captured?: Context) {
-  if (!snapshot || (movement?.active && id !== 'placement.cancel')) return;
+  if (!snapshot || ((movement?.active || transform?.active) && id !== 'placement.cancel')) return;
   await run(async () => {
     const reply = await send({
       type: 'action',
@@ -213,7 +231,7 @@ async function action(id: string, captured?: Context) {
   });
 }
 async function edit(property: string, value: string) {
-  if (!snapshot || movement?.active) return;
+  if (!snapshot || movement?.active || transform?.active) return;
   const captured = context();
   await run(async () => {
     const reply = await send({ type: 'edit', context: captured, property, value });
@@ -288,6 +306,7 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     return;
   }
+  if (transform?.key(event)) return;
   if (movement?.key(event)) return;
   const primary = navigator.platform.toLowerCase().includes('mac') ? event.metaKey : event.ctrlKey;
   const key = event.key.toLowerCase();

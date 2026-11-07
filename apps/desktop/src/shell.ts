@@ -21,6 +21,8 @@ export function createShell(action: (id: string) => void) {
         ['Redo', 'document.redo'],
         ['Properties', 'selection.properties'],
         ['Move selection', 'drawing.selection.move'],
+        ['Rotate selection', 'drawing.selection.rotate'],
+        ['Mirror selection', 'drawing.selection.mirror'],
       ],
     ],
     [
@@ -69,6 +71,14 @@ export function createShell(action: (id: string) => void) {
   const move = tool('Move selection · M', 'move', () => action('drawing.selection.move'));
   move.dataset.action = 'drawing.selection.move';
   toolbar.append(move);
+  for (const [label, name, id] of [
+    ['Rotate selection · R', 'rotate', 'drawing.selection.rotate'],
+    ['Mirror selection', 'mirror', 'drawing.selection.mirror'],
+  ]) {
+    const button = tool(label, name, () => action(id));
+    button.dataset.action = id;
+    toolbar.append(button);
+  }
   const fit = tool('Fit drawing · F', 'fit', () => action('drawing.view.fit'));
   fit.dataset.action = 'drawing.view.fit';
   toolbar.append(fit, separator());
@@ -123,7 +133,8 @@ export function createShell(action: (id: string) => void) {
   reportHeader.append(close);
   const reportBody = element('div', 'report-body');
   reportPane.append(reportHeader, reportBody);
-  center.append(tabs, canvas, reportPane);
+  const placement = element('div', 'placement-pane');
+  center.append(tabs, placement, canvas, reportPane);
   const right = element('aside', 'pane inspector-pane');
   right.dataset.focus = 'inspector';
   right.setAttribute('aria-label', 'Properties');
@@ -154,6 +165,7 @@ export function createShell(action: (id: string) => void) {
     tree,
     views,
     canvas,
+    placement,
     svg,
     empty,
     inspector,
