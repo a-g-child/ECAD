@@ -25,6 +25,8 @@ mod error;
 mod instantiation;
 mod library;
 mod project_usage;
+mod property_edits;
+mod property_selection;
 mod revision;
 mod session;
 mod transaction;
@@ -41,6 +43,10 @@ pub use library::{
     LibraryPublisher, LibrarySnapshot, Recommendation, VersionedLibraryStore, library_import,
 };
 pub use project_usage::{ProjectUsage, RevisionUse};
+pub use property_edits::{PropertyChange, PropertyEditPlan, property_edit_plan};
+pub use property_selection::{
+    PropertySelection, SelectionProperty, SelectionValue, inspect_properties,
+};
 pub use revision::{Revision, SessionEpoch};
 pub use session::Session;
 pub use usage_index::{KnownUse, KnownUseIndex, RegisteredUsage, UsageRefreshError, UsageStatus};

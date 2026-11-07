@@ -72,7 +72,7 @@ One device can have several schematic symbols, a connector face diagram, a physi
 
 Keep internal mutable collections private. Queries return read views or purpose-built results; mutations pass through methods that preserve invariants. Avoid a universally mutable project object exposed throughout the codebase.
 
-Property definitions describe stable identity, type, units, applicability, ownership, constraints, and inheritance. Build typed access to real model fields; do not flatten the whole domain into an unvalidated string-to-value map to simplify the inspector. Custom properties have an explicit schema and extension mechanism.
+Property definitions describe stable identity, type, units, applicability, ownership, constraints, and inheritance. Build typed access to real model fields; do not flatten the whole domain into an unvalidated string-to-value map to simplify the inspector. Custom properties will have an explicit schema and extension mechanism. The first implemented registry maps 15 typed fields directly onto existing electrical objects, with typed reference constraints, effective pin/structural restrictions, union inspection, and preflighted compound commands. It adds no generic persisted property bags or new schema fields. See [decision 0009](decisions/0009-electrical-property-contract.md). Creation defaults and inherited graphical styles remain separate upcoming capabilities; visual fields belong to drawing representations, not device/conductor identity.
 
 ## Commands, transactions, and undo
 

@@ -21,6 +21,9 @@ mod identity;
 mod library;
 mod objects;
 mod project;
+mod property;
+mod property_error;
+mod property_registry;
 mod reuse;
 mod reuse_error;
 
@@ -35,6 +38,13 @@ pub use identity::{
 pub use library::{LibraryError, SubsystemLibrary};
 pub use objects::{Conductor, Device, End, Terminal};
 pub use project::Project;
+pub use property::{
+    ObjectRef, PropertyAccess, PropertyDescriptor, PropertyId, PropertyObservation,
+    PropertyOwnership, PropertyReferenceKind, PropertyRestriction, PropertyValue,
+    PropertyValueKind,
+};
+pub use property_error::PropertyError;
+pub use property_registry::PROPERTY_IDS;
 pub use reuse::{
     DefinitionRef, InstanceBinding, InstanceIds, InstanceLimits, InstancePlan, InstanceState,
     MAX_INSTANCE_OBJECTS, SubsystemRevision,

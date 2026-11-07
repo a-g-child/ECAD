@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// A proposed edit violates structural validity. Rejected edits leave state intact.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ModelError {
+    /// Typed property applicability, value, or access validation failed.
+    Property(crate::PropertyError),
     /// Reusable content, mapping, or instance immutability validation failed.
     Reuse(crate::ReuseError),
     /// A required name, designation, or terminal number contains only whitespace.
@@ -64,6 +66,7 @@ impl fmt::Display for ModelError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Reuse(error) => error.fmt(f),
+            Self::Property(error) => error.fmt(f),
             Self::EmptyLabel => {
                 f.write_str("required name, designation, or terminal number cannot be blank")
             }
@@ -120,6 +123,7 @@ impl Error for ModelError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Reuse(error) => Some(error),
+            Self::Property(error) => Some(error),
             _ => None,
         }
     }
@@ -127,5 +131,11 @@ impl Error for ModelError {
 impl From<crate::ReuseError> for ModelError {
     fn from(error: crate::ReuseError) -> Self {
         Self::Reuse(error)
+    }
+}
+
+impl From<crate::PropertyError> for ModelError {
+    fn from(error: crate::PropertyError) -> Self {
+        Self::Property(error)
     }
 }

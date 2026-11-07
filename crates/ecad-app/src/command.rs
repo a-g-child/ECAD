@@ -10,6 +10,15 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Change one supported real field with validated access and an exact localized inverse.
+    SetProperty {
+        /// Existing electrical object whose field changes.
+        target: ecad_domain::ObjectRef,
+        /// Stable property identity, independent of display names.
+        property: ecad_domain::PropertyId,
+        /// Typed proposed value.
+        value: ecad_domain::PropertyValue,
+    },
     /// Adopt one reviewed revision; inverse restores the previous binding and content.
     AdoptInstance {
         /// Pin observed during planning; rejects stale or locally detached content.
@@ -83,6 +92,21 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::SetProperty {
+                target,
+                property,
+                value,
+            } => {
+                let previous = project.set_property(*target, *property, value.clone())?;
+                if previous == *value {
+                    return Ok(None);
+                }
+                Self::SetProperty {
+                    target: *target,
+                    property: *property,
+                    value: previous,
+                }
+            }
             Self::AdoptInstance { expected, target } => {
                 project.adopt_instance(expected, target)?;
                 if expected == target {

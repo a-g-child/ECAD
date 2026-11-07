@@ -23,6 +23,10 @@ mod instance_states;
 mod instances;
 #[path = "project_interfaces.rs"]
 mod interfaces;
+#[path = "project_labels.rs"]
+mod labels;
+#[path = "project_properties.rs"]
+mod properties;
 
 /// A structurally valid electrical document, independent of drawing geometry.
 #[derive(Clone, Debug, PartialEq, Eq)]
