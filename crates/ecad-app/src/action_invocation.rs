@@ -89,6 +89,10 @@ pub enum ActionParameters {
     ProjectMetadata(ecad_domain::ProjectMetadata),
     /// Exact reviewed company/contact copy into the project.
     ProfileImport(ProfileImportPreview),
+    /// Exact reviewed sheet layout.
+    SheetPreview(SheetPreview),
+    /// Explicit sheet removal/reordering or programmatic paper edit.
+    Sheet(SheetCommand),
 }
 /// A single request shared by all action surfaces, with original targets and input identity.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -109,6 +113,8 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Open the sheet and paper manager.
+    Sheets,
     /// Native host should choose and open a project, protecting dirty state.
     OpenProject,
     /// Active drawing surface should fit its viewport without a document edit.

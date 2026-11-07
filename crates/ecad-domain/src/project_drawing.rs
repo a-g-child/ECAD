@@ -17,6 +17,7 @@ impl Project {
     ) -> Result<DrawingDocument, ModelError> {
         drawing.validate()?;
         self.check_drawing_references(&drawing)?;
+        self.check_sheet_views(&drawing)?;
         Ok(std::mem::replace(&mut self.drawing, drawing))
     }
     /// Insert one drawing view through aggregate invariants.
@@ -38,6 +39,13 @@ impl Project {
     /// # Errors
     /// Returns identity, reference, role, or in-use failures without partial mutation.
     pub fn remove_drawing_view(&mut self, id: ViewId) -> Result<DrawingView, DrawingError> {
+        if self
+            .sheets()
+            .iter()
+            .any(|s| s.placement.as_ref().is_some_and(|p| p.view == id))
+        {
+            return Err(DrawingError::ViewInUse(id));
+        }
         self.drawing.remove_view(id)
     }
     /// Insert one drawing style through aggregate invariants.

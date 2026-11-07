@@ -6,6 +6,8 @@ import { LayoutTool } from './layout';
 import { DefaultsDialog } from './defaults';
 import { MetadataDialog } from './metadata';
 import { ProfilesDialog } from './profiles';
+import { SheetsDialog } from './sheets';
+import { PaperSurface } from './paper';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
 import { renderProperties, renderReport, renderTree } from './panels';
@@ -63,6 +65,11 @@ path = new PathTool(
 const defaults = new DefaultsDialog(shell, apply, status);
 const metadata = new MetadataDialog(shell, apply, status);
 const profiles = new ProfilesDialog(shell, apply, status);
+const sheets = new SheetsDialog(shell, apply, status);
+const paper = new PaperSurface(shell, () => {
+  if (!paper.active && snapshot) drawing.render(snapshot.scene.filter((r) => r.view === view));
+  buttons();
+});
 function toolActive() {
   return !!(movement?.active || layout?.active || annotation?.active || path?.active);
 }
@@ -91,7 +98,12 @@ function status(message: string, error = false) {
 }
 function context(): Context {
   if (!snapshot) throw new Error('The document is not ready');
-  return { revision: snapshot.revision, selection: [...selection], view, focus };
+  return {
+    revision: snapshot.revision,
+    selection: [...selection],
+    view,
+    focus: paper.active ? 'workspace' : focus,
+  };
 }
 const layoutActions = new Set([
   'drawing.selection.move',
@@ -102,6 +114,12 @@ const layoutActions = new Set([
 ]);
 function availableAction(id: string, enabled: boolean) {
   if (!enabled || (id === 'document.open' && !native)) return false;
+  if (
+    paper.active &&
+    id.startsWith('drawing.') &&
+    !['drawing.sheets.edit', 'drawing.styles.edit', 'drawing.view.fit'].includes(id)
+  )
+    return false;
   if (id === 'selection.properties') return selection.length > 0;
   if (layoutActions.has(id))
     return (
@@ -114,6 +132,7 @@ function availableAction(id: string, enabled: boolean) {
   return true;
 }
 function buttons() {
+  shell.sheets.disabled = busy || toolActive();
   for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-action]')) {
     const id = button.dataset.action!;
     const definition = snapshot?.actions.find((a) => a.id === id);
@@ -182,6 +201,7 @@ async function apply(reply: Reply) {
       replaced || oldView !== view,
     );
     drawing.setSelection(selection);
+    paper.update(next, replaced);
     renderTree(shell, next, selection, (target, add) => choose(target, add));
     buttons();
     await inspect();
@@ -197,7 +217,11 @@ async function apply(reply: Reply) {
   if (reply.request === 'cancel_move') {
     clearTools();
   }
-  if (reply.request === 'fit') drawing.fit();
+  if (reply.request === 'fit') {
+    if (paper.active) paper.fit();
+    else drawing.fit();
+  }
+  if (reply.request === 'sheets' && snapshot) await sheets.open(context(), snapshot, paper.id);
   if (reply.request === 'palette') openPalette();
   if (reply.request === 'profiles' && reply.profiles) profiles.open(context(), reply.profiles);
   if (reply.request === 'metadata' && reply.metadata) metadata.open(context(), reply.metadata);
@@ -217,6 +241,7 @@ async function inspect() {
 }
 function choose(target: Target | null, add: boolean) {
   if (!snapshot || busy || toolActive()) return;
+  if (paper.active) paper.show('');
   if (!target) {
     if (!add) selection = [];
   } else {
@@ -287,6 +312,7 @@ async function action(id: string, captured?: Context) {
   const target = captured ?? context();
   // Explicit menus/ribbons/palette actions target the drawing while retaining
   // the captured revision, view and selection. Keyboard routing keeps its focus rules.
+  if (!availableAction(id, true)) return;
   const drawingAction = id.startsWith('drawing.');
   if (drawingAction) shell.canvas.focus();
   const invocationContext = drawingAction ? { ...target, focus: 'canvas' } : target;
@@ -309,7 +335,7 @@ async function action(id: string, captured?: Context) {
   });
 }
 async function edit(property: string, value: string) {
-  if (!snapshot || toolActive()) return;
+  if (!snapshot || toolActive() || paper.active) return;
   const captured = context();
   await run(async () => {
     const reply = await send({ type: 'edit', context: captured, property, value });
@@ -380,9 +406,21 @@ document.addEventListener('keydown', (event) => {
     shell.palette.open ||
     defaults.active ||
     metadata.active ||
-    profiles.active
+    profiles.active ||
+    sheets.active
   )
     return;
+  if (
+    paper.active &&
+    event.key.toLowerCase() === 'f' &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey
+  ) {
+    event.preventDefault();
+    void action('drawing.view.fit');
+    return;
+  }
   if (event.key === 'Escape' && drawing.cancelGesture()) {
     event.preventDefault();
     return;
@@ -438,7 +476,7 @@ window.addEventListener('blur', () => {
 shell.tree.addEventListener('contextmenu', () => void action('selection.properties'));
 shell.canvas.addEventListener('contextmenu', (event) => {
   event.preventDefault();
-  void action('selection.properties');
+  void action(paper.active ? 'drawing.sheets.edit' : 'selection.properties');
 });
 if (native) {
   void import('@tauri-apps/api/event').then(({ listen }) =>

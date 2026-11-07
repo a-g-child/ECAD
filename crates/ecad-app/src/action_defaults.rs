@@ -27,6 +27,16 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "drawing.sheets.edit",
+                "Sheets and paper",
+                "Drawing",
+                "Manage paper sizes, margins, sheet numbering/order and scaled view placements",
+                Handler::Sheets,
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "workspace.profiles",
                 "Company / contact profiles",
                 "Workspace",

@@ -17,7 +17,7 @@ mod settings_requests;
 mod tools;
 /// One desktop document controller, independent of Tauri/windowing and testable locally.
 pub struct DesktopBridge {
-    document: Document<JsonFile>,
+    pub(crate) document: Document<JsonFile>,
     path: Option<PathBuf>,
     registry: ActionRegistry,
     keymap: EffectiveKeymap,
@@ -31,6 +31,7 @@ pub struct DesktopBridge {
     annotation: Option<Annotation>,
     path_draft: Option<PathDraft>,
     move_serial: u64,
+    pub(crate) sheet_tool: crate::sheets::SheetTool,
     profiles: crate::profiles::ProfilePanel,
 }
 impl DesktopBridge {
@@ -68,6 +69,7 @@ impl DesktopBridge {
             annotation: None,
             path_draft: None,
             move_serial: 0,
+            sheet_tool: crate::sheets::SheetTool::default(),
             profiles: crate::profiles::ProfilePanel::default(),
         })
     }
@@ -105,6 +107,7 @@ impl DesktopBridge {
             Document::open(JsonFile::new(path)).map_err(|e| BridgeError::new("open", e))?;
         self.document = document;
         self.profiles.invalidate();
+        self.sheet_tool.preview = None;
         self.movement = None;
         self.layout = None;
         self.annotation = None;
@@ -151,7 +154,7 @@ impl DesktopBridge {
             ..Response::default()
         }
     }
-    fn context(&self, value: serde_json::Value) -> Result<ActionContext, BridgeError> {
+    pub(crate) fn context(&self, value: serde_json::Value) -> Result<ActionContext, BridgeError> {
         let ctx: Context =
             serde_json::from_value(value).map_err(|e| BridgeError::new("context", e))?;
         if ctx.revision != Token::from(self.document.session().revision()) {
@@ -212,6 +215,7 @@ impl DesktopBridge {
             ActionOutcome::Request(r) => {
                 response.request = Some(
                     match r.kind {
+                        ActionRequestKind::Sheets => "sheets",
                         ActionRequestKind::CompanyProfiles => {
                             response.profiles = self.profiles.load()?.profiles;
                             "profiles"
@@ -299,7 +303,7 @@ impl DesktopBridge {
         }
         Ok(response)
     }
-    fn invoke(&mut self, invocation: ActionInvocation) -> Result<Response, BridgeError> {
+    pub(crate) fn invoke(&mut self, invocation: ActionInvocation) -> Result<Response, BridgeError> {
         if invocation.action.as_str() == "document.save" && self.path.is_none() {
             return Ok(Response {
                 request: Some("save_as".into()),
@@ -322,6 +326,8 @@ impl DesktopBridge {
         | Request::CommitMove { input, .. }
         | Request::CommitTransform { input, .. }
         | Request::CommitAnnotation { input, .. }
+        | Request::CommitSheet { input, .. }
+        | Request::ChangeSheet { input, .. }
         | Request::SaveProfile { input, .. }
         | Request::CommitProfileImport { input, .. }
         | Request::UpdateMetadata { input, .. }
@@ -349,6 +355,11 @@ impl DesktopBridge {
             | Request::AddPathVertex { .. }
             | Request::BackPathVertex { .. }
             | Request::CommitPath { .. }) => self.tool(request),
+            request @ (Request::NewSheet { .. }
+            | Request::PreviewSheet { .. }
+            | Request::CommitSheet { .. }
+            | Request::ChangeSheet { .. }
+            | Request::CancelSheet {}) => self.sheet_request(request),
             Request::Snapshot {} => Ok(self.snapshot()),
             request @ (Request::UpdateMetadata { .. }
             | Request::UpdateDefaults { .. }
@@ -454,7 +465,7 @@ impl DesktopBridge {
         }
     }
 }
-fn input_id(text: &str) -> Result<InputId, BridgeError> {
+pub(crate) fn input_id(text: &str) -> Result<InputId, BridgeError> {
     text.parse().ok().and_then(InputId::new).ok_or_else(|| {
         BridgeError::new("input", "Input identity must be a nonzero unsigned integer")
     })

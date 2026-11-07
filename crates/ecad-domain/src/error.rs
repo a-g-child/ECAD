@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// A proposed edit violates structural validity. Rejected edits leave state intact.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ModelError {
+    /// Paper layout, scale or sheet references are invalid.
+    Sheet(crate::SheetError),
     /// Whole-route references or geometry conflict.
     Route(crate::RouteError),
     /// Drawing units, style roles, or references are invalid.
@@ -69,6 +71,7 @@ pub enum ModelError {
 impl fmt::Display for ModelError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Sheet(error) => error.fmt(f),
             Self::Reuse(error) => error.fmt(f),
             Self::Property(error) => error.fmt(f),
             Self::Drawing(error) => error.fmt(f),
@@ -157,5 +160,11 @@ impl From<crate::DrawingError> for ModelError {
 impl From<crate::RouteError> for ModelError {
     fn from(error: crate::RouteError) -> Self {
         Self::Route(error)
+    }
+}
+
+impl From<crate::SheetError> for ModelError {
+    fn from(error: crate::SheetError) -> Self {
+        Self::Sheet(error)
     }
 }

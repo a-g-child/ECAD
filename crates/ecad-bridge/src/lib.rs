@@ -13,5 +13,6 @@ mod preview_scene;
 mod profiles;
 mod projection;
 mod properties;
+mod sheets;
 pub use controller::DesktopBridge;
 pub use dto::{BridgeError, Request, Response};

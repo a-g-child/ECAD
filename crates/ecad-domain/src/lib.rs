@@ -28,6 +28,7 @@ mod library;
 mod objects;
 mod project;
 mod project_metadata;
+mod project_sheets;
 mod property;
 mod property_error;
 mod property_registry;
@@ -36,6 +37,7 @@ mod reuse_error;
 mod route;
 mod route_error;
 mod route_geometry;
+mod sheet;
 mod snapping;
 
 pub use adoption_changes::{ObjectChanges, RevisionChanges};
@@ -49,7 +51,7 @@ pub use drawing_style::{
 pub use drawing_values::{DrawingColour, DrawingLength, DrawingPoint, FontFamily};
 pub use error::ModelError;
 pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};
-pub use identity::{AnchorId, ProfileId, RouteId};
+pub use identity::{AnchorId, ProfileId, RouteId, SheetId};
 pub use identity::{
     CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, IdError, InterfacePortId,
     ProjectId, SubsystemId, TerminalId,
@@ -78,3 +80,5 @@ pub use snapping::{DrawingGrid, SnapCandidate, SnapEnd, SnapQuery, SnapSettings,
 pub use drawing_transform::{DrawingTransform, MirrorAxis, QuarterTurn};
 
 pub use project_metadata::{MetadataField, ProjectMetadata};
+
+pub use sheet::{DrawingSheet, SheetError, SheetPaper, SheetViewPlacement};

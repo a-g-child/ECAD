@@ -36,6 +36,7 @@ mod routes;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Project {
     id: ProjectId,
+    pub(crate) sheets: Vec<crate::DrawingSheet>,
     pub(crate) metadata: crate::ProjectMetadata,
     drawing: crate::DrawingDocument,
     devices: BTreeMap<DeviceId, Device>,
@@ -58,6 +59,7 @@ impl Project {
     pub fn new(id: ProjectId) -> Self {
         Self {
             id,
+            sheets: Vec::new(),
             metadata: crate::ProjectMetadata::default(),
             drawing: crate::DrawingDocument::default(),
             devices: BTreeMap::new(),
@@ -240,6 +242,7 @@ impl Project {
         }
         self.validate_instances()?;
         self.drawing.validate()?;
+        self.validate_sheets()?;
         self.check_drawing_references(&self.drawing)?;
         Ok(())
     }

@@ -121,6 +121,42 @@ pub enum Request {
         /// Literal editable value, never an inferred identity.
         value: String,
     },
+    /// Prepare initial values for a new, uncommitted paper sheet.
+    NewSheet {
+        /// Captured document context.
+        context: serde_json::Value,
+    },
+    /// Validate exact paper values and retain a closed sheet-layout proposal.
+    PreviewSheet {
+        /// Captured document context.
+        context: serde_json::Value,
+        /// Strict sheet editor strings.
+        sheet: serde_json::Value,
+        /// Insert rather than replace existing identity.
+        create: bool,
+    },
+    /// Commit exactly the reviewed sheet proposal.
+    CommitSheet {
+        /// Retained proposal identity.
+        token: String,
+        /// Monotonic host input identity.
+        input: String,
+    },
+    /// Explicitly remove or reorder one sheet without changing its drawing number or source view.
+    ChangeSheet {
+        /// Captured document context.
+        context: serde_json::Value,
+        /// Existing sheet identity.
+        id: String,
+        /// remove or move.
+        operation: String,
+        /// Final ordinal for movement.
+        index: usize,
+        /// Monotonic host input identity.
+        input: String,
+    },
+    /// Cancel the retained sheet proposal without editing the project.
+    CancelSheet {},
     /// Discard the retained profile-copy proposal without editing the project.
     CancelProfileImport {},
     /// Reload the host-configured profile file, invalidating old observations/proposals.
@@ -329,9 +365,12 @@ pub struct Response {
     pub(crate) metadata: Option<Vec<crate::metadata::MetadataRow>>,
     pub(crate) profiles: Option<crate::profiles::ProfileCatalog>,
     pub(crate) profile_import: Option<crate::profiles::ImportRow>,
+    pub(crate) sheet_draft: Option<crate::sheets::SheetRow>,
+    pub(crate) sheet_preview: Option<crate::sheets::SheetPreviewRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
+    pub sheets: Vec<crate::sheets::SheetRow>,
     pub bridge_version: u8,
     pub next_input: String,
     pub revision: Token,

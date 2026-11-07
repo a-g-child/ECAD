@@ -1,6 +1,6 @@
 # Drawing sheets, layouts and metadata
 
-Status: included product feature. Project-owned metadata, reusable company/contact profiles and reviewed selective imports are implemented. Sheet geometry, table editing and placeholder placement remain planned.
+Status: included product feature. Project-owned metadata, reusable company/contact profiles and reviewed selective imports are implemented. Ordered paper sheets, one optional view placement, reviewed editing and read-only paper display are implemented. Table editing and placeholder placement remain planned.
 
 ## Scope and ownership
 
@@ -47,12 +47,24 @@ Saving a profile is outside project undo and does not dirty a project or clear r
 
 Native profiles live in company-profiles.json under the Tauri-provided per-user application configuration directory. Startup/configuration and missing-file reads do not create it; explicit Save profile creates directories and writes it. Projects retain copied values and never reference this path. The browser test harness uses a separate file alongside its temporary project; ECAD_UI_PROFILES can explicitly override its location. Profile schema v1 is separate from project schema v7. Saves use observed-byte/location checks and staged replacement; concurrent uncooperative writers can still race between check and rename. Automatic default-profile selection, deletion, profile import/export packaging and logos remain future work.
 
+## Paper sheets and view placement
+
+Drawing → Sheets opens a complete numeric paper editor. Create a blank sheet or place one existing drawing view. Set a literal drawing number/title, oriented paper dimensions, nonnegative left/right/top/bottom guide margins, a positive rational scale, paper origin and source-view origin. A4/A3/Letter presets and portrait/landscape controls set editable dimensions; custom paper is supported. All dimensions/origins use integer micrometres; scale is paper/model, so 1/2 means half size. Margins must leave a positive interior.
+
+The mapping is paper_point = paper_origin + (view_point - view_origin) × numerator/denominator. Source geometry and electrical data never change with paper edits. Blank sheets support future covers. One view may appear on several sheets; removing a sheet retains the view, while removing/replacing a referenced view is rejected. Sheets have stable IDs independent of unique editable drawing numbers and explicit order. The current project has one implicit ordered drawing set; multiple named sets and multiple placements per sheet remain future work.
+
+Preview validates and retains the exact proposed paper edit; Apply commits it once. Invalid input, cancellation and stale/superseded proposals cannot apply an older layout. Move up/down and Remove sheet are explicit undoable operations. Reordering never renumbers sheets. Changing an already-matching layout preserves redo and checkpoints. Source-view and paper layout edits use separate operations.
+
+The Sheet display selector switches between Model view and read-only paper preview. Paper preview clips to page bounds, draws margin guides, supports cursor zoom, modifier/middle-button panning and F fit, and disables source drawing tools. Return to Model view (or choose an object in the explorer) to edit source geometry. Right-click paper to open that sheet's manager. Model viewport/selection remain transient; deleting/undoing the displayed sheet returns to Model view. Margin guides are not printer hardware limits. This is not a PDF/print/export implementation.
+
+Project schema v8 adds an ordered sheets array alongside v7 metadata. V2–v7 load without invented sheets; explicit save writes v8. Older fixtures remain available and new v8 canonical outputs are tested. Sheet settings are outside electrical subsystem revision bodies. Title-block cells/bindings, template revisions, shared sheet defaults, multiple drawing sets, interactive paper placement, unified bulk sheet properties and output validation remain future work.
+
 ## Delivery checklist
 
 - [x] Include the feature and define scope, variable ownership and portability rules.
 - [x] Add project metadata, stable field catalog, exact history, versioned persistence and a bounded multiline editor.
 - [x] Add personal/company profile storage and explicit previewed copy/update into a project.
-- [ ] Add sheets, paper settings, numbering, drawing-set order and one view placement per sheet.
+- [x] Add sheets, paper settings, numbering, initial drawing-set order and one optional view placement per sheet.
 - [ ] Add table/cell geometry and editing with stable identities and bulk properties.
 - [ ] Add bindings, sheet-local values, missing/required diagnostics and override/reset behavior.
 - [ ] Add standard/draft/cover/contents templates, shared blocks and contents pagination.

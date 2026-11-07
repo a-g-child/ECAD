@@ -59,6 +59,9 @@ impl SubsystemRevision {
         content: Project,
     ) -> Result<Self, ModelError> {
         content.validate()?;
+        if !content.sheets().is_empty() {
+            return Err(crate::SheetError::ReusableSheetsUnsupported.into());
+        }
         if !content.metadata().values().is_empty() {
             return Err(crate::ReuseError::ProjectMetadataUnsupported.into());
         }

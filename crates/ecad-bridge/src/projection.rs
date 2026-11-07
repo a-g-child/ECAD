@@ -166,7 +166,8 @@ pub(crate) fn snapshot(
         .map(|d| {
             let supported = matches!(
                 d.handler,
-                ActionHandler::OpenProject
+                ActionHandler::Sheets
+                    | ActionHandler::OpenProject
                     | ActionHandler::CompanyProfiles
                     | ActionHandler::ProjectMetadata
                     | ActionHandler::DrawingSettings
@@ -210,6 +211,7 @@ pub(crate) fn snapshot(
         })
         .collect();
     Snapshot {
+        sheets: project.sheets().iter().map(Into::into).collect(),
         bridge_version: 1,
         next_input: "1".into(),
         revision: session.revision().into(),

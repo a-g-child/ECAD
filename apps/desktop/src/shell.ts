@@ -24,6 +24,7 @@ export function createShell(action: (id: string) => void) {
         ['Redo', 'document.redo'],
         ['Properties', 'selection.properties'],
         ['Drawing defaults…', 'drawing.styles.edit'],
+        ['Sheets and paper…', 'drawing.sheets.edit'],
         ['Create annotation', 'drawing.label.create'],
         ['Create graphical path', 'drawing.polyline.create'],
         ['Move selection', 'drawing.selection.move'],
@@ -73,7 +74,9 @@ export function createShell(action: (id: string) => void) {
   const tabs = element('div', 'drawing-tabs');
   const views = element('select', 'view-selector');
   views.setAttribute('aria-label', 'Drawing view');
-  tabs.append(views, element('span', 'pane-tag', 'SCHEMATIC'));
+  const sheets = element('select', 'sheet-selector');
+  sheets.setAttribute('aria-label', 'Sheet display');
+  tabs.append(views, sheets, element('span', 'pane-tag', 'SCHEMATIC'));
   const canvas = element('div', 'canvas');
   canvas.tabIndex = 0;
   canvas.dataset.focus = 'canvas';
@@ -131,6 +134,7 @@ export function createShell(action: (id: string) => void) {
     title,
     tree,
     views,
+    sheets,
     canvas,
     placement,
     svg,

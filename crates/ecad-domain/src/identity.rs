@@ -123,6 +123,11 @@ identity!(
     "Identity of a reusable personal/company profile outside project history."
 );
 
+identity!(
+    SheetId,
+    "Identity of a paper-space drawing sheet, separate from numbering and views."
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;

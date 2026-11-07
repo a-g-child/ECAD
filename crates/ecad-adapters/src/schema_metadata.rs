@@ -17,7 +17,7 @@ use std::{collections::BTreeMap, fmt};
 
 #[derive(Serialize)]
 #[serde(transparent)]
-struct MetadataData(BTreeMap<String, String>);
+pub(crate) struct MetadataData(BTreeMap<String, String>);
 impl<'de> Deserialize<'de> for MetadataData {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct Fields;
@@ -45,18 +45,18 @@ impl<'de> Deserialize<'de> for MetadataData {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct MetadataProjectData {
-    schema_version: u32,
-    project_id: String,
-    metadata: MetadataData,
-    subsystems: Vec<SubsystemData>,
-    devices: Vec<DeviceData>,
-    ports: Vec<PortData>,
-    conductors: Vec<ConductorData>,
-    cables: Vec<CableData>,
-    definitions: Vec<DefinitionData>,
-    instances: Vec<InstanceData>,
-    local_origins: Vec<InstanceData>,
-    drawing: RoutedDrawingData,
+    pub(crate) schema_version: u32,
+    pub(crate) project_id: String,
+    pub(crate) metadata: MetadataData,
+    pub(crate) subsystems: Vec<SubsystemData>,
+    pub(crate) devices: Vec<DeviceData>,
+    pub(crate) ports: Vec<PortData>,
+    pub(crate) conductors: Vec<ConductorData>,
+    pub(crate) cables: Vec<CableData>,
+    pub(crate) definitions: Vec<DefinitionData>,
+    pub(crate) instances: Vec<InstanceData>,
+    pub(crate) local_origins: Vec<InstanceData>,
+    pub(crate) drawing: RoutedDrawingData,
 }
 impl From<&Project> for MetadataProjectData {
     fn from(project: &Project) -> Self {

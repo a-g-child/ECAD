@@ -1,6 +1,6 @@
 //! Replaceable project IO, separate from the editing model and session.
 //!
-//! The adapter saves a complete experimental v7 project in one JSON file.
+//! The adapter saves a complete experimental v8 project in one JSON file.
 //! Domain structs are not serialized directly. See [`JsonFile`] for save guarantees
 //! and [`encode_project`] for deterministic text suitable for Git.
 
@@ -22,6 +22,7 @@ mod schema_drawing_values;
 mod schema_metadata;
 mod schema_reuse;
 mod schema_routes;
+mod schema_sheets;
 mod schema_structure;
 mod schema_styled_project;
 mod versioned_file;

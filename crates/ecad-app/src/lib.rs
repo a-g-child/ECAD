@@ -44,6 +44,7 @@ mod property_selection;
 mod revision;
 mod route_command;
 mod session;
+mod sheet_command;
 mod shortcut;
 mod transaction;
 mod usage_index;
@@ -123,3 +124,5 @@ pub use company_profile::{
     CompanyProfile, PROFILE_FIELDS, ProfileError, ProfileFieldChange, ProfileImportPreview,
     preview_profile_import,
 };
+
+pub use sheet_command::{SheetCommand, SheetPreview, preview_sheet};

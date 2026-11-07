@@ -38,6 +38,7 @@ export interface ActionRow {
   shortcuts: string[];
 }
 export interface Snapshot {
+  sheets: SheetRow[];
   bridge_version: 1;
   next_input: string;
   revision: Revision;
@@ -118,7 +119,32 @@ export interface ProfileImport {
   token: string;
   changes: { key: string; label: string; before: string | null; after: string | null }[];
 }
+export interface SheetRow {
+  id: string;
+  number: string;
+  title: string;
+  width: string;
+  height: string;
+  left: string;
+  right: string;
+  top: string;
+  bottom: string;
+  view: string | null;
+  paper_x: string;
+  paper_y: string;
+  source_x: string;
+  source_y: string;
+  numerator: string;
+  denominator: string;
+}
+export interface SheetPreview {
+  token: string;
+  sheet: SheetRow;
+  scene: SceneRow[];
+}
 export interface Reply {
+  sheet_draft: SheetRow | null;
+  sheet_preview: SheetPreview | null;
   profiles: ProfileCatalog | null;
   profile_import: ProfileImport | null;
   metadata: MetadataRow[] | null;
@@ -144,6 +170,7 @@ export function validateReply(value: unknown): Reply {
       s.bridge_version !== 1 ||
       typeof s.revision?.epoch !== 'string' ||
       typeof s.revision?.sequence !== 'string' ||
+      !Array.isArray(s.sheets) ||
       !Array.isArray(s.objects) ||
       !Array.isArray(s.scene) ||
       !Array.isArray(s.actions)

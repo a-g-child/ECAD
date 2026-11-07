@@ -309,7 +309,7 @@ fn transformed_v6_geometry_saves_reopens_and_restores_the_saved_checkpoint_on_re
     assert_projection(reopened.session().project(), &preview);
     let data: serde_json::Value =
         serde_json::from_str(&encode_project(reopened.session().project()).unwrap()).unwrap();
-    assert_eq!(data["schema_version"], 7);
+    assert_eq!(data["schema_version"], 8);
     document.undo(document.session().revision()).unwrap();
     assert_eq!(document.session().project(), &before);
     assert!(document.session().is_dirty());

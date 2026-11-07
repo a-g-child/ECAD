@@ -246,6 +246,24 @@ impl ActionDispatcher {
             (ActionHandler::CreatePolyline, ActionParameters::None) => {
                 request(ActionRequestKind::PolylinePlacement, None)
             }
+            (ActionHandler::Sheets, ActionParameters::None) => {
+                request(ActionRequestKind::Sheets, None)
+            }
+            (ActionHandler::Sheets, ActionParameters::SheetPreview(preview)) => {
+                if preview.revision() != revision {
+                    return Err(ActionDispatchError::WrongParameters);
+                }
+                ActionOutcome::Edited(
+                    document
+                        .execute(revision, Command::Sheet(preview.command))
+                        .map_err(ActionDispatchError::Edit)?,
+                )
+            }
+            (ActionHandler::Sheets, ActionParameters::Sheet(command)) => ActionOutcome::Edited(
+                document
+                    .execute(revision, Command::Sheet(command))
+                    .map_err(ActionDispatchError::Edit)?,
+            ),
             (ActionHandler::CompanyProfiles, ActionParameters::None) => {
                 request(ActionRequestKind::CompanyProfiles, None)
             }
