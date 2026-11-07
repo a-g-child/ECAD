@@ -27,6 +27,17 @@ pub(crate) fn check() -> Result<(), Box<dyn Error>> {
     for (name, allowed) in [
         ("ecad-domain", BTreeSet::new()),
         ("ecad-app", BTreeSet::from(["ecad-domain"])),
+        (
+            "ecad-bridge",
+            BTreeSet::from([
+                "ecad-domain",
+                "ecad-app",
+                "ecad-adapters",
+                "serde",
+                "serde_json",
+                "tempfile",
+            ]),
+        ),
     ] {
         let package = packages
             .iter()

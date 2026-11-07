@@ -1,6 +1,6 @@
 # Architecture direction
 
-Status: architecture direction with an initial headless implementation. Domain, application, JSON adapter, and local check-runner boundaries now exist; hierarchy, reusable revisions, drawing styles, whole conductor routes, and action contracts are implemented; desktop and broader capabilities remain planned. See the [implementation checklist](implementation-checklist.md) and [first implementation decision](decisions/0001-headless-foundation.md).
+Status: architecture direction with an initial headless implementation. Domain, application, JSON adapter, and local check-runner boundaries now exist; hierarchy, reusable revisions, drawing styles, whole conductor routes, and action contracts are implemented; a bounded Tauri desktop prototype is implemented on macOS; broader native/platform capabilities remain planned. See the [implementation checklist](implementation-checklist.md) and [first implementation decision](decisions/0001-headless-foundation.md).
 
 ## Principles
 
@@ -43,13 +43,14 @@ These are responsibility boundaries, not a requirement for a crate per row. Pres
 
 ## Initial repository shape
 
-Proposed starting shape when implementation begins:
+The core crates and desktop host now follow this shape; further feature directories are added only when needed:
 
 ```text
 crates/
   ecad-domain/          # Model, geometry, invariants, style/property definitions
   ecad-app/             # Sessions, commands, history, queries, service contracts
   ecad-adapters/        # Project files, Git, assets; isolated internal modules
+  ecad-bridge/          # Desktop DTOs/projections and guarded controller
 apps/
   desktop/
     src-tauri/         # Thin host and typed bridge
@@ -98,7 +99,7 @@ Keep action dispatch distinct from document command execution: an action may ent
 
 ## Frontend/core contract
 
-The headless preview contract now exposes immutable exact candidate records for layout and snapped movement, retaining the original session revision and closed commands. Prepare and commit share validated layout rules; commit never re-queries snap targets. The M action supports preview/commit parameters as well as immediate numeric layout. Snap queries are deterministic, view-scoped, and transient, with explicit exclusions/tolerance; the first implementation scans geometry linearly. Project schema v6 is unchanged. See [decision 0014](decisions/0014-deterministic-snapping-and-previews.md). Actual IPC DTOs, native tools, and rendering are still pending.
+The headless preview contract now exposes immutable exact candidate records for layout and snapped movement, retaining the original session revision and closed commands. Prepare and commit share validated layout rules; commit never re-queries snap targets. The M action supports preview/commit parameters as well as immediate numeric layout. Snap queries are deterministic, view-scoped, and transient, with explicit exclusions/tolerance; the first implementation scans geometry linearly. Project schema v6 is unchanged. See [decision 0014](decisions/0014-deterministic-snapping-and-previews.md). Bridge-v1 DTOs, an SVG read projection, and a bounded Tauri host are now implemented; native tool previews and comprehensive native interaction remain pending.
 
 Use a small, typed bridge supporting document operations, editing commands, queries, and revisioned change notifications. Keep transport DTOs distinct from internal model and persisted-file schemas so changing one boundary does not accidentally change all three.
 
@@ -109,6 +110,10 @@ The Rust session owns the committed document. Frontend state is a revisioned rea
 Do not require a synchronous round trip for every pointer movement. Allow local interaction previews using shared rules or a clearly bounded approximation, then validate the committed command in the core. The final result must match the preview or visibly explain why it cannot be applied. Prototype shared geometry via native calls, frontend code, or WebAssembly before selecting an approach.
 
 Long-running indexing, loading, imports, and geometry work must not block the interactive event loop. Define cancellation and progress at operation boundaries, and discard stale results rather than applying them to a changed document. Do not introduce async into pure domain functions without a concrete need.
+
+## First desktop composition
+
+The Tauri host lives in a separate Cargo project with its own lockfile. It connects a mutex-owned `ecad-bridge` controller to native file choosers and a TypeScript/SVG workspace; the main workspace remains testable without native webview libraries. Project state, validation, property plans, history, and guarded persistence stay in Rust. Whole projections carry string-encoded revision tokens and typed identities; exact property values remain strings, while millimetre floats serve scene presentation only. A browser-only loopback test host uses the same bridge and actual files in isolated temporary locations. It is not a production service or alternate electrical model. See [decision 0017](decisions/0017-first-desktop-slice.md).
 
 ## Derived electrical reports
 

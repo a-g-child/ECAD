@@ -1,0 +1,89 @@
+.report-pane {
+  height: 185px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  min-height: 0;
+}
+.report-pane[hidden] {
+  display: none;
+}
+.report-body {
+  overflow: auto;
+  min-width: 0;
+  min-height: 0;
+  scrollbar-gutter: stable;
+}
+.report-body table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 10px;
+}
+.report-body th,
+.report-body td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #e6eaed;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.report-body th {
+  color: #71808b;
+  background: #f7f8f9;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+}
+.plain {
+  border: 0;
+  background: transparent;
+  font-size: 10px;
+  padding: 3px 5px;
+}
+.palette {
+  width: 470px;
+  max-width: 80vw;
+  max-height: 65vh;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  box-shadow: 0 15px 60px #0003;
+}
+.palette::backdrop {
+  background: #10201935;
+}
+.palette-search {
+  width: 100%;
+  padding: 13px 15px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  outline: none;
+  font-size: 13px;
+}
+.palette-results {
+  overflow: auto;
+  max-height: 50vh;
+  padding: 5px;
+}
+.palette-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 0;
+  padding: 9px 10px;
+  text-align: left;
+  background: #fff;
+}
+.palette-item kbd {
+  font-size: 9px;
+  color: #869198;
+}
+.palette-item:disabled {
+  opacity: 0.48;
+}

@@ -1,0 +1,18 @@
+[package]
+name = "ecad-desktop"
+version = "0.1.0"
+edition = "2024"
+publish = false
+[dependencies]
+ecad-bridge = { path = "../../../crates/ecad-bridge" }
+tauri = { version = "=2.12.5", features = [] }
+tauri-plugin-dialog = "=2.8.3"
+[build-dependencies]
+tauri-build = { version = "=2.7.4", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "deny"

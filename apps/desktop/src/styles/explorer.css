@@ -1,0 +1,75 @@
+.tree,
+.inspector {
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  scrollbar-gutter: stable;
+  flex: 1;
+}
+.tree {
+  padding: 5px 0 20px;
+}
+.tree-section {
+  height: 31px;
+  padding: 14px 10px 0;
+  color: #7a858d;
+  font-size: 9px;
+  letter-spacing: 0.8px;
+}
+.tree-branch > summary {
+  display: flex;
+  align-items: center;
+  list-style: none;
+}
+.tree-branch > summary::-webkit-details-marker {
+  display: none;
+}
+.tree-branch > summary:before {
+  content: '›';
+  color: #839097;
+  width: 10px;
+  flex-shrink: 0;
+}
+.tree-branch[open] > summary:before {
+  content: '⌄';
+}
+.tree-item {
+  height: 27px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 7px;
+  text-align: left;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 8px;
+  min-width: 0;
+}
+.tree-item.selected {
+  background: #dcebe3;
+  color: #1d6249;
+}
+.tree-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.object-kind {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #c4cdd1;
+  border-radius: 2px;
+  text-align: center;
+  line-height: 14px;
+  flex-shrink: 0;
+  color: #74848b;
+}
+.selected .object-kind {
+  border-color: #8bb9a2;
+  color: #28755f;
+}

@@ -105,6 +105,10 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Native host should choose and open a project, protecting dirty state.
+    OpenProject,
+    /// Active drawing surface should fit its viewport without a document edit.
+    FitDrawing,
     /// Request pivot and quarter-turn for the captured drawing selection.
     RotateSelection,
     /// Request pivot and reflection axis for the captured drawing selection.

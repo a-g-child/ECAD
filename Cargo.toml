@@ -1,5 +1,6 @@
 [workspace]
-members = ["crates/ecad-domain", "crates/ecad-app", "crates/ecad-adapters", "xtask"]
+members = ["crates/ecad-domain", "crates/ecad-app", "crates/ecad-adapters", "crates/ecad-bridge", "xtask"]
+exclude = ["apps/desktop/src-tauri"]
 resolver = "3"
 
 [workspace.package]

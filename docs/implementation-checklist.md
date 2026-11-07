@@ -81,11 +81,15 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 
 ## 5. Desktop interaction prototype
 
-- [ ] Select the frontend/rendering approach through a bounded Tauri prototype on Linux, Windows, and macOS.
-- [ ] Add typed transport DTOs, revisioned projections, stale-result rejection, and resynchronization.
-- [ ] Build the stable shell and reusable inspector/tool/menu controls before growing feature panes.
-- [ ] Implement pan/zoom, selection, wire placement, Properties, and keyboard actions using shared infrastructure.
-- [ ] Verify preview/commit agreement, cancellation, focus retention, and stable workspace bounds.
+- [x] Build a bounded Tauri/TypeScript/SVG prototype and verify native macOS build/launch.
+- [ ] Validate the frontend/rendering choice natively on Linux and Windows before treating it as a release decision.
+- [x] Add bridge-v1 DTOs and full revisioned projections, stale-request/context validation, lossless identity/revision/editor strings, and host input-ID resynchronization.
+- [ ] Add incremental projections, cancellation/background budgets, generated comprehensive transport schemas, and large-document scene virtualization.
+- [x] Build fixed shell-owned pane bounds, shared menu/tool/property/table controls, reserved status feedback, and internal scrolling; test long values, errors, and resizing.
+- [x] Implement SVG pan/zoom, fit, whole-object/mixed selection, right-click/full Properties, bounded typed bulk editors, shared undo/redo/save/open/fit/palette/report paths, and protected keyboard input.
+- [ ] Add interactive wire/symbol placement, sub-element hit testing/selection, graphical move/rotate previews, snapping feedback, docking/splitters, and broader native interaction.
+- [x] Verify browser edit-to-core-to-render agreement, failed-edit focus retention, one-step undo, real saves/conflicts, report values, and fixed pane bounds using Chromium with the real Rust bridge.
+- [ ] Verify interactive tool preview/commit agreement and cancellation in the native UI.
 - [ ] Add native UI automation appropriate to each platform and representative rendering tests.
 - [ ] Demonstrate coordinated overview and detailed wiring views backed by the same objects.
 
@@ -139,6 +143,7 @@ Current test owners:
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
 - Action/keymap contracts: [registry/router tests](../crates/ecad-app/tests/action_contract.rs), [real invocation workflows](../crates/ecad-adapters/tests/action_workflow.rs), and [keymap persistence](../crates/ecad-adapters/tests/keymap_persistence.rs).
+- Desktop bridge and frontend: [bridge contracts](../crates/ecad-bridge/tests/document_bridge.rs), [browser workflows](../apps/desktop/tests/editor.test.mjs), and [core host requests](../crates/ecad-app/tests/desktop_surface_contract.rs).
 - Electrical reports and CSV outputs: [projection/workflows](../crates/ecad-adapters/tests/connection_report_workflow.rs), [golden/escaping/persistence contracts](../crates/ecad-adapters/tests/reports/persistence.rs), and [shared action](../crates/ecad-adapters/tests/reports/actions.rs).
 - Orthogonal transforms: [coordinate rules](../crates/ecad-domain/tests/transform_contract.rs), [connected workflows](../crates/ecad-adapters/tests/transform_workflow.rs), [failure/rollback cases](../crates/ecad-adapters/tests/transforms/failures.rs), and [shared action previews](../crates/ecad-adapters/tests/transforms/actions.rs).
 - Snapping and exact previews: [snap rules](../crates/ecad-domain/tests/snap_contract.rs), [placement workflows](../crates/ecad-adapters/tests/placement_workflow.rs), and [shared M preview/commit](../crates/ecad-adapters/tests/placement/actions.rs).

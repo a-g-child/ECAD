@@ -57,6 +57,10 @@ impl ActionDispatcher {
             }))
         };
         match (handler, &invocation.parameters) {
+            (ActionHandler::OpenProject, ActionParameters::None) => {
+                return Ok(request(ActionRequestKind::OpenProject, None));
+            }
+            (ActionHandler::OpenProject, _) => return Err(ActionDispatchError::WrongParameters),
             (ActionHandler::Palette, ActionParameters::None) => {
                 return Ok(request(ActionRequestKind::Palette, None));
             }
@@ -76,6 +80,9 @@ impl ActionDispatcher {
             .revision
             .expect("document availability checked revision");
         let outcome = match (handler, invocation.parameters) {
+            (ActionHandler::FitDrawing, ActionParameters::None) => {
+                request(ActionRequestKind::FitDrawing, None)
+            }
             (ActionHandler::ConnectionReport, ActionParameters::None) => {
                 ActionOutcome::ConnectionReport(Box::new(ConnectionReport::from_session(
                     document.session(),

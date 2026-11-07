@@ -74,6 +74,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecad-bridge"
+version = "0.1.0"
+dependencies = [
+ "ecad-adapters",
+ "ecad-app",
+ "ecad-domain",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "ecad-domain"
 version = "0.1.0"
 

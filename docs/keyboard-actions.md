@@ -1,11 +1,13 @@
 # Keyboard and action model
 
-Status: a headless action registry, shared invocation dispatcher, logical-key router, and canonical keymap schema v1 are implemented. Native UI wiring, shortcut editor, and the broader interaction requirements below remain planned. See [decision 0011](decisions/0011-action-registry-and-keymaps.md).
+Status: a headless action registry, shared invocation dispatcher, logical-key router, and canonical keymap schema v1 are implemented. The first desktop prototype routes supported keyboard/menu/tool/palette actions through this core and protects typing. Comprehensive native accelerators, shortcut editor, and the broader interaction requirements below remain planned. See [decision 0011](decisions/0011-action-registry-and-keymaps.md).
 
 ## Implemented first slice
 
 | Action | Shipped shortcut | Scope |
 | --- | --- | --- |
+| Open project request | Primary+O | Application |
+| Fit active drawing | F | Canvas |
 | Undo | Primary+Z | Document |
 | Redo | Primary+Shift+Z | Document |
 | Guarded save | Primary+S | Document |

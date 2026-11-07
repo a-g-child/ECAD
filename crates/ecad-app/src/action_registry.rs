@@ -6,6 +6,10 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Ask the host to select and open a local project, protecting existing edits.
+    OpenProject,
+    /// Ask the active drawing surface to fit its current geometry.
+    FitDrawing,
     /// Inspect a revision-bound report of actual terminals, conductors, and cable memberships.
     ConnectionReport,
     /// Request an exact quarter-turn and explicit pivot for the drawing selection.
@@ -198,7 +202,7 @@ impl ActionRegistry {
             return Some(ActionDisabled::UnknownAction(id.clone()));
         };
         let handler = definition.handler;
-        if handler == ActionHandler::Palette {
+        if matches!(handler, ActionHandler::Palette | ActionHandler::OpenProject) {
             return None;
         }
         if handler == ActionHandler::CancelPlacement {
@@ -266,7 +270,8 @@ impl ActionRegistry {
                     Ok(_) => None,
                 }
             }
-            ActionHandler::CreateLabel
+            ActionHandler::FitDrawing
+            | ActionHandler::CreateLabel
             | ActionHandler::CreatePolyline
             | ActionHandler::CreateRoute => {
                 if context.focus != ActionFocus::Canvas {

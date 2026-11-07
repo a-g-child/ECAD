@@ -21,7 +21,7 @@ fn main() -> ExitCode {
 fn run() -> Result<(), Box<dyn Error>> {
     let arguments: Vec<_> = std::env::args().skip(1).collect();
     if arguments.len() > 1 {
-        return Err("usage: cargo xtask [quick|full|scale]".into());
+        return Err("usage: cargo xtask [quick|full|scale|ui|desktop]".into());
     }
     let profile = arguments.first().map(String::as_str).unwrap_or("full");
     std::env::set_current_dir(
@@ -29,6 +29,41 @@ fn run() -> Result<(), Box<dyn Error>> {
             .parent()
             .ok_or("workspace root is missing")?,
     )?;
+    if matches!(profile, "ui" | "desktop") {
+        if profile == "ui" {
+            cargo(&["test", "--offline", "--locked", "-p", "ecad-bridge"])?;
+        }
+        npm(&["run", "format:check"])?;
+        npm(&["run", "build"])?;
+        if profile == "ui" {
+            npm(&["test"])?;
+        } else {
+            cargo(&[
+                "fmt",
+                "--manifest-path",
+                "apps/desktop/src-tauri/Cargo.toml",
+                "--",
+                "--check",
+            ])?;
+            cargo(&[
+                "clippy",
+                "--offline",
+                "--locked",
+                "--manifest-path",
+                "apps/desktop/src-tauri/Cargo.toml",
+                "--all-targets",
+                "--",
+                "-D",
+                "warnings",
+            ])?;
+        }
+        println!(
+            "{profile} checks passed on {} / {}",
+            std::env::consts::OS,
+            std::env::consts::ARCH
+        );
+        return Ok(());
+    }
     if profile == "scale" {
         return cargo(&[
             "run",
@@ -43,7 +78,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     }
     if !matches!(profile, "quick" | "full") {
         return Err(
-            "available profiles: quick, full, scale; native UI checks are not implemented".into(),
+            "available profiles: quick, full, scale, ui, desktop; native interaction automation remains pending".into(),
         );
     }
     boundaries::check()?;
@@ -100,4 +135,10 @@ fn execute(mut command: Command) -> Result<(), Box<dyn Error>> {
         return Err(format!("{command:?} exited with {status}").into());
     }
     Ok(())
+}
+
+fn npm(arguments: &[&str]) -> Result<(), Box<dyn Error>> {
+    let mut command = Command::new(if cfg!(windows) { "npm.cmd" } else { "npm" });
+    command.current_dir("apps/desktop").args(arguments);
+    execute(command)
 }

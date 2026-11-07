@@ -1,6 +1,6 @@
 # Repository working conventions
 
-This repository contains planning documents and an initial headless Rust workspace. Read the [implementation checklist](docs/implementation-checklist.md) to distinguish working behavior from future scope. There is no desktop UI yet.
+This repository contains a headless Rust engine and a first bounded Tauri desktop prototype. Read the [implementation checklist](docs/implementation-checklist.md) to distinguish working behavior from future scope. See [desktop setup](docs/desktop-prototype.md) for working UI behavior and platform limits.
 
 Read the relevant planning documents before implementation:
 
@@ -34,6 +34,8 @@ Read the relevant planning documents before implementation:
 - Snap queries must be deterministic, view-scoped, and explicit about document-space tolerance and exclusions. Numeric input bypasses snapping; geometry coincidence never creates connectivity. Keep previews transient, retain their original revision, and commit their closed proposal without re-querying targets.
 - Electrical reports derive from actual occurrence/terminal/conductor identities, preserving all attached ends, spares, and empty cables. Do not count bundled source bodies or drawing copies as extra physical objects. Guard current-value exports by report revision; keep historical snapshots explicit and generated CSV outside authoritative project data.
 - Action surfaces share registry availability and one dispatcher. Preserve captured targets/revisions, protect text/IME/control input, flag native repeats, and share monotonic input IDs across delivery paths. Never install a partially compiled keymap or silently drop unknown overrides.
+- Keep the desktop host in its separate Cargo project so core checks do not require native webview libraries. Bridge DTOs are distinct from persistence; transmit identities/revisions/exact editor values as strings, and reserve floats for display-only scene coordinates.
+- Keep native/browser requests on one monotonic input stream, resynchronize it after reload, and use the core registry/router/dispatcher. Native close/quit and file choosers must protect unsaved edits and changed document revisions.
 - Start with modules and crates needed by working features; avoid speculative plugin frameworks and empty scaffolding.
 
 ## Maintainability
@@ -49,6 +51,7 @@ Read the relevant planning documents before implementation:
 ## Verification and decisions
 
 - Run `cargo xtask full` for the current local formatting, Clippy, unit/integration/regression, doctest, rustdoc, and core dependency checks. `cargo xtask scale` runs the separate bounded release probe. Dependencies must be cached; the runner uses offline/locked Cargo operations.
+- For UI work, run `cargo xtask ui` (requires local Node dependencies and Playwright Chromium) and `cargo xtask desktop` on the available native host. Browser tests use real Rust state on loopback test ports; they are not native interaction automation.
 - Add relevant checks with implementation and keep the implementation checklist current.
 - Keep unit, regression, and integration tests runnable locally without GitHub or remote services. Run the appropriate local checks before treating implementation as ready; report unavailable checks explicitly.
 - Substantive bug fixes normally include a regression reproducer. Use temporary local repositories for Git integration tests.

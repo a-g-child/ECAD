@@ -27,6 +27,26 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "document.open",
+                "Open project",
+                "Document",
+                "Request a host file chooser with protected document replacement",
+                Handler::OpenProject,
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![binding(Scope::Application, vec![chord('o', true, false)])],
+            ),
+            (
+                "drawing.view.fit",
+                "Fit drawing",
+                "View",
+                "Fit the active drawing geometry to the available viewport",
+                Handler::FitDrawing,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![binding(Scope::Canvas, vec![chord('f', false, false)])],
+            ),
+            (
                 "reports.connections",
                 "Connection reports",
                 "Reports",
