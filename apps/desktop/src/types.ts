@@ -81,7 +81,12 @@ export interface TransformRow {
   operation: string;
   scene: SceneRow[];
 }
+export interface AnnotationRow extends MoveRow {
+  text: string;
+  valid: boolean;
+}
 export interface Reply {
+  annotation: AnnotationRow | null;
   transform: TransformRow | null;
   movement: MoveRow | null;
   snapshot: Snapshot | null;

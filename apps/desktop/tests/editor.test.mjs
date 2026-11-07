@@ -8,6 +8,7 @@ import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { registerControlsTests } from './controls.mjs';
 import { registerTransformTests } from './transforms.mjs';
+import { registerAnnotationTests } from './annotations.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -278,6 +279,9 @@ test('move group previews connected routes, cancels cleanly and commits one exac
   await until(async () => (await points()) === '10,5 30,5 30,20 60,20 60,5');
   assert.doesNotMatch(await p.title(), /^●/);
   await y.press('Escape');
+  await p.waitForFunction(
+    () => document.querySelector('.status-message')?.textContent === 'Move cancelled',
+  );
   await until(async () => !(await x.isVisible()));
   assert.equal(await points(), original);
   assert.deepEqual(await bounds(p), before);
@@ -370,5 +374,16 @@ registerTransformTests({
   bounds,
   root,
   route,
+  project: () => project,
+});
+
+registerAnnotationTests({
+  page,
+  button,
+  until,
+  pressAction,
+  bounds,
+  input,
+  root,
   project: () => project,
 });

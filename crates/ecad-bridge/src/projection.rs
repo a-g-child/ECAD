@@ -93,32 +93,7 @@ pub(crate) fn snapshot(
             Some(ObjectRef::View(l.view)),
             Some(l.view),
         ));
-        let (colour, width) = properties::stroke(project, target);
-        let height = match project
-            .property(target, PropertyId::TextHeight)
-            .map(|v| v.value)
-        {
-            Ok(PropertyValue::Length(v)) => f64::from(v.micrometres()) / 1000.0,
-            _ => 2.5,
-        };
-        let font = match project
-            .property(target, PropertyId::FontFamily)
-            .map(|v| v.value)
-        {
-            Ok(PropertyValue::Text(v)) => v,
-            _ => "sans-serif".into(),
-        };
-        scene.push(SceneRow {
-            target: target.into(),
-            view: l.view.to_string(),
-            label: l.text.clone(),
-            shape: "text".into(),
-            points: vec![mm(l.position)],
-            colour,
-            width,
-            text_height: height,
-            font,
-        });
+        scene.push(label(project, l));
     }
     for p in drawing.polylines() {
         let target = ObjectRef::Polyline(p.id);
@@ -203,6 +178,7 @@ pub(crate) fn snapshot(
             let supported = matches!(
                 d.handler,
                 ActionHandler::OpenProject
+                    | ActionHandler::CreateLabel
                     | ActionHandler::FitDrawing
                     | ActionHandler::MoveSelection
                     | ActionHandler::RotateSelection
@@ -344,4 +320,34 @@ pub(crate) fn demo() -> Result<Project, BridgeError> {
     })();
     result.map_err(|e| BridgeError::new("sample", e))?;
     Ok(project)
+}
+
+pub(crate) fn label(project: &Project, l: &DrawingLabel) -> SceneRow {
+    let target = ObjectRef::Label(l.id);
+    let (colour, width) = properties::stroke(project, target);
+    let height = match project
+        .property(target, PropertyId::TextHeight)
+        .map(|v| v.value)
+    {
+        Ok(PropertyValue::Length(v)) => f64::from(v.micrometres()) / 1000.0,
+        _ => 2.5,
+    };
+    let font = match project
+        .property(target, PropertyId::FontFamily)
+        .map(|v| v.value)
+    {
+        Ok(PropertyValue::Text(v)) => v,
+        _ => "sans-serif".into(),
+    };
+    SceneRow {
+        target: target.into(),
+        view: l.view.to_string(),
+        label: l.text.clone(),
+        shape: "text".into(),
+        points: vec![mm(l.position)],
+        colour,
+        width,
+        text_height: height,
+        font,
+    }
 }

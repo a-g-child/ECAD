@@ -1,5 +1,8 @@
 //! Guarded document ownership and one shared action/key routing path for desktop requests.
-use crate::{dto::*, movement::Movement, projection, properties, transform::Transform};
+use crate::{
+    annotation::Annotation, dto::*, movement::Movement, projection, properties,
+    transform::Transform,
+};
 use ecad_adapters::JsonFile;
 use ecad_app::*;
 
@@ -23,6 +26,7 @@ pub struct DesktopBridge {
     clock: std::time::Instant,
     movement: Option<Movement>,
     transform: Option<Transform>,
+    annotation: Option<Annotation>,
     move_serial: u64,
 }
 impl DesktopBridge {
@@ -57,6 +61,7 @@ impl DesktopBridge {
             clock: std::time::Instant::now(),
             movement: None,
             transform: None,
+            annotation: None,
             move_serial: 0,
         })
     }
@@ -91,6 +96,7 @@ impl DesktopBridge {
         self.document = document;
         self.movement = None;
         self.transform = None;
+        self.annotation = None;
         self.demo = false;
         self.path = Some(path.into());
         self.router.cancel_pending();
@@ -173,7 +179,9 @@ impl DesktopBridge {
             selection,
             view,
             focus,
-            tool_active: self.movement.is_some() || self.transform.is_some(),
+            tool_active: self.movement.is_some()
+                || self.transform.is_some()
+                || self.annotation.is_some(),
             ..ActionContext::default()
         })
     }
@@ -195,10 +203,13 @@ impl DesktopBridge {
                         ActionRequestKind::OpenProject => "open",
                         ActionRequestKind::FitDrawing => "fit",
                         ActionRequestKind::MoveSelection => "move",
+                        ActionRequestKind::LabelPlacement => "annotation",
                         ActionRequestKind::RotateSelection => "rotate",
                         ActionRequestKind::MirrorSelection => "mirror",
                         ActionRequestKind::CancelPlacement => {
-                            let message = if self.transform.take().is_some() {
+                            let message = if self.annotation.take().is_some() {
+                                "Annotation cancelled"
+                            } else if self.transform.take().is_some() {
                                 "Transform cancelled"
                             } else {
                                 "Move cancelled"
@@ -275,7 +286,8 @@ impl DesktopBridge {
         if let Request::Action { input, .. }
         | Request::Key { input, .. }
         | Request::CommitMove { input, .. }
-        | Request::CommitTransform { input, .. } = &request
+        | Request::CommitTransform { input, .. }
+        | Request::CommitAnnotation { input, .. } = &request
         {
             let id = input_id(input)?.get();
             if id <= self.last_input {
@@ -289,7 +301,10 @@ impl DesktopBridge {
             | Request::CommitMove { .. }
             | Request::BeginTransform { .. }
             | Request::PreviewTransform { .. }
-            | Request::CommitTransform { .. }) => self.tool(request),
+            | Request::CommitTransform { .. }
+            | Request::BeginAnnotation { .. }
+            | Request::PreviewAnnotation { .. }
+            | Request::CommitAnnotation { .. }) => self.tool(request),
             Request::Snapshot {} => Ok(self.snapshot()),
             Request::Inspect { context } => {
                 let context = self.context(context)?;

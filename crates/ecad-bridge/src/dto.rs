@@ -188,6 +188,25 @@ pub enum Request {
         /// Shared host input identity.
         input: String,
     },
+    /// Begin a new annotation in the captured view, initially without text.
+    BeginAnnotation {
+        /// Captured view, revision and action context.
+        context: serde_json::Value,
+    },
+    /// Replace the annotation proposal; invalid updates invalidate its previous token.
+    PreviewAnnotation {
+        /// Opaque placement lifetime.
+        session: String,
+        /// Strict text, exact coordinates and snap-choice input envelope.
+        placement: serde_json::Value,
+    },
+    /// Create only the retained annotation proposal through the normal T action.
+    CommitAnnotation {
+        /// Current valid proposal token.
+        token: String,
+        /// Shared host input identity.
+        input: String,
+    },
     /// Route one logical keyboard event using the core keymap and protected-input policy.
     Key {
         /// Captured targets/focus/revision.
@@ -222,6 +241,7 @@ pub struct Response {
     pub(crate) message: Option<String>,
     pub(crate) movement: Option<MoveRow>,
     pub(crate) transform: Option<TransformRow>,
+    pub(crate) annotation: Option<AnnotationRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
@@ -305,4 +325,23 @@ pub(crate) struct TransformRow {
     pub y: String,
     pub operation: String,
     pub scene: Vec<SceneRow>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub(crate) struct AnnotationRow {
+    #[serde(flatten)]
+    pub placement: MoveRow,
+    pub text: String,
+    pub valid: bool,
+}
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct AnnotationInput {
+    pub text: String,
+    pub x: String,
+    pub y: String,
+    pub exact: bool,
+    pub suppressed: bool,
+    pub candidate: Option<usize>,
+    pub tolerance_um: u32,
 }

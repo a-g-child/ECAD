@@ -3,6 +3,7 @@ import { createShell } from './shell';
 import { DrawingCanvas } from './canvas';
 import { MovementTool } from './movement';
 import { TransformTool } from './transform';
+import { AnnotationTool } from './annotation';
 import { renderProperties, renderReport, renderTree } from './panels';
 import { element } from './ui';
 import { chooseFile, errorText, inputId, native, send, syncInput } from './transport';
@@ -20,6 +21,7 @@ let paletteContext: Context | null = null;
 const drawing = new DrawingCanvas(shell, choose, selectMany);
 let movement: MovementTool | undefined;
 let transform: TransformTool | undefined;
+let annotation: AnnotationTool | undefined;
 movement = new MovementTool(shell, drawing, apply, status, buttons, () => {
   movement?.clear();
   void action('placement.cancel');
@@ -28,8 +30,28 @@ transform = new TransformTool(shell, drawing, apply, status, buttons, () => {
   transform?.clear();
   void action('placement.cancel');
 });
+annotation = new AnnotationTool(
+  shell,
+  drawing,
+  apply,
+  status,
+  buttons,
+  (target) => choose(target, false),
+  () => {
+    annotation?.clear();
+    void action('placement.cancel');
+  },
+);
+function toolActive() {
+  return !!(movement?.active || transform?.active || annotation?.active);
+}
+function clearTools() {
+  movement?.clear();
+  transform?.clear();
+  annotation?.clear();
+}
 drawing.startMove = async (target, point) => {
-  if (!snapshot || busy || movement?.active || transform?.active) return null;
+  if (!snapshot || busy || toolActive()) return null;
   if (selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind))) {
     status(
       'Drag terminal anchors to move connected routes. Labels and graphical paths can be dragged directly.',
@@ -64,7 +86,7 @@ function buttons() {
         busy ||
         !selection.length ||
         selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind));
-    if (movement?.active || transform?.active) button.disabled = true;
+    if (toolActive()) button.disabled = true;
   }
 }
 async function apply(reply: Reply) {
@@ -89,13 +111,17 @@ async function apply(reply: Reply) {
     const oldView = view;
     snapshot = next;
     if (changed) {
-      movement?.clear();
-      transform?.clear();
+      clearTools();
     }
     if (replaced) {
       selection = [];
       selectionSequence++;
     }
+    const liveTargets = new Set(next.objects.map((row) => keyOf(row.target)));
+    selection = selection.filter((target) => liveTargets.has(keyOf(target)));
+    shell.selectionStatus.textContent = selection.length
+      ? `${selection.length} selected`
+      : 'No selection';
     if (!next.views.some((v) => v.id === view)) view = next.views[0]?.id ?? null;
     shell.title.textContent = `${next.name}${next.dirty ? '  •' : ''}`;
     shell.title.title = next.path ?? 'Built-in demonstration. Save as to create your own project.';
@@ -121,12 +147,12 @@ async function apply(reply: Reply) {
   if (reply.properties) renderProperties(shell, reply.properties, selection.length, edit);
   if (reply.report) renderReport(shell, reply.report);
   if (reply.message) status(reply.message);
+  if (reply.request === 'annotation') await annotation?.begin(context());
   if (reply.request === 'move') await movement?.begin(context());
   if (reply.request === 'rotate' || reply.request === 'mirror')
     await transform?.begin(context(), reply.request);
   if (reply.request === 'cancel_move') {
-    movement?.clear();
-    transform?.clear();
+    clearTools();
   }
   if (reply.request === 'fit') drawing.fit();
   if (reply.request === 'palette') openPalette();
@@ -144,7 +170,7 @@ async function inspect() {
     renderProperties(shell, reply.properties, selection.length, edit);
 }
 function choose(target: Target | null, add: boolean) {
-  if (!snapshot || busy || movement?.active || transform?.active) return;
+  if (!snapshot || busy || toolActive()) return;
   if (!target) {
     if (!add) selection = [];
   } else {
@@ -167,7 +193,7 @@ function choose(target: Target | null, add: boolean) {
   selectionChanged();
 }
 function selectMany(targets: Target[], add: boolean) {
-  if (!snapshot || busy || movement?.active || transform?.active) return;
+  if (!snapshot || busy || toolActive()) return;
   selection = [
     ...new Map(
       (add ? [...selection, ...targets] : targets).map((target) => [keyOf(target), target]),
@@ -211,7 +237,7 @@ async function run(operation: () => Promise<void>) {
   }
 }
 async function action(id: string, captured?: Context) {
-  if (!snapshot || ((movement?.active || transform?.active) && id !== 'placement.cancel')) return;
+  if (!snapshot || (toolActive() && id !== 'placement.cancel')) return;
   await run(async () => {
     const reply = await send({
       type: 'action',
@@ -231,7 +257,7 @@ async function action(id: string, captured?: Context) {
   });
 }
 async function edit(property: string, value: string) {
-  if (!snapshot || movement?.active || transform?.active) return;
+  if (!snapshot || toolActive()) return;
   const captured = context();
   await run(async () => {
     const reply = await send({ type: 'edit', context: captured, property, value });
@@ -298,7 +324,7 @@ document.addEventListener('keydown', (event) => {
     busy ||
     composing ||
     event.isComposing ||
-    target.matches('input,textarea,[contenteditable="true"]') ||
+    target.matches('input,textarea,select,button,[contenteditable="true"]') ||
     shell.palette.open
   )
     return;
@@ -306,6 +332,7 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     return;
   }
+  if (annotation?.key(event)) return;
   if (transform?.key(event)) return;
   if (movement?.key(event)) return;
   const primary = navigator.platform.toLowerCase().includes('mac') ? event.metaKey : event.ctrlKey;
@@ -341,9 +368,15 @@ document.addEventListener('keydown', (event) => {
   });
 });
 document.addEventListener('keyup', (event) => {
-  if (event.key === 'Alt') movement?.releaseAlt();
+  if (event.key === 'Alt') {
+    movement?.releaseAlt();
+    annotation?.releaseAlt();
+  }
 });
-window.addEventListener('blur', () => movement?.releaseAlt());
+window.addEventListener('blur', () => {
+  movement?.releaseAlt();
+  annotation?.releaseAlt();
+});
 shell.tree.addEventListener('contextmenu', () => void action('selection.properties'));
 shell.canvas.addEventListener('contextmenu', (event) => {
   event.preventDefault();

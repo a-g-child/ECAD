@@ -44,6 +44,9 @@ export function registerTransformTests({
     assert.equal(await ink(p), original);
     assert.deepEqual(await bounds(p), before);
     await x(p).press('Escape');
+    await p.waitForFunction(
+      () => document.querySelector('.status-message')?.textContent === 'Transform cancelled',
+    );
     await until(async () => !(await x(p).isVisible()));
     assert.equal(await ink(p), original);
     await p.locator('.canvas').focus();

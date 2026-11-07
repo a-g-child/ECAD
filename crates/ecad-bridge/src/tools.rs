@@ -13,6 +13,7 @@ impl DesktopBridge {
                     .ok_or_else(|| BridgeError::new("move", "Movement identity exhausted"))?;
                 self.movement = None;
                 self.transform = None;
+                self.annotation = None;
                 let scene = self.snapshot().snapshot.expect("snapshot").scene;
                 let movement = Movement::begin(
                     self.document.session(),
@@ -80,6 +81,7 @@ impl DesktopBridge {
                     .ok_or_else(|| BridgeError::new("transform", "Tool identity exhausted"))?;
                 self.movement = None;
                 self.transform = None;
+                self.annotation = None;
                 let scene = self.snapshot().snapshot.expect("snapshot").scene;
                 let transform = Transform::begin(
                     self.document.session(),
@@ -118,6 +120,45 @@ impl DesktopBridge {
                     parameters: ActionParameters::CommitLayout(preview),
                 });
                 self.transform = None;
+                result
+            }
+            Request::BeginAnnotation { context } => {
+                let context = self.context(context)?;
+                self.move_serial = self
+                    .move_serial
+                    .checked_add(1)
+                    .ok_or_else(|| BridgeError::new("annotation", "Tool identity exhausted"))?;
+                self.movement = None;
+                self.transform = None;
+                self.annotation = None;
+                let annotation =
+                    Annotation::begin(self.document.session(), context, self.move_serial)?;
+                let reply = annotation.response();
+                self.annotation = Some(annotation);
+                Ok(reply)
+            }
+            Request::PreviewAnnotation { session, placement } => {
+                let tool = self
+                    .annotation
+                    .as_mut()
+                    .ok_or_else(|| BridgeError::new("annotation", "No active annotation"))?;
+                tool.update(self.document.session(), &session, placement)
+            }
+            Request::CommitAnnotation { token, input } => {
+                let tool = self
+                    .annotation
+                    .as_mut()
+                    .ok_or_else(|| BridgeError::new("annotation", "No active annotation"))?;
+                let (context, parameters) = tool.take(&token)?;
+                let result = self.invoke(ActionInvocation {
+                    input_id: input_id(&input)?,
+                    action: ActionId::new("drawing.label.create").expect("builtin"),
+                    source: InvocationSource::Toolbar,
+                    repeat: false,
+                    context,
+                    parameters,
+                });
+                self.annotation = None;
                 result
             }
             _ => Err(BridgeError::new("tool", "Unsupported tool request")),

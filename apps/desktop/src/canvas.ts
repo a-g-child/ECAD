@@ -20,7 +20,11 @@ export class DrawingCanvas {
   preview(rows: SceneRow[], snap?: [number, number]) {
     const base = this.rows;
     const patches = new Map(rows.map((r) => [keyOf(r.target), r]));
-    this.render(base.map((r) => patches.get(keyOf(r.target)) ?? r));
+    const existing = new Set(base.map((r) => keyOf(r.target)));
+    this.render([
+      ...base.map((r) => patches.get(keyOf(r.target)) ?? r),
+      ...rows.filter((r) => !existing.has(keyOf(r.target))),
+    ]);
     this.rows = base;
     for (const node of this.shell.svg.querySelectorAll<SVGElement>('[data-object]'))
       node.classList.toggle('move-preview', patches.has(node.dataset.object!));

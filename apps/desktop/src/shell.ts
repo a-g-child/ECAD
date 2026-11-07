@@ -20,6 +20,7 @@ export function createShell(action: (id: string) => void) {
         ['Undo', 'document.undo'],
         ['Redo', 'document.redo'],
         ['Properties', 'selection.properties'],
+        ['Create annotation', 'drawing.label.create'],
         ['Move selection', 'drawing.selection.move'],
         ['Rotate selection', 'drawing.selection.rotate'],
         ['Mirror selection', 'drawing.selection.mirror'],
@@ -72,6 +73,7 @@ export function createShell(action: (id: string) => void) {
   move.dataset.action = 'drawing.selection.move';
   toolbar.append(move);
   for (const [label, name, id] of [
+    ['Create annotation · T', 'text', 'drawing.label.create'],
     ['Rotate selection · R', 'rotate', 'drawing.selection.rotate'],
     ['Mirror selection', 'mirror', 'drawing.selection.mirror'],
   ]) {

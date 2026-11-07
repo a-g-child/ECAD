@@ -147,3 +147,11 @@
   width: 128px;
   min-width: 80px;
 }
+.annotation-bar[hidden],
+.annotation-active > .move-bar:not(.annotation-bar) {
+  display: none;
+}
+.annotation-text {
+  width: 160px;
+  min-width: 60px;
+}
