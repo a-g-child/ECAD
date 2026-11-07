@@ -1,0 +1,31 @@
+# 0011: Shared action registry, keymaps, and protected input routing
+
+Status: accepted for headless action contracts and portable keymap import/export.
+
+## Decision
+
+Keep user action identities distinct from document commands and property identities. `ActionRegistry` holds stable dotted IDs, display/search metadata, broadest binding scope, typed handler family, derived invocation requirements, repeat policy, and explicit suggested/unbound defaults. Reject duplicate IDs, blank metadata, and an empty suggested-default policy. Current built-ins cover undo/redo, guarded save, Properties, annotation/polyline input/creation, drawing settings, palette, and cancellation requests. No unsupported wire tool is advertised. Feature logic stays in existing commands/services; this is not a plugin execution framework or an action per field/value assignment.
+
+Generate disabled palette listings and availability from the same registry used at execution. Revalidate actual session revision/epoch, history, selected object existence, canvas/view requirements, and protected text undo. Availability performs no filesystem IO; save still checks the observed file version at execution. Starting input/placement or opening an editor returns a typed request carrying original revision/selection/view/optional anchor. Complete parameters create real commands; absent anchors never become invented geometry. Replies use a new input ID and revalidate their captured context.
+
+## Keymaps and routing
+
+Layer user overrides over shipped defaults per action. Overrides replace the full binding list, with empty lists explicitly unbinding. Import/export canonical strict keymap schema v1 outside project data, preserving unknown/retired action IDs for visible compilation diagnostics. Reject malformed keys/scopes/modifiers, repeated override/modifier entries, unknown fields, and future schemas. Compilation reports all unknown references, widened contexts, overlapping duplicates, and prefixes; no partial effective map is returned. Exclusive canvas/tree/inspector contexts may reuse keys; overlapping scopes do not implicitly shadow one another or delay direct keys. Shortcut text comes from the effective platform-normalized map.
+
+Use logical printable characters with ASCII-letter normalization and explicit Shift, exact non-ASCII scalars, named keys, and F1–F24. Primary resolves to Control for Linux/Windows profiles and Meta for macOS. These are application policy choices; physical keyboard positions, layout/dead-key normalization, OS reservations, and native availability remain host work. There is no arbitrary registered-action count limit. Initial defaults use T/P/E for annotation/polyline/Properties; W awaits an electrical routing implementation.
+
+The router suppresses all application shortcuts during text/numeric editing, modal interaction, IME composition, or control-owned input. This first policy also suppresses Save/palette shortcuts while typing; explicit non-keyboard invocation remains available where safe. Protect document undo/redo from stealing local control history for every invocation source. Hosts must preserve normal control input when the router reports protection.
+
+Ordered sequences expose pending chords/deadlines using caller-supplied monotonic milliseconds. Timeout and explicit host ticks can clear pending input without blocking. Escape cancels a sequence before a later Escape can cancel placement. Invalid continuations are not retried as fresh tool shortcuts. Preserve the original anchor across pointer motion; cancel if document/selection/view/focus/tool context changes. Ignore prefix/placement/save repeats; allow declared undo/redo repeat operations. Keymap replacement cancels pending input but retains replay protection.
+
+## Host input and dispatch
+
+Menus, toolbars, palette, context menus, keyboard, and native accelerators use `ActionDispatcher`. Share one monotonic input-ID stream and reuse an ID for duplicate native/web deliveries. Reject IDs at or below the last attempted input, including failed attempts. Native invocations also carry repeat flags and receive the same keyboard/input protection. Native accelerator callbacks must honor the shared router decision, including suppressed/unhandled sequence continuations; they must not bypass pending sequences by being treated as independent explicit menu clicks. This protocol cannot deduplicate host events assigned different IDs; actual native normalization and once-only routing still require desktop integration tests.
+
+Typed application requests can work without a document; reject malformed palette/cancel parameter variants before accessing document-only state. Command/model/save failures preserve their original typed sources and normal history/checkpoint guarantees. Input IDs, transient requests, pending sequences, and focus stay outside shared document persistence. Project v5 and library v1 formats are unchanged.
+
+## Limits and verification
+
+Current keymap conflict compilation compares bound entries pairwise. Synthetic probes grow 100/1,000/10,000 unbound registry entries with a fixed small shipped keymap, measuring registration, compilation, palette coverage, and 1,000 direct-key routes. This does not characterize large bound-keymap or conflict-diagnostic workloads. Revisit indexing and resource budgets with measured binding counts before exposing unbounded external imports in a desktop host. Samples are exploratory, not native input-latency/capacity guarantees.
+
+Core tests cover metadata/availability/growth, default policies, remapping/unbinding, context overlap/prefixes, platform modifier aliases, input protection, repeat/replay, sequence state/time/target behavior, and keymap replacement. Adapter contracts cover canonical/strict preference data, unknown/conflicting imports, every invocation source, concrete creation/history/save, captured requests, stale replies, malformed parameters, native repeat, protected undo, and save conflicts. A runnable example drives T through placement request/reply, duplicate rejection, undo/redo/save/reopen. Native UI, keymap editor/preference-file lifecycle, action-ID migrations, live menus/palette/tool controls, and Windows/Linux execution remain pending.

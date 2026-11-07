@@ -88,7 +88,7 @@ This command model does not imply event sourcing, persisted undo across restarts
 
 Use a central registry of user-facing action identities, context/enabled rules, invocation requirements, and default binding policies. Menus, toolbars, context menus, shortcut help, and the command palette reference it. Feature modules register behavior without creating separate keyboard dispatch paths. Native menu adapters and frontend input handling must not double-dispatch an action.
 
-Keep action dispatch distinct from document command execution: an action may enter a tool or open UI; a committed edit passes through the application command boundary. Store keymap overrides as user/workspace preferences. Context routing, typing protection, deterministic targets, and sequence conflicts are explicit contracts. See [Keyboard and action model](keyboard-actions.md).
+Keep action dispatch distinct from document command execution: an action may enter a tool or open UI; a committed edit passes through the application command boundary. Store keymap overrides as user/workspace preferences. The implemented headless registry/router/dispatcher shares availability and typed invocation across surfaces, with captured-context revalidation, protected input, explicit repeat behavior, sequence cancellation, and host-input replay checks. Strict keymap schema v1 is independent of project data; native event/menu integration remains future work. See [decision 0011](decisions/0011-action-registry-and-keymaps.md). Context routing, typing protection, deterministic targets, and sequence conflicts are explicit contracts. See [Keyboard and action model](keyboard-actions.md).
 
 ## Frontend/core contract
 

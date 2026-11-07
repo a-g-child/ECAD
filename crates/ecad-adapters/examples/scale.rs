@@ -1,5 +1,7 @@
 //! Bounded, deterministic headless scale probe; not a native UI capacity claim.
 
+#[path = "support/actions.rs"]
+mod actions;
 #[path = "support/hierarchy.rs"]
 mod hierarchy;
 #[path = "support/properties.rs"]
@@ -31,6 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let reuse_cases = reuse::cases()?;
     let property_cases = properties::cases()?;
     let style_cases = styles::cases()?;
+    let action_cases = actions::cases()?;
     let rustc = Process::new("rustc").arg("--version").output()?;
     if !rustc.status.success() {
         return Err("could not identify rustc".into());
@@ -62,8 +65,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 7,
-        "recipe": "electrical-drawing-styles-v7",
+        "report_version": 8,
+        "recipe": "electrical-actions-v8",
         "project_schema": 5,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
@@ -79,6 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "reuse_cases": reuse_cases,
         "property_cases": property_cases,
         "style_cases": style_cases,
+        "action_cases": action_cases,
     });
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/scale");
     std::fs::create_dir_all(&root)?;

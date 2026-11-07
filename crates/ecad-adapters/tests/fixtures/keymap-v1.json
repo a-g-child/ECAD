@@ -1,0 +1,46 @@
+{
+  "kind": "ecad-keymap",
+  "schema_version": 1,
+  "overrides": [
+    {
+      "action": "document.redo",
+      "bindings": []
+    },
+    {
+      "action": "drawing.label.create",
+      "bindings": [
+        {
+          "scope": "canvas",
+          "sequence": [
+            {
+              "key": {
+                "kind": "character",
+                "value": "λ"
+              },
+              "modifiers": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": "drawing.styles.edit",
+      "bindings": [
+        {
+          "scope": "document",
+          "sequence": [
+            {
+              "key": {
+                "kind": "function",
+                "value": 12
+              },
+              "modifiers": [
+                "primary"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
