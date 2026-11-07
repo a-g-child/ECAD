@@ -19,6 +19,7 @@
 
 mod action_defaults;
 mod action_dispatch;
+mod action_invocation;
 mod action_registry;
 mod action_types;
 mod adoption;
@@ -45,9 +46,10 @@ mod transaction;
 mod usage_index;
 mod versioned_store;
 
-pub use action_dispatch::{
-    ActionDispatchError, ActionDispatcher, ActionInvocation, ActionOutcome, ActionParameters,
-    ActionRequest, ActionRequestKind, InputId, InvocationSource,
+pub use action_dispatch::ActionDispatcher;
+pub use action_invocation::{
+    ActionDispatchError, ActionInvocation, ActionOutcome, ActionParameters, ActionRequest,
+    ActionRequestKind, InputId, InvocationSource,
 };
 pub use action_registry::{
     ActionDefinition, ActionHandler, ActionInputRequirement, ActionListing, ActionRegistry,

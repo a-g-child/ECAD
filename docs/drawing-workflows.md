@@ -1,6 +1,6 @@
 # Drawing and editing workflows
 
-Status: Headless views, annotations, graphical polylines, electrically anchored whole conductor routes, portable defaults/styles, and property edits are implemented. Route commands support indexed vertex/segment editing and local first-leg/bend anchor movement with exact undo. Numeric origin translation/alignment/distribution and simultaneous connected-anchor movement are also implemented. Headless terminal/endpoint/midpoint/grid snapping and revision-bound exact layout/move previews are implemented. Interactive tools, visual-bounds layout, rendering, symbols, live label attachment, persistent constraints, alignment snapping, crossing/hop presentation, and the broader workflows below remain proposed. See [route decision 0012](decisions/0012-whole-conductor-routes.md). See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
+Status: Headless views, annotations, graphical polylines, electrically anchored whole conductor routes, portable defaults/styles, and property edits are implemented. Route commands support indexed vertex/segment editing and local first-leg/bend anchor movement with exact undo. Numeric origin translation/alignment/distribution and simultaneous connected-anchor movement are also implemented. Headless terminal/endpoint/midpoint/grid snapping, exact pivot-based quarter-turn/mirror transforms, and revision-bound layout/move previews are implemented. Interactive tools, visual-bounds layout, rendering, symbols, live label attachment, persistent constraints, alignment snapping, crossing/hop presentation, and the broader workflows below remain proposed. See [route decision 0012](decisions/0012-whole-conductor-routes.md). See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
 
 ## Design intent
 
@@ -39,6 +39,12 @@ Labels should support attachment to their owning symbol or route, with editable 
 - Make each completed operation a coherent undoable command. Copy, paste, duplicate, grouping, and transforms follow the same command rules.
 
 Nested groups, routes, and device symbols require explicit hit-testing priorities. Reference images and locked background geometry should not intercept ordinary electrical selection unless intentionally targeted.
+
+## Implemented orthogonal group transforms
+
+Quarter-turns and reflections use explicit pivots in micrometres, never an implicit selection centre. Positive 90 maps relative `(x, y)` to `(-y, x)` in document coordinates; visual clockwise naming depends on the future viewport convention. Vertical-axis mirroring changes x about `pivot.x`; horizontal-axis mirroring changes y about `pivot.y`. Every selected graphical path vertex transforms. Routes transform completely when both anchors are selected, including self-loops at the pivot; other connections adjust their moved endpoint locally. Electrical bindings, ordered endpoints, view membership, and appearance stay intact. Annotations transform position while glyphs remain upright.
+
+A fixed origin is not proof of a no-op: reports separate changed geometry from changed origins and include actual route changes. Exact closed previews support all layout actions, with R for rotation requests and a remappable unbound mirror action. Overflow and invalid local routes reject atomically; undo restores stored geometry rather than applying an inverse transform. Arbitrary angles, scaling, symbols, text orientation, and interactive controls remain planned. See [decision 0015](decisions/0015-orthogonal-group-transforms.md).
 
 ## Coordinates, snapping, and constraints
 

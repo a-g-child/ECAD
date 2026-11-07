@@ -34,6 +34,9 @@ impl LayoutAxis {
 /// Explicit one-shot layout policy; no persistent constraint or implicit grid rounding.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LayoutOperation {
+    /// Rotate or mirror complete selected graphical geometry around an explicit pivot.
+    /// Annotations transform their position only; glyphs remain upright.
+    Transform(DrawingTransform),
     /// Translate every selected origin by the same signed micrometre offset.
     Translate(DrawingPoint),
     /// Align selected origins to an explicit numeric coordinate, preserving the other axis.
@@ -116,7 +119,9 @@ pub struct LayoutPlan {
     pub commands: Vec<Command>,
     /// Changed selected origins in typed identity order.
     pub changes: Vec<LayoutChange>,
-    /// Selected objects already at the requested origin.
+    /// Selected records whose actual geometry changes, including paths whose origin stays fixed.
+    pub geometry_changed: BTreeSet<ObjectRef>,
+    /// Selected records whose own geometry is unchanged; touching routes can still change.
     pub unchanged: BTreeSet<ObjectRef>,
     /// Union of connected routes affected by selected anchor movement, each counted once.
     pub affected_routes: BTreeSet<RouteId>,
@@ -157,7 +162,7 @@ pub(crate) fn layout_origins(
     Ok((view.ok_or(LayoutError::EmptySelection)?, origins))
 }
 
-/// Preflight numeric translation, alignment, or distribution over a complete mixed selection.
+/// Preflight numeric layout or exact orthogonal transforms over a complete mixed selection.
 ///
 /// Origins are explicit geometry, never estimated text extents. No object is silently skipped.
 /// Moving connected anchors adjusts each touching route once; translating both route ends by
@@ -184,45 +189,52 @@ pub(crate) fn layout_plan_candidate(
     let mut plan = LayoutPlan {
         commands: vec![],
         changes: vec![],
+        geometry_changed: BTreeSet::new(),
         unchanged: BTreeSet::new(),
         affected_routes: BTreeSet::new(),
     };
     let mut anchors = BTreeMap::new();
     for (target, before) in origins {
         let after = destinations[&target];
-        if before == after {
-            plan.unchanged.insert(target);
-            continue;
+        if before != after {
+            plan.changes.push(LayoutChange {
+                target,
+                before,
+                after,
+            });
         }
-        plan.changes.push(LayoutChange {
-            target,
-            before,
-            after,
-        });
-        match target {
+        let changed = match target {
             ObjectRef::Anchor(id) => {
-                anchors.insert(id, after);
+                if before != after || matches!(operation, LayoutOperation::Transform(_)) {
+                    anchors.insert(id, after);
+                }
+                before != after
             }
             ObjectRef::Label(id) => {
-                let mut label = project.drawing().label(id).expect("known label").clone();
-                label.position = after;
-                plan.commands
-                    .push(Command::Drawing(DrawingCommand::ReplaceLabel(label)));
+                if before != after {
+                    let mut label = project.drawing().label(id).expect("known label").clone();
+                    label.position = after;
+                    plan.commands
+                        .push(Command::Drawing(DrawingCommand::ReplaceLabel(label)));
+                }
+                before != after
             }
             ObjectRef::Polyline(id) => {
-                let mut line = project.drawing().polyline(id).expect("known path").clone();
-                let dx = i128::from(after.x) - i128::from(before.x);
-                let dy = i128::from(after.y) - i128::from(before.y);
-                for point in &mut line.points {
-                    point.x = i64::try_from(i128::from(point.x) + dx)
-                        .map_err(|_| DrawingError::CoordinateOverflow)?;
-                    point.y = i64::try_from(i128::from(point.y) + dy)
-                        .map_err(|_| DrawingError::CoordinateOverflow)?;
+                let original = project.drawing().polyline(id).expect("known path");
+                let line = reposition_polyline(original, before, after, operation)?;
+                let changed = &line != original;
+                if changed {
+                    plan.commands
+                        .push(Command::Drawing(DrawingCommand::ReplacePolyline(line)));
                 }
-                plan.commands
-                    .push(Command::Drawing(DrawingCommand::ReplacePolyline(line)));
+                changed
             }
             _ => unreachable!("origins contain only supported targets"),
+        };
+        if changed {
+            plan.geometry_changed.insert(target);
+        } else {
+            plan.unchanged.insert(target);
         }
     }
     if !anchors.is_empty() {
@@ -233,13 +245,26 @@ pub(crate) fn layout_plan_candidate(
             .iter()
             .map(|r| r.id)
             .collect();
-        plan.commands
-            .push(Command::Route(RouteCommand::MoveAnchors(anchors)));
+        let command = if let LayoutOperation::Transform(transform) = operation {
+            RouteCommand::TransformAnchors {
+                anchors: anchors.into_keys().collect(),
+                transform,
+            }
+        } else {
+            RouteCommand::MoveAnchors(anchors)
+        };
+        plan.commands.push(Command::Route(command));
     }
     let mut candidate = project.clone();
-    for command in &plan.commands {
-        command.apply(&mut candidate)?;
+    let mut commands = Vec::new();
+    for command in std::mem::take(&mut plan.commands) {
+        if command.apply(&mut candidate)?.is_some() {
+            commands.push(command);
+        }
     }
+    plan.commands = commands;
+    plan.affected_routes
+        .retain(|id| candidate.drawing().route(*id) != project.drawing().route(*id));
     candidate.validate()?;
     Ok((plan, candidate))
 }
@@ -251,6 +276,11 @@ fn layout_destinations(
 ) -> Result<BTreeMap<ObjectRef, DrawingPoint>, LayoutError> {
     let mut destinations = origins.clone();
     match operation {
+        LayoutOperation::Transform(transform) => {
+            for point in destinations.values_mut() {
+                *point = transform.point(*point)?;
+            }
+        }
         LayoutOperation::Translate(delta) => {
             for point in destinations.values_mut() {
                 *point = point.translated(delta)?;
@@ -290,4 +320,29 @@ fn layout_destinations(
         }
     }
     Ok(destinations)
+}
+
+/// Transform all path vertices even if its origin stays fixed, retaining style and identity.
+fn reposition_polyline(
+    original: &DrawingPolyline,
+    before: DrawingPoint,
+    after: DrawingPoint,
+    operation: LayoutOperation,
+) -> Result<DrawingPolyline, DrawingError> {
+    let mut line = original.clone();
+    let dx = i128::from(after.x) - i128::from(before.x);
+    let dy = i128::from(after.y) - i128::from(before.y);
+    for point in &mut line.points {
+        *point = if let LayoutOperation::Transform(transform) = operation {
+            transform.point(*point)?
+        } else {
+            DrawingPoint {
+                x: i64::try_from(i128::from(point.x) + dx)
+                    .map_err(|_| DrawingError::CoordinateOverflow)?,
+                y: i64::try_from(i128::from(point.y) + dy)
+                    .map_err(|_| DrawingError::CoordinateOverflow)?,
+            }
+        };
+    }
+    Ok(line)
 }

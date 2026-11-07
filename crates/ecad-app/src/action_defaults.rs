@@ -27,6 +27,26 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "drawing.selection.rotate",
+                "Rotate drawing selection",
+                "Drawing",
+                "Request an exact quarter-turn and document pivot; keep connected paths whole",
+                Handler::RotateSelection,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![binding(Scope::Canvas, vec![chord('r', false, false)])],
+            ),
+            (
+                "drawing.selection.mirror",
+                "Mirror drawing selection",
+                "Drawing",
+                "Reflect selected geometry across an explicit pivot axis; preserve electrical A/B order",
+                Handler::MirrorSelection,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "drawing.selection.move",
                 "Move drawing selection",
                 "Drawing",

@@ -74,8 +74,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 11,
-        "recipe": "snapped-placement-v11",
+        "report_version": 12,
+        "recipe": "orthogonal-transforms-v12",
         "project_schema": 6,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },

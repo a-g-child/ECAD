@@ -6,6 +6,10 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Request an exact quarter-turn and explicit pivot for the drawing selection.
+    RotateSelection,
+    /// Request an explicit reflection axis and pivot for the drawing selection.
+    MirrorSelection,
     /// Request numeric translation of supported drawing origins.
     MoveSelection,
     /// Request origin alignment to an explicit document coordinate.
@@ -94,6 +98,8 @@ impl ActionDefinition {
     pub fn input_requirement(&self) -> ActionInputRequirement {
         match self.handler {
             ActionHandler::MoveSelection
+            | ActionHandler::RotateSelection
+            | ActionHandler::MirrorSelection
             | ActionHandler::AlignSelection
             | ActionHandler::DistributeSelection => ActionInputRequirement::Layout,
             ActionHandler::CreateRoute => ActionInputRequirement::RoutePlacement,
@@ -226,6 +232,8 @@ impl ActionRegistry {
                     .map(ActionDisabled::MissingTarget)
             }
             ActionHandler::MoveSelection
+            | ActionHandler::RotateSelection
+            | ActionHandler::MirrorSelection
             | ActionHandler::AlignSelection
             | ActionHandler::DistributeSelection => {
                 if context.focus != ActionFocus::Canvas {
@@ -315,5 +323,26 @@ impl ActionRegistry {
                 state: self.state(&definition.id, context, session),
             })
             .collect()
+    }
+}
+
+impl ActionHandler {
+    /// Keep parameter/preview compatibility shared across immediate and reviewed layout paths.
+    pub(crate) fn accepts_layout(self, operation: LayoutOperation) -> bool {
+        use ecad_domain::DrawingTransform;
+        matches!(
+            (self, operation),
+            (Self::MoveSelection, LayoutOperation::Translate(_))
+                | (Self::AlignSelection, LayoutOperation::Align { .. })
+                | (Self::DistributeSelection, LayoutOperation::Distribute(_))
+                | (
+                    Self::RotateSelection,
+                    LayoutOperation::Transform(DrawingTransform::Rotate { .. })
+                )
+                | (
+                    Self::MirrorSelection,
+                    LayoutOperation::Transform(DrawingTransform::Mirror { .. })
+                )
+        )
     }
 }

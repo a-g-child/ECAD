@@ -124,4 +124,14 @@ impl Project {
     pub fn restore_route_layout(&mut self, layout: RouteLayout) -> Result<RouteLayout, ModelError> {
         self.drawing.restore_route_layout(layout)
     }
+    /// Transform placed terminal groups and connected routes with exact previous-layout data.
+    /// # Errors
+    /// Missing anchors, overflow, or invalid local routes leave all project state intact.
+    pub fn transform_terminal_anchors(
+        &mut self,
+        anchors: std::collections::BTreeSet<AnchorId>,
+        transform: DrawingTransform,
+    ) -> Result<RouteLayout, ModelError> {
+        self.drawing.transform_terminal_anchors(anchors, transform)
+    }
 }

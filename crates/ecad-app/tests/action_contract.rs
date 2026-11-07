@@ -11,7 +11,7 @@ use support::*;
 #[test]
 fn builtin_metadata_is_complete_and_disabled_actions_stay_searchable() {
     let registry = ActionRegistry::builtins();
-    assert_eq!(registry.definitions().len(), 13);
+    assert_eq!(registry.definitions().len(), 15);
     let session = session();
     let context = context(&session);
     assert_eq!(
@@ -42,7 +42,7 @@ fn builtin_metadata_is_complete_and_disabled_actions_stay_searchable() {
             .id,
         id("drawing.route.create")
     );
-    assert_eq!(registry.search("", &context, Some(&session)).len(), 13);
+    assert_eq!(registry.search("", &context, Some(&session)).len(), 15);
     for action in registry.definitions() {
         assert!(!action.label.is_empty());
         assert!(!action.description.is_empty());
@@ -89,7 +89,7 @@ fn registry_rejects_duplicate_or_invalid_metadata_and_grows_without_an_action_co
         extra.defaults = DefaultBindings::Unbound;
         registry.register(extra).unwrap();
     }
-    assert_eq!(registry.definitions().len(), 141);
+    assert_eq!(registry.definitions().len(), 143);
     for invalid in [
         "",
         "undo",

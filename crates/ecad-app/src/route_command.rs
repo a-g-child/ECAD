@@ -5,6 +5,13 @@ use ecad_domain::*;
 /// Committed whole-route or placed-terminal layout operation, independent of UI tools.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RouteCommand {
+    /// Rotate or mirror selected terminal placements and complete internally connected routes.
+    TransformAnchors {
+        /// Deduplicated existing terminal placements; route bindings never change.
+        anchors: std::collections::BTreeSet<AnchorId>,
+        /// Exact pivot and orthogonal operation.
+        transform: DrawingTransform,
+    },
     /// Move several anchors together; each affected route is adjusted once.
     MoveAnchors(std::collections::BTreeMap<AnchorId, DrawingPoint>),
     /// Restore exact geometry for several anchors and their touching route union.
@@ -54,6 +61,13 @@ pub enum RouteCommand {
 impl RouteCommand {
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::TransformAnchors { anchors, transform } => {
+                let old = project.transform_terminal_anchors(anchors.clone(), *transform)?;
+                if old == project.drawing().route_layout(anchors.iter().copied())? {
+                    return Ok(None);
+                }
+                Self::RestoreLayout(old)
+            }
             Self::MoveAnchors(positions) => {
                 let old = project.move_terminal_anchors(positions.clone())?;
                 if old.anchors.iter().all(|a| positions[&a.id] == a.position) {

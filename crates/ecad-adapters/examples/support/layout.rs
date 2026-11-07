@@ -1,7 +1,7 @@
 //! Measure origin-layout preflight separately from commit/undo over growing selections.
 
 use ecad_adapters::{decode_project, encode_project};
-use ecad_app::{LayoutAxis, LayoutOperation, Session, layout_plan};
+use ecad_app::{LayoutAxis, LayoutOperation, PreviewObject, Session, layout_plan, preview_layout};
 use ecad_domain::*;
 use serde_json::{Value, json};
 use std::{error::Error, time::Instant};
@@ -37,7 +37,7 @@ fn probe(count: u128) -> Result<Value, Box<dyn Error>> {
     let start = Instant::now();
     let plan = layout_plan(
         session.project(),
-        selection,
+        selection.iter().copied(),
         LayoutOperation::Align {
             axis: LayoutAxis::Y,
             coordinate_um: 500,
@@ -67,9 +67,40 @@ fn probe(count: u128) -> Result<Value, Box<dyn Error>> {
     if session.project() != &before {
         return Err("layout undo changed the document".into());
     }
+    let transform = DrawingTransform::Rotate {
+        pivot: DrawingPoint::default(),
+        turn: QuarterTurn::Positive90,
+    };
+    let start = Instant::now();
+    let preview = preview_layout(&session, selection, LayoutOperation::Transform(transform))?;
+    let transform_preview_ns = start.elapsed().as_nanos();
+    if preview.geometry_changed().len() != usize::try_from(count)? {
+        return Err("rotation preview missed geometry".into());
+    }
+    let projection = preview.objects().to_vec();
+    let start = Instant::now();
+    session.apply_layout_preview(preview)?;
+    let transform_commit_ns = start.elapsed().as_nanos();
+    for object in projection {
+        let PreviewObject::Label(label) = object else {
+            return Err("unexpected rotation preview object".into());
+        };
+        if session.project().drawing().label(label.id) != Some(&label) {
+            return Err("rotation preview differed from commit".into());
+        }
+    }
+    if decode_project(&encode_project(session.project())?)? != *session.project() {
+        return Err("rotated geometry did not round trip".into());
+    }
+    let start = Instant::now();
+    session.undo(session.revision())?;
+    let transform_undo_ns = start.elapsed().as_nanos();
+    if session.project() != &before {
+        return Err("rotation undo changed original geometry".into());
+    }
     Ok(
         json!({"selected_annotations":count, "preflight_ns":preflight_ns, "commit_ns":commit_ns, "undo_ns":undo_ns,
-        "samples":1, "scope":"origin alignment; preflight includes a temporary full-project candidate",
-        "correctness":"all origins aligned; round trip and exact single-transaction undo verified"}),
+        "transform_preview_ns":transform_preview_ns,"transform_commit_ns":transform_commit_ns,"transform_undo_ns":transform_undo_ns,"samples":1, "scope":"origin alignment and quarter-turn annotation placement; preflight includes a temporary full-project candidate",
+        "correctness":"alignment and rotation preview agreement, round trips and exact single-transaction undo verified"}),
     )
 }

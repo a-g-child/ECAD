@@ -126,4 +126,40 @@ impl DrawingDocument {
         }
         self.restore_route_layout(layout)
     }
+    /// Transform selected anchors and each touching route once, without electrical mutation.
+    /// Routes with both anchors selected transform completely, including self-loops at the
+    /// pivot. Other routes retain their unaffected geometry and adjust only the moved end.
+    /// # Errors
+    /// Rejects missing anchors, overflow, or invalid local geometry before any mutation.
+    pub fn transform_terminal_anchors(
+        &mut self,
+        anchors: BTreeSet<AnchorId>,
+        transform: DrawingTransform,
+    ) -> Result<RouteLayout, ModelError> {
+        let mut layout = self.route_layout(anchors.iter().copied())?;
+        let mut positions = BTreeMap::new();
+        for anchor in &mut layout.anchors {
+            anchor.position = transform.point(anchor.position)?;
+            positions.insert(anchor.id, anchor.position);
+        }
+        for route in &mut layout.routes {
+            if route
+                .anchors
+                .iter()
+                .all(|id| id.is_some_and(|id| anchors.contains(&id)))
+            {
+                for point in &mut route.points {
+                    *point = transform.point(*point)?;
+                }
+            } else {
+                for end in 0..2 {
+                    if let Some(position) = route.anchors[end].and_then(|id| positions.get(&id)) {
+                        route.validate_geometry()?;
+                        crate::route_geometry::move_end(route, end, *position);
+                    }
+                }
+            }
+        }
+        self.restore_route_layout(layout)
+    }
 }

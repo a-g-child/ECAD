@@ -48,7 +48,11 @@ impl LayoutPreview {
     pub fn changes(&self) -> &[LayoutChange] {
         &self.plan.changes
     }
-    /// Selected origins that already matched the requested coordinates.
+    /// Selected records whose geometry changes, even when their origin remains at the pivot.
+    pub fn geometry_changed(&self) -> &BTreeSet<ObjectRef> {
+        &self.plan.geometry_changed
+    }
+    /// Selected records whose geometry stays unchanged; connected routes may still transform.
     pub fn unchanged(&self) -> &BTreeSet<ObjectRef> {
         &self.plan.unchanged
     }

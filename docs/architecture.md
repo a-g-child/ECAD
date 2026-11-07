@@ -78,6 +78,8 @@ Whole conductor routes reference existing electrical IDs; view-local anchors pla
 
 Numeric layout plans act on explicit drawing origins, with deterministic identity ties and checked micrometre arithmetic. A simultaneous anchor command adjusts the union of touching routes once and translates whole routes when both endpoints share an offset. Preflight uses a temporary candidate; undo retains exact localized state. Renderer bounds and persistent constraints are separate future contracts. See [decision 0013](decisions/0013-origin-layout-and-group-movement.md).
 
+Orthogonal transforms operate on complete selected path geometry and selected terminal placements. Fully internal routes transform every vertex; boundary routes adjust locally. Explicit pivots, checked integer arithmetic, fixed-origin geometry reporting, and exact localized layout snapshots preserve deterministic edits and undo. Action invocation data and dispatch orchestration now live in separate cohesive modules without changing root public APIs. See [decision 0015](decisions/0015-orthogonal-group-transforms.md).
+
 ## Commands, transactions, and undo
 
 A proposed edit carries explicit parameters and targets. The application resolves applicability, validates the complete operation, and prepares a change before committing it. Success produces a change summary and an undo record; failure leaves the authoritative document and history unchanged.

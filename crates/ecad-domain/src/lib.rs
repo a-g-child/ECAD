@@ -19,6 +19,7 @@ mod drawing_document;
 mod drawing_error;
 mod drawing_objects;
 mod drawing_style;
+mod drawing_transform;
 mod drawing_values;
 mod error;
 mod hierarchy;
@@ -72,3 +73,5 @@ pub use route::{AnchorLayout, DrawingRoute, RouteEdit, RouteLayout, RouteMode, T
 pub use route_error::RouteError;
 
 pub use snapping::{DrawingGrid, SnapCandidate, SnapEnd, SnapQuery, SnapSettings, SnapTarget};
+
+pub use drawing_transform::{DrawingTransform, MirrorAxis, QuarterTurn};

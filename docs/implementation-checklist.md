@@ -70,7 +70,9 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Register M movement and remappable alignment/distribution actions; test selection validation, overflow, distribution ties, rollback/checkpoints, stale replies, and strict save/reopen.
 - [x] Query deterministic terminal/endpoint/midpoint/grid snap candidates, with explicit radius, exclusions, stable ties, integer rounding, suppression, and cycling.
 - [x] Prepare exact transient layout/move geometry at a captured revision and commit matching proposals through M and normal document/session history; reject stale/different-session previews, including no-ops.
-- [ ] Add visual-bounds/edge-gap layout, symbol/live-label attachment, transforms, interactive tools, spatial indexing/hysteresis/alignment snapping, pinned waypoints, and broader geometry operations.
+- [x] Add exact pivot-based quarter-turn/mirror group transforms, complete internal-route transforms, local external-route adjustment, fixed-origin/self-loop edit reporting, exact previews, and R/remappable mirror actions.
+- [x] Test transform overflow/rollback, four-turn and mirror cycles, upright annotation policy, independent views, closed-preview action guards, and v6 save/reopen/checkpoints.
+- [ ] Add visual-bounds/edge-gap layout, symbol/live-label attachment, arbitrary-angle/scale and text-orientation transforms, interactive tools, spatial indexing/hysteresis/alignment snapping, pinned waypoints, and broader geometry operations.
 - [x] Test electrical property applicability/types, pinned ownership, label uniqueness, topology validation, compound rollback, stale plans, saved checkpoints, and exact undo/redo.
 - [x] Test style/default precedence, captured creation intent, equal overrides, reset/undo, focused shared-style persistence, strict drawing schema, malformed geometry/roles/references, and v2–v4 upgrades to v5.
 - [x] Test shortcut conflicts/typing/composition/repeat/replay protection, context capture, sequence behavior, unknown imports, and shared real-document invocation.
@@ -113,6 +115,7 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Probe 100/1,000/10,000 routes with fixed-degree anchor movement, 1,000 edits, bounded bends, round trips, and complete undo.
 - [x] Measure grouped fixed-degree anchor movement and separate layout preflight/commit/undo over 20/200/2,000 annotation origins.
 - [x] Probe deterministic endpoint/midpoint snap queries over 100/1,000/10,000 graphical paths, documenting the initial linear scan and separate native/UI limits.
+- [x] Measure 1,000 fixed-degree two-anchor half turns through 10,000 routes and quarter-turn annotation-position preview/commit/undo through 2,000 objects.
 - [ ] Expand probes to large bound keymaps, nested reusable dependencies, visible rendering, libraries, and assets.
 - [ ] Measure memory, cache invalidation, object visits, save/load IO, native frame times, and foreground response during background work.
 - [ ] Add bounded soak/cancellation/failure cases and establish stable performance regression gates from measured variance.
@@ -133,6 +136,7 @@ Current test owners:
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
 - Action/keymap contracts: [registry/router tests](../crates/ecad-app/tests/action_contract.rs), [real invocation workflows](../crates/ecad-adapters/tests/action_workflow.rs), and [keymap persistence](../crates/ecad-adapters/tests/keymap_persistence.rs).
+- Orthogonal transforms: [coordinate rules](../crates/ecad-domain/tests/transform_contract.rs), [connected workflows](../crates/ecad-adapters/tests/transform_workflow.rs), [failure/rollback cases](../crates/ecad-adapters/tests/transforms/failures.rs), and [shared action previews](../crates/ecad-adapters/tests/transforms/actions.rs).
 - Snapping and exact previews: [snap rules](../crates/ecad-domain/tests/snap_contract.rs), [placement workflows](../crates/ecad-adapters/tests/placement_workflow.rs), and [shared M preview/commit](../crates/ecad-adapters/tests/placement/actions.rs).
 - Origin layout and group movement: [layout workflows](../crates/ecad-adapters/tests/layout_workflow.rs), [failure/rollback regressions](../crates/ecad-adapters/tests/layout/failures.rs), and [shared action workflows](../crates/ecad-adapters/tests/layout/actions.rs).
 - Whole conductor routes: [workflow contracts](../crates/ecad-adapters/tests/route_workflow.rs), [persistence/action/adoption regressions](../crates/ecad-adapters/tests/routes/persistence.rs), and [routed fixture](../crates/ecad-adapters/tests/fixtures/routed-conveyor-v6.json).

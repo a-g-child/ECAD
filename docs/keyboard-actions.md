@@ -14,12 +14,16 @@ Status: a headless action registry, shared invocation dispatcher, logical-key ro
 | Graphical polyline input/creation | P | Canvas |
 | Existing conductor route input/creation | W | Canvas |
 | Numeric selection movement | M | Canvas |
+| Quarter-turn rotation request | R | Canvas |
+| Mirror request | Unbound; remappable | Canvas |
 | Origin alignment/distribution | Unbound; remappable | Canvas |
 | Drawing fallbacks/creation presets | Primary+K, S | Document |
 | Palette request | Primary+Shift+P | Application |
 | Cancel placement request | Escape | Active canvas tool |
 
-Primary resolves to Control for Linux/Windows profiles and Meta/Command for macOS. These are explicit initial choices, not native-platform validation. W requests a whole route for an existing electrical conductor; interactive wire creation remains planned. T/P/W/M request typed input/placement; they do not create geometry without concrete parameters. Escape cancels a pending key sequence first, then may request tool cancellation on a subsequent press. These requests need actual host controls/tools before they become desktop interactions.
+Primary resolves to Control for Linux/Windows profiles and Meta/Command for macOS. These are explicit initial choices, not native-platform validation. W requests a whole route for an existing electrical conductor; interactive wire creation remains planned. T/P/W/M/R request typed input/placement; they do not create geometry without concrete parameters. Escape cancels a pending key sequence first, then may request tool cancellation on a subsequent press. These requests need actual host controls/tools before they become desktop interactions.
+
+All layout handlers accept generic exact preview/commit parameters, checked against the handler operation, captured selection/view, and original preview revision. Rotation requests require an explicit pivot and quarter-turn; mirror requests require a pivot and axis. Neither infers a selection centre or changes electrical endpoints.
 
 The M handler also accepts exact/pointer preview parameters and a closed preview for commit. Its preview result exposes candidate targets and exact geometry without changing history. Commit checks original revision, selection, and view; it never substitutes a fresh revision for the preview. Native preview/cycling controls remain unimplemented.
 
