@@ -74,6 +74,18 @@ identity!(
     ConductorId,
     "Identity of an individual conductor; independent of its drawing."
 );
+identity!(
+    SubsystemId,
+    "Identity of a placed subsystem occurrence, never a reusable definition ID."
+);
+identity!(
+    InterfacePortId,
+    "Identity of one subsystem interface exposure of an existing terminal."
+);
+identity!(
+    CableId,
+    "Identity of a cable assembly grouping existing conductors."
+);
 
 #[cfg(test)]
 mod tests {

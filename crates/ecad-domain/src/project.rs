@@ -1,7 +1,17 @@
 //! Project ownership and atomic, invariant-preserving single-object operations.
 
-use crate::{Conductor, ConductorId, Device, DeviceId, End, ModelError, ProjectId, TerminalId};
-use std::collections::BTreeMap;
+use crate::{
+    Cable, CableId, Conductor, ConductorId, Device, DeviceId, End, InterfacePort, InterfacePortId,
+    ModelError, ProjectId, Subsystem, SubsystemId, TerminalId,
+};
+use std::collections::{BTreeMap, BTreeSet};
+
+#[path = "project_cables.rs"]
+mod cables;
+#[path = "project_hierarchy.rs"]
+mod hierarchy;
+#[path = "project_interfaces.rs"]
+mod interfaces;
 
 /// A structurally valid electrical document, independent of drawing geometry.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -10,6 +20,11 @@ pub struct Project {
     devices: BTreeMap<DeviceId, Device>,
     terminal_owners: BTreeMap<TerminalId, DeviceId>,
     conductors: BTreeMap<ConductorId, Conductor>,
+    subsystems: BTreeMap<SubsystemId, Subsystem>,
+    ports: BTreeMap<InterfacePortId, InterfacePort>,
+    exports: BTreeMap<(SubsystemId, TerminalId), BTreeSet<InterfacePortId>>,
+    cables: BTreeMap<CableId, Cable>,
+    conductor_cables: BTreeMap<ConductorId, CableId>,
 }
 
 impl Project {
@@ -21,6 +36,11 @@ impl Project {
             devices: BTreeMap::new(),
             terminal_owners: BTreeMap::new(),
             conductors: BTreeMap::new(),
+            subsystems: BTreeMap::new(),
+            ports: BTreeMap::new(),
+            exports: BTreeMap::new(),
+            cables: BTreeMap::new(),
+            conductor_cables: BTreeMap::new(),
         }
     }
 
@@ -58,6 +78,7 @@ impl Project {
     /// # Errors
     /// Duplicate device or terminal identities reject the entire insertion.
     pub fn insert_device(&mut self, device: Device) -> Result<(), ModelError> {
+        self.require_subsystem(device.subsystem())?;
         if self.devices.contains_key(&device.id()) {
             return Err(ModelError::DuplicateDevice(device.id()));
         }
@@ -75,7 +96,7 @@ impl Project {
 
     /// Remove an unconnected device, returning its exact value for undo.
     /// # Errors
-    /// Missing or connected devices are rejected without altering any data.
+    /// Missing, connected, or interface/cable-referenced devices are rejected without mutation.
     /// Currently scans conductors; the scale harness should inform a reverse index.
     pub fn remove_device(&mut self, id: DeviceId) -> Result<Device, ModelError> {
         let device = self.devices.get(&id).ok_or(ModelError::MissingDevice(id))?;
@@ -89,6 +110,18 @@ impl Project {
                 }
             }
         }
+        if self
+            .ports
+            .values()
+            .any(|port| self.terminal_owner(port.terminal()) == Some(id))
+            || self.cables.values().any(|cable| {
+                [End::A, End::B]
+                    .into_iter()
+                    .any(|end| cable.endpoint(end) == crate::CableEndpoint::Device(id))
+            })
+        {
+            return Err(ModelError::DeviceReferenced(id));
+        }
         for terminal in device.terminals() {
             self.terminal_owners.remove(&terminal.id());
         }
@@ -99,22 +132,23 @@ impl Project {
 
     /// Insert a conductor; free ends are allowed, dangling references are not.
     /// # Errors
-    /// Rejects duplicate conductor IDs or nonexistent attached terminals atomically.
+    /// Rejects duplicate IDs, nonexistent terminals, or unexposed crossed boundaries atomically.
     pub fn insert_conductor(&mut self, conductor: Conductor) -> Result<(), ModelError> {
         if self.conductors.contains_key(&conductor.id()) {
             return Err(ModelError::DuplicateConductor(conductor.id()));
         }
-        for end in [End::A, End::B] {
-            self.check_terminal(conductor.endpoint(end))?;
-        }
+        self.check_conductor(&conductor)?;
         self.conductors.insert(conductor.id(), conductor);
         Ok(())
     }
 
     /// Remove a conductor, retaining its identity and endpoints in the return value.
     /// # Errors
-    /// Returns [`ModelError::MissingConductor`] without mutation if absent.
+    /// Returns a missing-conductor or cable-membership error without mutation.
     pub fn remove_conductor(&mut self, id: ConductorId) -> Result<Conductor, ModelError> {
+        if self.conductor_cables.contains_key(&id) {
+            return Err(ModelError::ConductorInCable(id));
+        }
         self.conductors
             .remove(&id)
             .ok_or(ModelError::MissingConductor(id))
@@ -122,14 +156,21 @@ impl Project {
 
     /// Set one termination, returning the previous attachment for undo.
     /// # Errors
-    /// Unknown conductors or terminals are rejected before mutation.
+    /// Unknown references, unexposed boundaries, or cable endpoint mismatches are
+    /// rejected before mutation.
     pub fn set_termination(
         &mut self,
         id: ConductorId,
         end: End,
         terminal: Option<TerminalId>,
     ) -> Result<Option<TerminalId>, ModelError> {
-        self.check_terminal(terminal)?;
+        let current = self
+            .conductors
+            .get(&id)
+            .ok_or(ModelError::MissingConductor(id))?;
+        let mut candidate = current.clone();
+        candidate.set_endpoint(end, terminal);
+        self.check_conductor(&candidate)?;
         let conductor = self
             .conductors
             .get_mut(&id)
@@ -139,14 +180,16 @@ impl Project {
         Ok(previous)
     }
 
-    /// Recheck references across the complete document, including all free ends.
+    /// Recheck complete hierarchy, interfaces, wiring, and cable endpoint consistency.
     /// # Errors
-    /// Returns the first missing terminal attachment in stable conductor/end order.
+    /// Returns the first structural/boundary error in deterministic validation order.
     pub fn validate(&self) -> Result<(), ModelError> {
+        self.validate_hierarchy()?;
         for conductor in self.conductors.values() {
-            for end in [End::A, End::B] {
-                self.check_terminal(conductor.endpoint(end))?;
-            }
+            self.check_conductor(conductor)?;
+        }
+        for cable in self.cables.values() {
+            self.check_cable(cable)?;
         }
         Ok(())
     }
@@ -156,6 +199,21 @@ impl Project {
             && !self.terminal_owners.contains_key(&id)
         {
             return Err(ModelError::MissingTerminal(id));
+        }
+        Ok(())
+    }
+
+    fn check_conductor(&self, conductor: &Conductor) -> Result<(), ModelError> {
+        for end in [End::A, End::B] {
+            self.check_terminal(conductor.endpoint(end))?;
+        }
+        self.check_boundaries(conductor.endpoint(End::A), conductor.endpoint(End::B))?;
+        if let Some(cable_id) = self.conductor_cables.get(&conductor.id()) {
+            let cable = self
+                .cables
+                .get(cable_id)
+                .ok_or(ModelError::MissingCable(*cable_id))?;
+            self.check_core_endpoints(cable, conductor)?;
         }
         Ok(())
     }

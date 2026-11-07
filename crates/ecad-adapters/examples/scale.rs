@@ -1,5 +1,8 @@
 //! Bounded, deterministic headless scale probe; not a native UI capacity claim.
 
+#[path = "support/hierarchy.rs"]
+mod hierarchy;
+
 use ecad_adapters::{decode_project, encode_project};
 use ecad_app::{Command, Session};
 use ecad_domain::{Conductor, ConductorId, Device, DeviceId, End, Project, Terminal, TerminalId};
@@ -18,6 +21,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     for count in [100, 1_000, 10_000] {
         cases.push(probe(count)?);
     }
+    let hierarchy_cases = hierarchy::cases()?;
     let rustc = Process::new("rustc").arg("--version").output()?;
     if !rustc.status.success() {
         return Err("could not identify rustc".into());
@@ -49,9 +53,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 2,
-        "recipe": "unique-device-chain-v2",
-        "project_schema": 2,
+        "report_version": 3,
+        "recipe": "unique-device-chain-and-hierarchy-v3",
+        "project_schema": 3,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },
         "os": std::env::consts::OS,
@@ -62,6 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "scope": "headless engine only; no native UI, disk IO, or memory measurements",
         "cache": "fresh in-memory project per case; no persistent index",
         "cases": cases,
+        "hierarchy_cases": hierarchy_cases,
     });
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/scale");
     std::fs::create_dir_all(&root)?;

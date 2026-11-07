@@ -1,6 +1,6 @@
 //! Immutable object values; project-level edits maintain cross-object references.
 
-use crate::{ConductorId, DeviceId, ModelError, TerminalId};
+use crate::{ConductorId, DeviceId, ModelError, SubsystemId, TerminalId};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// An electrical connection anchor owned by exactly one device.
@@ -37,6 +37,7 @@ pub struct Device {
     id: DeviceId,
     designation: String,
     terminals: BTreeMap<TerminalId, Terminal>,
+    subsystem: Option<SubsystemId>,
 }
 
 impl Device {
@@ -66,6 +67,7 @@ impl Device {
             id,
             designation,
             terminals: by_id,
+            subsystem: None,
         })
     }
 
@@ -82,6 +84,19 @@ impl Device {
     /// Iterate terminals in stable identity order, not displayed-number order.
     pub fn terminals(&self) -> impl ExactSizeIterator<Item = &Terminal> {
         self.terminals.values()
+    }
+
+    /// Attach this value to a block; insertion validates that the block exists.
+    pub fn in_subsystem(mut self, subsystem: SubsystemId) -> Self {
+        self.subsystem = Some(subsystem);
+        self
+    }
+    /// Return its immediate functional owner, or project root.
+    pub fn subsystem(&self) -> Option<SubsystemId> {
+        self.subsystem
+    }
+    pub(crate) fn set_subsystem(&mut self, subsystem: Option<SubsystemId>) {
+        self.subsystem = subsystem;
     }
 }
 

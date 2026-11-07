@@ -4,7 +4,7 @@ use ecad_adapters::{ProjectFileError, RandomIds, decode_project, encode_project,
 use ecad_domain::ProjectId;
 
 const LEGACY: &str = include_str!("fixtures/minimal-v1.json");
-const CURRENT: &str = include_str!("fixtures/minimal-v2.json");
+const CURRENT: &str = include_str!("fixtures/minimal-v3.json");
 
 #[test]
 fn v1_requires_explicit_migration_and_does_not_invent_a_project_identity() {
@@ -47,7 +47,7 @@ fn migration_rejects_unknown_data_and_dangling_references() {
     ));
     assert!(matches!(
         migrate_v1(CURRENT, ProjectId::new(1).unwrap()),
-        Err(ProjectFileError::UnsupportedVersion(2))
+        Err(ProjectFileError::UnsupportedVersion(3))
     ));
 }
 
@@ -78,6 +78,9 @@ fn production_generator_produces_canonical_uuid_v4_typed_identities() {
         RandomIds::device().unwrap().to_string(),
         RandomIds::terminal().unwrap().to_string(),
         RandomIds::conductor().unwrap().to_string(),
+        RandomIds::subsystem().unwrap().to_string(),
+        RandomIds::interface_port().unwrap().to_string(),
+        RandomIds::cable().unwrap().to_string(),
     ];
     for text in &generated {
         assert_eq!(text.len(), 32);

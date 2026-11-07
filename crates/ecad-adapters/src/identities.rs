@@ -1,6 +1,8 @@
 //! Fallible OS-random UUID-v4 generation outside the dependency-free domain.
 
-use ecad_domain::{ConductorId, DeviceId, ProjectId, TerminalId};
+use ecad_domain::{
+    CableId, ConductorId, DeviceId, InterfacePortId, ProjectId, SubsystemId, TerminalId,
+};
 
 /// Generate typed persistent IDs from OS entropy, without timestamps or counters.
 ///
@@ -9,6 +11,24 @@ use ecad_domain::{ConductorId, DeviceId, ProjectId, TerminalId};
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a placed subsystem occurrence ID, not a reusable definition ID.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn subsystem() -> Result<SubsystemId, getrandom::Error> {
+        Ok(SubsystemId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+    /// Generate an external interface identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn interface_port() -> Result<InterfacePortId, getrandom::Error> {
+        Ok(InterfacePortId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+    /// Generate a cable assembly identity.
+    /// # Errors
+    /// Returns the OS entropy error.
+    pub fn cable() -> Result<CableId, getrandom::Error> {
+        Ok(CableId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
     /// Generate a project lineage ID.
     /// # Errors
     /// Returns the OS entropy error; no fallback to a weak or fixed source is used.

@@ -1,6 +1,6 @@
 # Hierarchy, scale, and shared revisions
 
-Status: agreed product direction with proposed mechanics. Identity details, resource budgets, and library storage are not finalized.
+Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Shared definitions, revision publication/adoption, and associated identity/storage policies below remain planned. See [decision 0004](decisions/0004-local-hierarchy-and-cables.md).
 
 ## Target and object boundaries
 
@@ -20,7 +20,7 @@ Render visible views and query relevant objects. Prepare hierarchy summaries for
 
 Model physical containment as acyclic. Reusable definition dependencies must also reject recursive cycles. A definition can be reused many times without being permitted to contain itself indirectly. Reference links between devices are not containment and may legitimately form electrical cycles.
 
-No small fixed nesting cap is chosen yet. Use explicit traversal order and bounded, cancellation-aware work. Set practical depth, total expanded-instance, and memory/work limits from tests. A shallow hierarchy can still expand enormously, so depth alone is an inadequate guard. Reject or clearly diagnose exceeded limits without silently dropping objects or producing incomplete outputs marked as complete.
+The initial local hierarchy has a provisional 256-level guard, iterative traversal, and explicit failure diagnostics. Tests cover the boundary and failed reorganization; the scale probe measures depth and unrelated block growth. This does not establish general expanded-instance or memory limits. A shallow hierarchy can still expand enormously when reusable definitions are introduced. Add cancellation and those broader budgets as that work develops; do not silently truncate results.
 
 Define representative fixtures by conductor count, terminal count, devices, repeated subsystem instances, nesting depth, drawing geometry, and assets. Measure document opening, local edits, navigation, validation, memory, and undo growth. Select numeric targets before making performance claims.
 

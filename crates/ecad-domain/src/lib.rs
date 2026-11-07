@@ -13,12 +13,18 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+mod cable;
 mod error;
+mod hierarchy;
 mod identity;
 mod objects;
 mod project;
 
+pub use cable::{Cable, CableEndpoint};
 pub use error::ModelError;
-pub use identity::{ConductorId, DeviceId, IdError, ProjectId, TerminalId};
+pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};
+pub use identity::{
+    CableId, ConductorId, DeviceId, IdError, InterfacePortId, ProjectId, SubsystemId, TerminalId,
+};
 pub use objects::{Conductor, Device, End, Terminal};
 pub use project::Project;

@@ -2,7 +2,7 @@
 
 use crate::{
     ProjectFileError,
-    schema::{LegacyProjectData, ProjectData, VersionEnvelope},
+    schema::{FlatProjectData, LegacyProjectData, ProjectData, VersionEnvelope},
 };
 use ecad_app::ProjectStore;
 use ecad_domain::{Project, ProjectId};
@@ -12,7 +12,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Encode v2 JSON in identity order, with two-space indentation and a final LF.
+/// Encode v3 JSON in identity order, with two-space indentation and a final LF.
 ///
 /// No timestamps, session history, or platform line endings are embedded.
 /// # Errors
@@ -34,7 +34,10 @@ pub fn decode_project(text: &str) -> Result<Project, ProjectFileError> {
     if envelope.schema_version == 1 {
         return Err(ProjectFileError::MigrationRequired(1));
     }
-    if envelope.schema_version != 2 {
+    if envelope.schema_version == 2 {
+        return serde_json::from_str::<FlatProjectData>(text)?.upgrade();
+    }
+    if envelope.schema_version != 3 {
         return Err(ProjectFileError::UnsupportedVersion(
             envelope.schema_version,
         ));
@@ -46,7 +49,7 @@ pub fn decode_project(text: &str) -> Result<Project, ProjectFileError> {
 /// Explicitly migrate a v1 project, preserving all object IDs and assigning its lineage ID.
 ///
 /// This only converts in memory and never rewrites the source. Save the result to
-/// a new destination, then use v2 normally. The caller selects and records the ID.
+/// a new destination, then use the current format normally. The caller selects the ID.
 /// # Errors
 /// Rejects unsupported versions, unknown fields, or invalid electrical references.
 pub fn migrate_v1(text: &str, project_id: ProjectId) -> Result<Project, ProjectFileError> {

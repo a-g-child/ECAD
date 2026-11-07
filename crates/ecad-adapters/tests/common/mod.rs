@@ -6,7 +6,7 @@ use ecad_domain::{Device, DeviceId, Project};
 use std::path::Path;
 
 pub fn fixture() -> Project {
-    decode_project(include_str!("../fixtures/minimal-v2.json")).unwrap()
+    decode_project(include_str!("../fixtures/minimal-v3.json")).unwrap()
 }
 
 pub fn seed(path: &Path) -> JsonFile {

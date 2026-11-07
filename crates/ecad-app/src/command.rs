@@ -1,10 +1,39 @@
 //! Electrical edits and exact localized inverses; no full-document snapshots.
 
-use ecad_domain::{Conductor, ConductorId, Device, DeviceId, End, ModelError, Project, TerminalId};
+use ecad_domain::{
+    Cable, CableId, Conductor, ConductorId, Device, DeviceId, End, InterfacePort, InterfacePortId,
+    ModelError, Project, Subsystem, SubsystemId, TerminalId,
+};
 
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Insert a project-local functional block.
+    InsertSubsystem(Subsystem),
+    /// Remove an empty unreferenced block.
+    RemoveSubsystem(SubsystemId),
+    /// Change containment without altering identity or electrical connections.
+    SetSubsystemParent {
+        /// Occurrence to reparent.
+        subsystem: SubsystemId,
+        /// New containing block or project root.
+        parent: Option<SubsystemId>,
+    },
+    /// Move a device between functional scopes.
+    SetDeviceSubsystem {
+        /// Device occurrence being moved.
+        device: DeviceId,
+        /// New block or project root.
+        subsystem: Option<SubsystemId>,
+    },
+    /// Expose an internal terminal through a functional interface.
+    InsertPort(InterfacePort),
+    /// Remove an unused interface exposure.
+    RemovePort(InterfacePortId),
+    /// Group existing conductors into an overview cable.
+    InsertCable(Cable),
+    /// Remove a cable grouping while retaining the conductors.
+    RemoveCable(CableId),
     /// Insert a generic device and its terminals.
     InsertDevice(Device),
     /// Remove an unconnected device.
@@ -28,6 +57,41 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::InsertSubsystem(subsystem) => {
+                project.insert_subsystem(subsystem.clone())?;
+                Self::RemoveSubsystem(subsystem.id())
+            }
+            Self::RemoveSubsystem(id) => Self::InsertSubsystem(project.remove_subsystem(*id)?),
+            Self::SetSubsystemParent { subsystem, parent } => {
+                let previous = project.set_subsystem_parent(*subsystem, *parent)?;
+                if previous == *parent {
+                    return Ok(None);
+                }
+                Self::SetSubsystemParent {
+                    subsystem: *subsystem,
+                    parent: previous,
+                }
+            }
+            Self::SetDeviceSubsystem { device, subsystem } => {
+                let previous = project.set_device_subsystem(*device, *subsystem)?;
+                if previous == *subsystem {
+                    return Ok(None);
+                }
+                Self::SetDeviceSubsystem {
+                    device: *device,
+                    subsystem: previous,
+                }
+            }
+            Self::InsertPort(port) => {
+                project.insert_port(port.clone())?;
+                Self::RemovePort(port.id())
+            }
+            Self::RemovePort(id) => Self::InsertPort(project.remove_port(*id)?),
+            Self::InsertCable(cable) => {
+                project.insert_cable(cable.clone())?;
+                Self::RemoveCable(cable.id())
+            }
+            Self::RemoveCable(id) => Self::InsertCable(project.remove_cable(*id)?),
             Self::InsertDevice(device) => {
                 project.insert_device(device.clone())?;
                 Self::RemoveDevice(device.id())

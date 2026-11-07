@@ -1,6 +1,6 @@
 # Implementation checklist
 
-Status: headless foundation, compound editing, persistent identities, explicit v1 migration, and optimistic guarded save/reload implemented. Checked items describe executable behavior or completed checks, not the full intended CAD product. Keep this file current as features and tests land.
+Status: headless lifecycle plus project-local hierarchy, interfaces, and cable grouping implemented. Shared subsystem definitions and revision adoption remain planned. Checked items describe executable behavior or completed checks, not the full intended CAD product.
 
 ## 1. Working foundation
 
@@ -34,16 +34,17 @@ Status: headless foundation, compound editing, persistent identities, explicit v
 - [ ] Define cooperative locking/concurrent-writer guarantees and path-alias handling beyond the current optimistic check/replace window.
 - [ ] Specify and test recovery/durability, metadata preservation, and multi-file save behavior before adopting a multi-file project format.
 - [ ] Set input/resource limits and add malformed-input/failure-injection cases as the format grows.
-- [x] Define explicit v1-to-v2 migration assigning a chosen project ID; retain the original v1 fixture and test preservation of existing electrical identities.
+- [x] Define explicit v1 migration assigning a chosen project ID; retain v1/v2 fixtures and test lossless v2-to-v3 upgrade with electrical identities preserved.
 
 ## 3. Hierarchy and cable vertical slice
 
 - [ ] Model definition lineage, immutable revision, and placed occurrence as distinct identities.
-- [ ] Introduce nested subsystem containment, cycle rejection, stable traversal, and resource diagnostics.
-- [ ] Add explicit external interfaces and conductor continuity across a subsystem boundary.
-- [ ] Add cable assemblies and conductor membership without conflating drawn routes with connectivity.
-- [ ] Build the controller/conveyor example from the scope with one nested subsystem and one cable.
-- [ ] Test boundary mappings, independent repeated occurrences, save/reopen, rejection, undo/redo, and schema compatibility.
+- [x] Introduce project-local occurrences with dedicated `SubsystemId`, nested containment, cycle rejection, stable iterative paths, and a provisional depth guard.
+- [x] Add explicit external interfaces and conductor continuity across every exited subsystem boundary without duplicate terminal objects.
+- [x] Add cable assemblies with unique core membership and consistency between overview endpoints and detailed terminations.
+- [x] Build the controller/conveyor example with a junction, nested sensor assembly, one cable, and internal wiring.
+- [x] Test boundary mappings, reorganization rejection, atomic rollback, save/reopen, undo/redo, canonical loading, and schema compatibility.
+- [ ] Implement reusable definition instantiation, independent repeated instances of one definition, immutable revisions, and explicit adoption workflows. Local block IDs will not be repurposed as definition IDs.
 
 ## 4. Foundational editing contracts
 
@@ -78,7 +79,8 @@ Status: headless foundation, compound editing, persistent identities, explicit v
 
 - [x] Local release-build sweep of 100, 1,000, and 10,000 unique devices, with 1,000 local edits and complete undo checks per case.
 - [ ] Establish an actual representative car-scale fixture and usable reference hardware budgets.
-- [ ] Expand probes to hierarchy depth/fan-out, repeated definitions, visible geometry, properties/styles, libraries, and assets.
+- [x] Add headless hierarchy probes for unrelated block growth and depths through the 256-level guard, preserving interface/cable invariants and undo correctness.
+- [ ] Expand probes to shared-definition expansion, visible geometry, properties/styles, libraries, and assets.
 - [ ] Measure memory, cache invalidation, object visits, save/load IO, native frame times, and foreground response during background work.
 - [ ] Add bounded soak/cancellation/failure cases and establish stable performance regression gates from measured variance.
 - [x] Current core checks and examples executed on macOS/aarch64 with Rust 1.97.0.
@@ -94,6 +96,8 @@ For each implementation slice, record the relevant contract/decision, completed 
 Current test owners:
 
 - Domain invariants: [project tests](../crates/ecad-domain/tests/project_invariants.rs).
+- Hierarchy and cable invariants: [hierarchy tests](../crates/ecad-domain/tests/hierarchy_contract.rs) and [cable tests](../crates/ecad-domain/tests/cable_contract.rs).
+- Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - History contracts: [session tests](../crates/ecad-app/tests/history_contract.rs) and internal overflow test.
 - Transaction atomicity and session-token isolation: [transaction tests](../crates/ecad-app/tests/transaction_contract.rs).
 - Saved checkpoints and reopen behavior: [saved-state tests](../crates/ecad-adapters/tests/saved_state_contract.rs).

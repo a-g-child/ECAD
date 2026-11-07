@@ -2,7 +2,7 @@
 
 An electrical CAD application in early development, targeting equipment systems around the scale of a car. The intended desktop platforms are Linux, Windows, and macOS.
 
-The first working slice is a **headless Rust engine**, not a graphical CAD application. It can create devices and terminals, connect individual conductors, commit multi-object transactions, undo/redo complete operations, track saved checkpoints, and save/reopen deterministic versioned JSON. Session-specific revision tokens reject edits from old or unrelated sessions. The project scope includes hierarchy, libraries, styles, bulk properties, keyboard-first control, and integrated Git workflows; those are tracked separately from implemented features.
+The working implementation is a **headless Rust engine**, not a graphical CAD application. It supports devices, terminals, conductors, project-local nested subsystems, explicit interfaces, and cable assemblies. Multi-object transactions, undo/redo, saved checkpoints, and deterministic JSON are implemented. Shared subsystem definitions/revisions, libraries, styles, bulk properties, keyboard-first control, and the desktop workspace remain planned.
 
 The document controller now supports guarded saves, save-as, external-change detection, and validated reloads. Persistent project IDs and OS-random UUID-v4 object generation are available without adding IO dependencies to the core.
 
@@ -39,11 +39,12 @@ cargo fetch --locked
 | `cargo xtask full` | Quick checks plus example-target compilation, doctests, and documentation with warnings treated as errors |
 | `cargo xtask scale` | Optimized headless probe at 100, 1,000, and 10,000 devices; writes `target/scale/latest.json` |
 | `cargo run --offline --locked -p ecad-adapters --example headless` | Creates two devices and one conductor, exercises undo/redo, and saves/reopens in an automatically cleaned temporary directory |
+| `cargo run --offline --locked -p ecad-adapters --example conveyor` | Builds a controller, nested conveyor/sensor assembly, interfaces, cable, and internal wiring as one transaction; verifies undo/redo and save/reopen |
 | `cargo doc --offline --locked --workspace --no-deps --open` | Opens generated Rust API documentation |
 
-The full suite currently contains 56 behavior tests and two doctests. Integration tests use isolated temporary files and repositories, including a real Git branch/commit/checkout workflow and safe reload after checkout. They do not alter this workspace's repository or contact a remote. This workspace's `origin` is configured as [a-g-child/ECAD](https://github.com/a-g-child/ECAD).
+The full suite currently contains 76 behavior tests and two doctests. Integration tests use isolated temporary files and repositories, including a real Git branch/commit/checkout workflow and safe reload after checkout. They do not alter this workspace's repository or contact a remote. This workspace's `origin` is configured as [a-g-child/ECAD](https://github.com/a-g-child/ECAD).
 
-The scale probe varies unique device/terminal/conductor counts while editing the same local connection 1,000 times. It records build, validation, encoding/decoding, and local-edit latency and verifies round trips and undo correctness. It does not yet measure UI rendering, memory, hierarchy, disk IO, or release capacity. Results are measurements, not pass/fail timing guarantees.
+The scale probe varies unique device/terminal/conductor counts, unrelated subsystem counts, and hierarchy depth while editing a local connection 1,000 times per case. It records core timing and verifies round trips and undo correctness. Hierarchy cases cover 100/1,000/10,000 unrelated blocks and depth 16/128/256, with explicit terminal exposure and a real cable grouping. It does not measure UI rendering, memory, shared-definition expansion, disk IO, or release capacity. Results are measurements, not pass/fail timing guarantees.
 
 ## Source boundaries
 
@@ -59,9 +60,11 @@ docs/                 Product plans, decisions, and implementation checklist
 
 ## Prototype boundaries
 
-The experimental v2 JSON format contains a persistent project lineage ID, devices, terminals, and conductors. IDs have canonical lowercase 32-digit hexadecimal encoding. `RandomIds` generates UUID-v4 identities from OS entropy; explicit constructors remain useful for imported data and deterministic fixtures. Save-as/file copies and Git branches retain the lineage ID; creating a distinct design requires choosing a new lineage rather than treating the path as identity. A general design-fork operation is not implemented yet.
+The experimental v3 JSON format adds subsystems, device ownership, interface exposures, and cable membership to the v2 electrical model. IDs have canonical lowercase 32-digit hexadecimal encoding. `RandomIds` generates UUID-v4 identities from OS entropy; explicit constructors remain useful for imported data and deterministic fixtures. Save-as/file copies and Git branches retain project lineage. A general design-fork operation is not implemented yet.
 
-Opening v1 returns `MigrationRequired(1)` rather than inventing an ID. Explicitly convert with `migrate_v1(legacy_text, project_id)`, choosing and retaining the assigned project ID, then save the result to a new destination through `Document`. The migration preserves object IDs and assignments and never rewrites the source. Unknown fields and future versions are rejected.
+V2 files load losslessly as root-level designs and save in v3 on the next explicit save. Opening v1 returns `MigrationRequired(1)` rather than inventing a project ID. Convert with `migrate_v1(legacy_text, project_id)`, retaining that ID, then save to a new destination through `Document`. Old fixtures are retained and object identities/assignments are preserved. Unknown fields and future versions are rejected.
+
+Subsystems currently represent local occurrences, not shared templates. A port exposes an existing internal terminal; every boundary crossed by a completed conductor must expose its terminal. Cable ends reference devices/subsystems and validate their cores against those endpoints. Spare ends and empty cables remain valid drafts. Traversal is iterative with a provisional 256-level guard. Reparenting, device-scope changes, and interface removal currently validate the full model; ordinary termination edits follow only the affected ancestry and cable constraints.
 
 Undo history is session-local and limited by transaction count, not bytes. Every session receives a process-local epoch; revision guards reject tokens from other sessions but are not persistent identifiers across application restarts. New documents start unsaved. `Document::open` starts clean, and `Document::save` moves the checkpoint only after success. Undo/redo tracks saved history positions; independently recreated equivalent contents are conservatively treated as dirty.
 
