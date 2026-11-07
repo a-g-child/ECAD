@@ -10,6 +10,8 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Whole-route geometry and placed-terminal layout with exact local inverses.
+    Route(crate::RouteCommand),
     /// Drawing content, shared styles, and creation settings with localized inverses.
     Drawing(crate::DrawingCommand),
     /// Restore exact literal/override state, used for inheritance-aware undo and reset.
@@ -103,6 +105,7 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::Route(command) => return Ok(command.apply(project)?.map(Self::Route)),
             Self::Drawing(command) => return Ok(command.apply(project)?.map(Self::Drawing)),
             Self::SetPropertyState {
                 target,

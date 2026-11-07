@@ -36,6 +36,19 @@ pub enum InvocationSource {
 /// Concrete parameters; missing placement data becomes a request, not inferred geometry.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ActionParameters {
+    /// Complete existing-conductor routing input, with view and stroke preset taken from context.
+    Route {
+        /// Fresh whole-route identity.
+        id: ecad_domain::RouteId,
+        /// Existing real electrical conductor.
+        conductor: ecad_domain::ConductorId,
+        /// Explicit same-view A/B placed anchors.
+        anchors: [Option<ecad_domain::AnchorId>; 2],
+        /// Complete ordered document geometry.
+        points: Vec<DrawingPoint>,
+        /// Explicit geometry policy.
+        mode: ecad_domain::RouteMode,
+    },
     /// Invoke an immediate action or request an input/placement editor.
     #[default]
     None,
@@ -77,6 +90,8 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Request an existing conductor, placed anchors, and whole route geometry.
+    RoutePlacement,
     /// Request annotation text and/or explicit placement.
     LabelPlacement,
     /// Request whole-path geometry.
@@ -248,6 +263,36 @@ impl ActionDispatcher {
                     invocation.context.selection.iter().copied(),
                 )
                 .map_err(ActionDispatchError::Model)?,
+            ),
+            (ActionHandler::CreateRoute, ActionParameters::None) => {
+                request(ActionRequestKind::RoutePlacement, None)
+            }
+            (
+                ActionHandler::CreateRoute,
+                ActionParameters::Route {
+                    id,
+                    conductor,
+                    anchors,
+                    points,
+                    mode,
+                },
+            ) => ActionOutcome::Edited(
+                document
+                    .execute(
+                        revision,
+                        Command::Route(RouteCommand::Create {
+                            id,
+                            conductor,
+                            anchors,
+                            points,
+                            mode,
+                            view: invocation
+                                .context
+                                .view
+                                .expect("placement availability checked view"),
+                        }),
+                    )
+                    .map_err(ActionDispatchError::Edit)?,
             ),
             (ActionHandler::CreateLabel, ActionParameters::None) => {
                 request(ActionRequestKind::LabelPlacement, None)

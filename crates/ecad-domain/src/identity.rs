@@ -109,6 +109,15 @@ identity!(
 );
 identity!(StyleId, "Identity of a project-owned named drawing style.");
 
+identity!(
+    AnchorId,
+    "Identity of one placed terminal anchor in a drawing view."
+);
+identity!(
+    RouteId,
+    "Identity of one whole conductor route in a drawing view."
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;

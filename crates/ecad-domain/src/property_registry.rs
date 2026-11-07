@@ -6,7 +6,12 @@ use crate::{
 };
 
 /// All currently registered fields, in stable inspector order.
-pub const PROPERTY_IDS: [PropertyId; 24] = [
+pub const PROPERTY_IDS: [PropertyId; 29] = [
+    PropertyId::AnchorTerminal,
+    PropertyId::RouteConductor,
+    PropertyId::RouteAnchorA,
+    PropertyId::RouteAnchorB,
+    PropertyId::RouteMode,
     PropertyId::FontFamily,
     PropertyId::TextHeight,
     PropertyId::StrokeWidth,
@@ -38,6 +43,41 @@ impl PropertyId {
         use PropertyOwnership as Owner;
         use PropertyValueKind as Kind;
         let (key, label, value_kind, ownership, editable) = match self {
+            Self::AnchorTerminal => (
+                "anchor_terminal",
+                "Real terminal",
+                Kind::Object,
+                Owner::Structure,
+                false,
+            ),
+            Self::RouteConductor => (
+                "route_conductor",
+                "Conductor",
+                Kind::Object,
+                Owner::Connection,
+                false,
+            ),
+            Self::RouteAnchorA => (
+                "route_anchor_a",
+                "Anchor A",
+                Kind::OptionalObject,
+                Owner::Connection,
+                false,
+            ),
+            Self::RouteAnchorB => (
+                "route_anchor_b",
+                "Anchor B",
+                Kind::OptionalObject,
+                Owner::Connection,
+                false,
+            ),
+            Self::RouteMode => (
+                "route_mode",
+                "Geometry mode",
+                Kind::RouteMode,
+                Owner::Structure,
+                false,
+            ),
             Self::FontFamily => (
                 "font_family",
                 "Font family",
@@ -196,6 +236,10 @@ impl PropertyId {
             ),
         };
         let reference_kind = match self {
+            Self::AnchorTerminal => Some(PropertyReferenceKind::Terminal),
+            Self::RouteConductor => Some(PropertyReferenceKind::Conductor),
+            Self::RouteAnchorA | Self::RouteAnchorB => Some(PropertyReferenceKind::Anchor),
+            Self::RouteMode => None,
             Self::DrawingView => Some(PropertyReferenceKind::View),
             Self::FontFamily
             | Self::TextHeight
@@ -231,12 +275,26 @@ impl PropertyId {
     pub fn applies_to(self, target: ObjectRef) -> bool {
         use ObjectRef as Object;
         match self {
-            Self::FontFamily | Self::TextHeight | Self::DrawingText | Self::DrawingPosition => {
+            Self::AnchorTerminal => matches!(target, Object::Anchor(_)),
+            Self::RouteConductor | Self::RouteAnchorA | Self::RouteAnchorB | Self::RouteMode => {
+                matches!(target, Object::Route(_))
+            }
+            Self::DrawingPosition => matches!(target, Object::Label(_) | Object::Anchor(_)),
+            Self::FontFamily | Self::TextHeight | Self::DrawingText => {
                 matches!(target, Object::Label(_))
             }
-            Self::StrokeWidth | Self::DrawingVertices => matches!(target, Object::Polyline(_)),
-            Self::DrawingColour | Self::DrawingView | Self::DrawingStyle => {
-                matches!(target, Object::Label(_) | Object::Polyline(_))
+            Self::StrokeWidth | Self::DrawingVertices => {
+                matches!(target, Object::Polyline(_) | Object::Route(_))
+            }
+            Self::DrawingView => matches!(
+                target,
+                Object::Label(_) | Object::Polyline(_) | Object::Route(_) | Object::Anchor(_)
+            ),
+            Self::DrawingColour | Self::DrawingStyle => {
+                matches!(
+                    target,
+                    Object::Label(_) | Object::Polyline(_) | Object::Route(_)
+                )
             }
             Self::Identity => true,
             Self::Designation => matches!(target, Object::Device(_) | Object::Cable(_)),

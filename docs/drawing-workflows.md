@@ -1,6 +1,6 @@
 # Drawing and editing workflows
 
-Status: headless views, annotations, retained graphical polylines, portable defaults/styles, and whole-value property edits are implemented. Interactive tools, rendering, electrically anchored routes, symbols, attachment, and the broader workflows below remain proposed. See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
+Status: Headless views, annotations, graphical polylines, electrically anchored whole conductor routes, portable defaults/styles, and property edits are implemented. Route commands support indexed vertex/segment editing and local first-leg/bend anchor movement with exact undo. Interactive tools, rendering, symbols, live label attachment, snapping, constraints, crossing/hop presentation, and the broader workflows below remain proposed. See [route decision 0012](decisions/0012-whole-conductor-routes.md). See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Complements the [product scope](product-scope.md); detailed interaction choices and implementation remain open.
 
 ## Design intent
 

@@ -35,6 +35,7 @@ mod project_usage;
 mod property_edits;
 mod property_selection;
 mod revision;
+mod route_command;
 mod session;
 mod shortcut;
 mod transaction;
@@ -74,6 +75,7 @@ pub use property_selection::{
     PropertySelection, SelectionProperty, SelectionValue, inspect_properties,
 };
 pub use revision::{Revision, SessionEpoch};
+pub use route_command::RouteCommand;
 pub use session::Session;
 pub use shortcut::{
     KeySequence, NamedKey, PhysicalModifiers, ResolvedChord, ShortcutChord, ShortcutKey,

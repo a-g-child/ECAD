@@ -12,6 +12,19 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a placed terminal-anchor identity.
+    /// # Errors
+    /// Returns the OS entropy error without weak fallback.
+    pub fn anchor() -> Result<ecad_domain::AnchorId, getrandom::Error> {
+        Ok(ecad_domain::AnchorId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+    /// Generate a whole-route identity.
+    /// # Errors
+    /// Returns the OS entropy error without weak fallback.
+    pub fn route() -> Result<ecad_domain::RouteId, getrandom::Error> {
+        Ok(ecad_domain::RouteId::new(random_value()?).expect("UUID-v4 identity is nonzero"))
+    }
+
     /// Generate a drawing view identity.
     /// # Errors
     /// Returns the OS entropy error.

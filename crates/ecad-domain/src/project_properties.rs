@@ -10,7 +10,11 @@ use crate::{
 impl ObjectRef {
     fn owned(self) -> Option<OwnedObject> {
         Some(match self {
-            Self::View(_) | Self::Label(_) | Self::Polyline(_) => return None,
+            Self::Anchor(_)
+            | Self::Route(_)
+            | Self::View(_)
+            | Self::Label(_)
+            | Self::Polyline(_) => return None,
             Self::Subsystem(id) => OwnedObject::Subsystem(id),
             Self::Device(id) => OwnedObject::Device(id),
             Self::Terminal(id) => OwnedObject::Terminal(id),
@@ -26,6 +30,12 @@ impl Project {
     /// Returns the matching typed missing-object error, never an unsupported-property result.
     pub fn require_object(&self, target: ObjectRef) -> Result<(), ModelError> {
         match target {
+            ObjectRef::Anchor(id) if self.drawing.terminal_anchor(id).is_none() => {
+                return Err(crate::RouteError::MissingAnchor(id).into());
+            }
+            ObjectRef::Route(id) if self.drawing.route(id).is_none() => {
+                return Err(crate::RouteError::MissingRoute(id).into());
+            }
             ObjectRef::View(id) if self.drawing.view(id).is_none() => {
                 return Err(crate::DrawingError::MissingView(id).into());
             }
@@ -67,7 +77,11 @@ impl Project {
         self.require_object(target)?;
         if matches!(
             target,
-            ObjectRef::View(_) | ObjectRef::Label(_) | ObjectRef::Polyline(_)
+            ObjectRef::Anchor(_)
+                | ObjectRef::Route(_)
+                | ObjectRef::View(_)
+                | ObjectRef::Label(_)
+                | ObjectRef::Polyline(_)
         ) {
             return self.drawing.property(target, property);
         }
@@ -198,7 +212,11 @@ impl Project {
         self.require_object(target)?;
         if matches!(
             target,
-            ObjectRef::View(_) | ObjectRef::Label(_) | ObjectRef::Polyline(_)
+            ObjectRef::Anchor(_)
+                | ObjectRef::Route(_)
+                | ObjectRef::View(_)
+                | ObjectRef::Label(_)
+                | ObjectRef::Polyline(_)
         ) {
             return self.drawing.set_property(target, property, value);
         }

@@ -107,6 +107,7 @@ impl TryFrom<SettingsData> for DrawingSettings {
             },
             text_creation: value.text_creation.try_into()?,
             stroke_creation: value.stroke_creation.try_into()?,
+            route_creation: Appearance::default(),
         })
     }
 }

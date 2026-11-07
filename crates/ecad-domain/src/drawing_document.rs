@@ -2,14 +2,20 @@
 
 #[path = "drawing_properties.rs"]
 mod properties;
+#[path = "drawing_routes.rs"]
+mod routes;
 
 use crate::*;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// Project-owned drawing views, styles, annotations, and graphical paths.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DrawingDocument {
     settings: DrawingSettings,
+    anchors: BTreeMap<AnchorId, TerminalAnchor>,
+    routes: BTreeMap<RouteId, DrawingRoute>,
+    anchor_routes: BTreeMap<AnchorId, BTreeSet<RouteId>>,
+    conductor_routes: BTreeMap<ConductorId, BTreeSet<RouteId>>,
     views: BTreeMap<ViewId, DrawingView>,
     styles: BTreeMap<StyleId, DrawingStyle>,
     labels: BTreeMap<LabelId, DrawingLabel>,
@@ -61,6 +67,7 @@ impl DrawingDocument {
     ) -> Result<DrawingSettings, DrawingError> {
         self.check_appearance(&settings.text_creation, DrawingRole::Text)?;
         self.check_appearance(&settings.stroke_creation, DrawingRole::Stroke)?;
+        self.check_appearance(&settings.route_creation, DrawingRole::Stroke)?;
         Ok(std::mem::replace(&mut self.settings, settings))
     }
     /// Insert one independent drawing scope.
@@ -92,7 +99,9 @@ impl DrawingDocument {
     /// # Errors
     /// Rejects missing views or any remaining annotation/path membership.
     pub fn remove_view(&mut self, id: ViewId) -> Result<DrawingView, DrawingError> {
-        if self.labels.values().any(|o| o.view == id)
+        if self.anchors.values().any(|o| o.view == id)
+            || self.routes.values().any(|o| o.view == id)
+            || self.labels.values().any(|o| o.view == id)
             || self.polylines.values().any(|o| o.view == id)
         {
             return Err(DrawingError::ViewInUse(id));
@@ -129,13 +138,15 @@ impl DrawingDocument {
     /// # Errors
     /// Rejects missing styles or references from any object or creation preset.
     pub fn remove_style(&mut self, id: StyleId) -> Result<DrawingStyle, DrawingError> {
-        if self.labels.values().any(|o| o.appearance.style == Some(id))
+        if self.routes.values().any(|o| o.appearance.style == Some(id))
+            || self.labels.values().any(|o| o.appearance.style == Some(id))
             || self
                 .polylines
                 .values()
                 .any(|o| o.appearance.style == Some(id))
             || self.settings.text_creation.style == Some(id)
             || self.settings.stroke_creation.style == Some(id)
+            || self.settings.route_creation.style == Some(id)
         {
             return Err(DrawingError::StyleInUse(id));
         }
@@ -241,15 +252,17 @@ impl DrawingDocument {
     /// Recheck every drawing reference; no renderer, font lookup, or electrical routing runs.
     /// # Errors
     /// Returns the first invalid reference, role, or object value.
-    pub fn validate(&self) -> Result<(), DrawingError> {
+    pub fn validate(&self) -> Result<(), ModelError> {
         self.check_appearance(&self.settings.text_creation, DrawingRole::Text)?;
         self.check_appearance(&self.settings.stroke_creation, DrawingRole::Stroke)?;
+        self.check_appearance(&self.settings.route_creation, DrawingRole::Stroke)?;
         for label in self.labels.values() {
             self.check_label(label)?;
         }
         for line in self.polylines.values() {
             self.check_polyline(line)?;
         }
+        self.validate_routes()?;
         Ok(())
     }
 }

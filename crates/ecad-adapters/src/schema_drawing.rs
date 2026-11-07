@@ -15,7 +15,7 @@ enum RoleData {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct StyleData {
+pub(crate) struct StyleData {
     id: String,
     name: String,
     role: RoleData,
@@ -23,14 +23,14 @@ struct StyleData {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct ViewData {
+pub(crate) struct ViewData {
     id: String,
     name: String,
     overrides: PatchData,
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct LabelData {
+pub(crate) struct LabelData {
     id: String,
     view: String,
     text: String,
@@ -39,7 +39,7 @@ struct LabelData {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct PolylineData {
+pub(crate) struct PolylineData {
     id: String,
     view: String,
     points_um: Vec<[i64; 2]>,
@@ -48,11 +48,11 @@ struct PolylineData {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct DrawingData {
-    settings: SettingsData,
-    styles: Vec<StyleData>,
-    views: Vec<ViewData>,
-    labels: Vec<LabelData>,
-    polylines: Vec<PolylineData>,
+    pub(crate) settings: SettingsData,
+    pub(crate) styles: Vec<StyleData>,
+    pub(crate) views: Vec<ViewData>,
+    pub(crate) labels: Vec<LabelData>,
+    pub(crate) polylines: Vec<PolylineData>,
 }
 impl From<&DrawingDocument> for DrawingData {
     fn from(drawing: &DrawingDocument) -> Self {

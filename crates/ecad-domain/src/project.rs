@@ -29,8 +29,10 @@ mod interfaces;
 mod labels;
 #[path = "project_properties.rs"]
 mod properties;
+#[path = "project_routes.rs"]
+mod routes;
 
-/// A structurally valid electrical document, independent of drawing geometry.
+/// A validated project with electrical identity and separate view-local drawing representations.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Project {
     id: ProjectId,
@@ -124,9 +126,16 @@ impl Project {
 
     /// Remove an unconnected device, returning its exact value for undo.
     /// # Errors
-    /// Missing, connected, or interface/cable-referenced devices are rejected without mutation.
+    /// Missing, connected, placed-anchor, or interface/cable-referenced devices are rejected without mutation.
     /// Currently scans conductors; the scale harness should inform a reverse index.
     pub fn remove_device(&mut self, id: DeviceId) -> Result<Device, ModelError> {
+        if self
+            .drawing
+            .terminal_anchors()
+            .any(|anchor| self.terminal_owner(anchor.terminal) == Some(id))
+        {
+            return Err(crate::RouteError::DeviceAnchored(id).into());
+        }
         self.ensure_editable(OwnedObject::Device(id))?;
         let device = self.devices.get(&id).ok_or(ModelError::MissingDevice(id))?;
         for conductor in self.conductors.values() {
@@ -173,8 +182,11 @@ impl Project {
 
     /// Remove a conductor, retaining its identity and endpoints in the return value.
     /// # Errors
-    /// Returns a missing-conductor or cable-membership error without mutation.
+    /// Returns a missing-conductor, drawing-route, ownership, or cable-membership error without mutation.
     pub fn remove_conductor(&mut self, id: ConductorId) -> Result<Conductor, ModelError> {
+        if self.drawing.conductor_routes(id).next().is_some() {
+            return Err(crate::RouteError::ConductorInUse(id).into());
+        }
         self.ensure_editable(OwnedObject::Conductor(id))?;
         if self.conductor_cables.contains_key(&id) {
             return Err(ModelError::ConductorInCable(id));
@@ -226,6 +238,7 @@ impl Project {
         }
         self.validate_instances()?;
         self.drawing.validate()?;
+        self.check_drawing_references(&self.drawing)?;
         Ok(())
     }
 
@@ -244,6 +257,7 @@ impl Project {
         }
         self.check_boundaries(conductor.endpoint(End::A), conductor.endpoint(End::B))?;
         self.check_instance_wire(conductor)?;
+        self.check_conductor_routes(conductor)?;
         if let Some(cable_id) = self.conductor_cables.get(&conductor.id()) {
             let cable = self
                 .cables

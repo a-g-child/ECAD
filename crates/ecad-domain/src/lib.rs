@@ -31,6 +31,9 @@ mod property_error;
 mod property_registry;
 mod reuse;
 mod reuse_error;
+mod route;
+mod route_error;
+mod route_geometry;
 
 pub use adoption_changes::{ObjectChanges, RevisionChanges};
 pub use cable::{Cable, CableEndpoint};
@@ -43,6 +46,7 @@ pub use drawing_style::{
 pub use drawing_values::{DrawingColour, DrawingLength, DrawingPoint, FontFamily};
 pub use error::ModelError;
 pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};
+pub use identity::{AnchorId, RouteId};
 pub use identity::{
     CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, IdError, InterfacePortId,
     ProjectId, SubsystemId, TerminalId,
@@ -63,3 +67,5 @@ pub use reuse::{
     MAX_INSTANCE_OBJECTS, SubsystemRevision,
 };
 pub use reuse_error::ReuseError;
+pub use route::{AnchorLayout, DrawingRoute, RouteEdit, RouteMode, TerminalAnchor};
+pub use route_error::RouteError;

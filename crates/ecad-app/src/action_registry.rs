@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Request/create a whole representation of an existing electrical conductor.
+    CreateRoute,
     /// Undo one document transaction.
     Undo,
     /// Redo one document transaction.
@@ -28,6 +30,8 @@ pub enum ActionHandler {
 /// Declared input needs; missing creation input produces a typed request, not an invented point.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionInputRequirement {
+    /// Existing conductor, placed terminal anchors, and explicit whole-path geometry.
+    RoutePlacement,
     /// No additional parameters.
     None,
     /// Existing selected objects are required.
@@ -81,6 +85,7 @@ impl ActionDefinition {
     /// Derive invocation needs from the actual typed handler, avoiding divergent metadata.
     pub fn input_requirement(&self) -> ActionInputRequirement {
         match self.handler {
+            ActionHandler::CreateRoute => ActionInputRequirement::RoutePlacement,
             ActionHandler::Properties => ActionInputRequirement::Selection,
             ActionHandler::CreateLabel => ActionInputRequirement::LabelPlacement,
             ActionHandler::CreatePolyline => ActionInputRequirement::PolylinePlacement,
@@ -209,7 +214,9 @@ impl ActionRegistry {
                     .copied()
                     .map(ActionDisabled::MissingTarget)
             }
-            ActionHandler::CreateLabel | ActionHandler::CreatePolyline => {
+            ActionHandler::CreateLabel
+            | ActionHandler::CreatePolyline
+            | ActionHandler::CreateRoute => {
                 if context.focus != ActionFocus::Canvas {
                     return Some(ActionDisabled::CanvasRequired);
                 }

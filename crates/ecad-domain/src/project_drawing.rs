@@ -14,8 +14,9 @@ impl Project {
     pub fn replace_drawing(
         &mut self,
         drawing: DrawingDocument,
-    ) -> Result<DrawingDocument, DrawingError> {
+    ) -> Result<DrawingDocument, ModelError> {
         drawing.validate()?;
+        self.check_drawing_references(&drawing)?;
         Ok(std::mem::replace(&mut self.drawing, drawing))
     }
     /// Insert one drawing view through aggregate invariants.

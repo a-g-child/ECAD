@@ -1,4 +1,4 @@
-//! Explicit defaults for working headless operations; no unimplemented wire-tool action.
+//! Explicit defaults for implemented headless workflows and typed placement requests.
 
 use crate::*;
 
@@ -20,12 +20,22 @@ fn binding(scope: BindingScope, chords: Vec<ShortcutChord>) -> ScopedShortcut {
 }
 impl ActionRegistry {
     /// Register shipped working handlers and their explicit default/unbound policies.
-    /// Direct T/P request annotation/polyline placement; W is reserved for a future
-    /// electrical route tool rather than advertising unsupported wire behavior.
+    /// Direct T/P request annotation/polyline placement; W requests a whole route
+    /// for an existing conductor. Interactive placement and new-wire creation remain host work.
     pub fn builtins() -> Self {
         use ActionHandler as Handler;
         use BindingScope as Scope;
         let entries = [
+            (
+                "drawing.route.create",
+                "Route conductor",
+                "Drawing",
+                "Request anchors and a whole path for an existing wire conductor",
+                Handler::CreateRoute,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![binding(Scope::Canvas, vec![chord('w', false, false)])],
+            ),
             (
                 "document.undo",
                 "Undo",

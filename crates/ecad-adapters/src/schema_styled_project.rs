@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct StyledProjectData {
+pub(crate) struct StyledProjectData<D = DrawingData> {
     schema_version: u32,
     project_id: String,
     subsystems: Vec<SubsystemData>,
@@ -24,13 +24,14 @@ pub(crate) struct StyledProjectData {
     definitions: Vec<DefinitionData>,
     instances: Vec<InstanceData>,
     local_origins: Vec<InstanceData>,
-    drawing: DrawingData,
+    drawing: D,
 }
-impl From<&Project> for StyledProjectData {
+pub(crate) type RoutedProjectData = StyledProjectData<crate::schema_routes::RoutedDrawingData>;
+impl From<&Project> for RoutedProjectData {
     fn from(project: &Project) -> Self {
         let base = ReusableProjectData::from(project);
         Self {
-            schema_version: 5,
+            schema_version: 6,
             project_id: base.project_id,
             subsystems: base.subsystems,
             devices: base.devices,
@@ -44,10 +45,10 @@ impl From<&Project> for StyledProjectData {
         }
     }
 }
-impl TryFrom<StyledProjectData> for Project {
-    type Error = ProjectFileError;
-    fn try_from(data: StyledProjectData) -> Result<Self, Self::Error> {
-        if data.schema_version != 5 {
+impl<D: TryInto<ecad_domain::DrawingDocument, Error = ProjectFileError>> StyledProjectData<D> {
+    fn load(self, expected: u32) -> Result<Project, ProjectFileError> {
+        let data = self;
+        if data.schema_version != expected {
             return Err(ProjectFileError::UnsupportedVersion(data.schema_version));
         }
         let mut project = Project::try_from(ReusableProjectData {
@@ -65,5 +66,17 @@ impl TryFrom<StyledProjectData> for Project {
         project.replace_drawing(data.drawing.try_into()?)?;
         project.validate()?;
         Ok(project)
+    }
+}
+impl TryFrom<StyledProjectData> for Project {
+    type Error = ProjectFileError;
+    fn try_from(data: StyledProjectData) -> Result<Self, Self::Error> {
+        data.load(5)
+    }
+}
+impl TryFrom<RoutedProjectData> for Project {
+    type Error = ProjectFileError;
+    fn try_from(data: RoutedProjectData) -> Result<Self, Self::Error> {
+        data.load(6)
     }
 }

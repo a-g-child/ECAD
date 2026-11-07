@@ -74,6 +74,8 @@ pub struct DrawingSettings {
     pub text_creation: Appearance,
     /// Initial style link/overrides copied into newly created polylines only.
     pub stroke_creation: Appearance,
+    /// Initial appearance for conductor routes, independent of graphical polyline presets.
+    pub route_creation: Appearance,
 }
 /// An immutable-value proposal for one project-owned named style.
 #[derive(Clone, Debug, PartialEq, Eq)]

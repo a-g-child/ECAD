@@ -8,7 +8,7 @@ use ecad_domain::{
 };
 use serde_json::Value;
 
-const FIXTURE: &str = include_str!("fixtures/controller-conveyor-v5.json");
+const FIXTURE: &str = include_str!("fixtures/controller-conveyor-v6.json");
 
 fn commands(project: &Project) -> Vec<Command> {
     let mut commands: Vec<_> = project
@@ -214,7 +214,7 @@ fn v2_upgrade_preserves_lineage_and_all_existing_electrical_objects() {
     let old = decode_project(include_str!("fixtures/minimal-v2.json")).unwrap();
     assert_eq!(
         encode_project(&old).unwrap(),
-        include_str!("fixtures/minimal-v5.json")
+        include_str!("fixtures/minimal-v6.json")
     );
     assert_eq!(old.subsystems().count(), 0);
     assert_eq!(old.cables().count(), 0);

@@ -12,11 +12,12 @@ Status: a headless action registry, shared invocation dispatcher, logical-key ro
 | Properties | E | Canvas/project tree |
 | Annotation input/creation | T | Canvas |
 | Graphical polyline input/creation | P | Canvas |
+| Existing conductor route input/creation | W | Canvas |
 | Drawing fallbacks/creation presets | Primary+K, S | Document |
 | Palette request | Primary+Shift+P | Application |
 | Cancel placement request | Escape | Active canvas tool |
 
-Primary resolves to Control for Linux/Windows profiles and Meta/Command for macOS. These are explicit initial choices, not native-platform validation. The wire tool is not implemented, so there is no shipped W action. T/P request typed input/placement; they do not create geometry without concrete parameters. Escape cancels a pending key sequence first, then may request tool cancellation on a subsequent press. These requests need actual host controls/tools before they become desktop interactions.
+Primary resolves to Control for Linux/Windows profiles and Meta/Command for macOS. These are explicit initial choices, not native-platform validation. W requests a whole route for an existing electrical conductor; interactive wire creation remains planned. T/P/W request typed input/placement; they do not create geometry without concrete parameters. Escape cancels a pending key sequence first, then may request tool cancellation on a subsequent press. These requests need actual host controls/tools before they become desktop interactions.
 
 The registry exposes stable IDs, descriptions/categories/search terms, requirements, availability reasons, optional checked state, repeat policy, and suggested bindings or an explicit unbound policy. Current built-ins are non-toggle actions. Every registered action can be remapped or explicitly unbound; underlying model functions are not automatically user actions. Preserve one action implementation for menu/toolbar/palette/context-menu/keyboard/native accelerator invocation. Typed requests retain the original revision/selection/view/optional anchor; replies get new input IDs and revalidate before commands execute.
 
@@ -26,7 +27,7 @@ All application shortcuts are suppressed during text/numeric editing, modal UI, 
 
 Hosts must share one monotonic input-ID stream across native/web paths, reuse an ID for duplicate delivery, and flag repeats on native invocations too. Both router and dispatcher reject replay/out-of-order IDs; attempted failures consume IDs. Native accelerator callbacks must honor the same router decision for that input, including pending/failed sequences, rather than bypass it as an explicit menu click. This is a tested core protocol, not proof that a future native host normalizes/deduplicates its events correctly. Palette and cancellation requests can be handled without a document; malformed parameters are rejected before document access. No input ID is persisted into project/keymap data.
 
-Preference-file lifecycle/editor, physical-key bindings, OS reserved-key diagnostics, native focus/accelerator tests, renamed-action migrations, live UI synchronization, and actual popup/tool controls remain planned. Keymap encoding is a standalone import/export contract; project schema v5 and library schema v1 are unchanged.
+Preference-file lifecycle/editor, physical-key bindings, OS reserved-key diagnostics, native focus/accelerator tests, renamed-action migrations, live UI synchronization, and actual popup/tool controls remain planned. Keymap encoding is a standalone import/export contract; keymap schema v1 and library schema v1 remain independent of project schema v6.
 
 ## Intent and coverage
 

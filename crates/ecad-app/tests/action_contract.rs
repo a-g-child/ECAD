@@ -11,7 +11,7 @@ use support::*;
 #[test]
 fn builtin_metadata_is_complete_and_disabled_actions_stay_searchable() {
     let registry = ActionRegistry::builtins();
-    assert_eq!(registry.definitions().len(), 9);
+    assert_eq!(registry.definitions().len(), 10);
     let session = session();
     let context = context(&session);
     assert_eq!(
@@ -36,8 +36,13 @@ fn builtin_metadata_is_complete_and_disabled_actions_stay_searchable() {
     assert!(!results.is_empty());
     assert!(!results[0].state.enabled());
     assert_eq!(results[0].definition.id, id("document.undo"));
-    assert!(registry.search("wire", &context, Some(&session)).is_empty());
-    assert_eq!(registry.search("", &context, Some(&session)).len(), 9);
+    assert_eq!(
+        registry.search("wire", &context, Some(&session))[0]
+            .definition
+            .id,
+        id("drawing.route.create")
+    );
+    assert_eq!(registry.search("", &context, Some(&session)).len(), 10);
     for action in registry.definitions() {
         assert!(!action.label.is_empty());
         assert!(!action.description.is_empty());
@@ -84,7 +89,7 @@ fn registry_rejects_duplicate_or_invalid_metadata_and_grows_without_an_action_co
         extra.defaults = DefaultBindings::Unbound;
         registry.register(extra).unwrap();
     }
-    assert_eq!(registry.definitions().len(), 137);
+    assert_eq!(registry.definitions().len(), 138);
     for invalid in [
         "",
         "undo",

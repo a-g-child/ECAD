@@ -71,7 +71,9 @@ impl Project {
                 )?;
                 self.cables.insert(id, replacement);
             }
-            ObjectRef::View(_)
+            ObjectRef::Anchor(_)
+            | ObjectRef::Route(_)
+            | ObjectRef::View(_)
             | ObjectRef::Label(_)
             | ObjectRef::Polyline(_)
             | ObjectRef::Conductor(_) => unreachable!("conductors have no registered label field"),

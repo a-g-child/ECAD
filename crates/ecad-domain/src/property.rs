@@ -5,6 +5,10 @@ use crate::{CableId, ConductorId, DeviceId, InterfacePortId, SubsystemId, Termin
 /// An addressable existing electrical object; IDs of different kinds remain distinct.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ObjectRef {
+    /// Placed real-terminal anchor.
+    Anchor(crate::AnchorId),
+    /// Whole conductor route.
+    Route(crate::RouteId),
     /// Drawing view.
     View(crate::ViewId),
     /// Free-standing text annotation.
@@ -28,6 +32,17 @@ pub enum ObjectRef {
 /// Stable property identities; sharing a label alone never combines two properties.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PropertyId {
+    /// Real terminal referenced by a placed anchor.
+    AnchorTerminal,
+    /// Electrical conductor represented by a whole route.
+    RouteConductor,
+    /// First endpoint's placed terminal anchor.
+    RouteAnchorA,
+    /// Second endpoint's placed terminal anchor.
+    RouteAnchorB,
+    /// Explicit whole-route geometry policy.
+    RouteMode,
+
     /// Requested font family on drawing text.
     FontFamily,
     /// Graphical text height in micrometres.
@@ -82,6 +97,8 @@ pub enum PropertyId {
 /// Runtime value type, shared by inspection and validated edits.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyValueKind {
+    /// Whole-route geometry policy.
+    RouteMode,
     /// Positive document distance in micrometres.
     Length,
     /// Output RGB colour.
@@ -106,6 +123,8 @@ pub enum PropertyValueKind {
 /// Typed inspected/proposed value; absence and mixed-selection state are separate concepts.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PropertyValue {
+    /// Explicit whole-route geometry policy.
+    RouteMode(crate::RouteMode),
     /// Positive document distance in micrometres.
     Length(crate::DrawingLength),
     /// Output RGB colour.
@@ -130,6 +149,7 @@ impl PropertyValue {
     /// Identify this value's runtime kind without coercing strings or reference types.
     pub fn kind(&self) -> PropertyValueKind {
         match self {
+            Self::RouteMode(_) => PropertyValueKind::RouteMode,
             Self::Length(_) => PropertyValueKind::Length,
             Self::Colour(_) => PropertyValueKind::Colour,
             Self::Point(_) => PropertyValueKind::Point,
@@ -203,6 +223,8 @@ pub struct PropertyDescriptor {
 /// Allowed target kinds for a reference-valued field, independent of displayed labels.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropertyReferenceKind {
+    /// Placed real-terminal representation.
+    Anchor,
     /// Drawing scope, independent of functional containment.
     View,
     /// An object's own identity may be of any supported kind.
@@ -223,6 +245,7 @@ impl PropertyReferenceKind {
     pub fn accepts(self, target: ObjectRef) -> bool {
         match self {
             Self::Any => true,
+            Self::Anchor => matches!(target, ObjectRef::Anchor(_)),
             Self::View => matches!(target, ObjectRef::View(_)),
             Self::Subsystem => matches!(target, ObjectRef::Subsystem(_)),
             Self::Device => matches!(target, ObjectRef::Device(_)),
@@ -240,7 +263,8 @@ impl PropertyDescriptor {
         }
         let accepts = |target| self.reference_kind.is_some_and(|kind| kind.accepts(target));
         match value {
-            PropertyValue::Length(_)
+            PropertyValue::RouteMode(_)
+            | PropertyValue::Length(_)
             | PropertyValue::Colour(_)
             | PropertyValue::Point(_)
             | PropertyValue::Points(_)

@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// A proposed edit violates structural validity. Rejected edits leave state intact.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ModelError {
+    /// Whole-route references or geometry conflict.
+    Route(crate::RouteError),
     /// Drawing units, style roles, or references are invalid.
     Drawing(crate::DrawingError),
     /// Typed property applicability, value, or access validation failed.
@@ -70,6 +72,7 @@ impl fmt::Display for ModelError {
             Self::Reuse(error) => error.fmt(f),
             Self::Property(error) => error.fmt(f),
             Self::Drawing(error) => error.fmt(f),
+            Self::Route(error) => error.fmt(f),
             Self::EmptyLabel => {
                 f.write_str("required name, designation, or terminal number cannot be blank")
             }
@@ -128,6 +131,7 @@ impl Error for ModelError {
             Self::Reuse(error) => Some(error),
             Self::Property(error) => Some(error),
             Self::Drawing(error) => Some(error),
+            Self::Route(error) => Some(error),
             _ => None,
         }
     }
@@ -147,5 +151,11 @@ impl From<crate::PropertyError> for ModelError {
 impl From<crate::DrawingError> for ModelError {
     fn from(error: crate::DrawingError) -> Self {
         Self::Drawing(error)
+    }
+}
+
+impl From<crate::RouteError> for ModelError {
+    fn from(error: crate::RouteError) -> Self {
+        Self::Route(error)
     }
 }

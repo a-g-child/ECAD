@@ -50,6 +50,10 @@ fn set_patch(
 impl DrawingDocument {
     fn appearance(&self, target: ObjectRef) -> Option<(&Appearance, ViewId)> {
         match target {
+            ObjectRef::Route(id) => self
+                .routes
+                .get(&id)
+                .map(|route| (&route.appearance, route.view)),
             ObjectRef::Label(id) => self.labels.get(&id).map(|o| (&o.appearance, o.view)),
             ObjectRef::Polyline(id) => self.polylines.get(&id).map(|o| (&o.appearance, o.view)),
             _ => None,
@@ -67,6 +71,53 @@ impl DrawingDocument {
             return self.resolve(target, property);
         }
         let value = match (target, property) {
+            (ObjectRef::Anchor(id), PropertyId::AnchorTerminal) => {
+                PropertyValue::Object(ObjectRef::Terminal(
+                    self.terminal_anchor(id)
+                        .ok_or(RouteError::MissingAnchor(id))?
+                        .terminal,
+                ))
+            }
+            (ObjectRef::Anchor(id), PropertyId::DrawingPosition) => PropertyValue::Point(
+                self.terminal_anchor(id)
+                    .ok_or(RouteError::MissingAnchor(id))?
+                    .position,
+            ),
+            (ObjectRef::Anchor(id), PropertyId::DrawingView) => {
+                PropertyValue::Object(ObjectRef::View(
+                    self.terminal_anchor(id)
+                        .ok_or(RouteError::MissingAnchor(id))?
+                        .view,
+                ))
+            }
+            (ObjectRef::Route(id), PropertyId::RouteConductor) => {
+                PropertyValue::Object(ObjectRef::Conductor(
+                    self.route(id)
+                        .ok_or(RouteError::MissingRoute(id))?
+                        .conductor,
+                ))
+            }
+            (ObjectRef::Route(id), PropertyId::RouteAnchorA | PropertyId::RouteAnchorB) => {
+                PropertyValue::OptionalObject(
+                    self.route(id).ok_or(RouteError::MissingRoute(id))?.anchors[if property
+                        == PropertyId::RouteAnchorA
+                    {
+                        0
+                    } else {
+                        1
+                    }]
+                    .map(ObjectRef::Anchor),
+                )
+            }
+            (ObjectRef::Route(id), PropertyId::RouteMode) => {
+                PropertyValue::RouteMode(self.route(id).ok_or(RouteError::MissingRoute(id))?.mode)
+            }
+            (ObjectRef::Route(id), PropertyId::DrawingVertices) => PropertyValue::Points(
+                self.route(id)
+                    .ok_or(RouteError::MissingRoute(id))?
+                    .points
+                    .clone(),
+            ),
             (_, PropertyId::Identity) => PropertyValue::Object(target),
             (ObjectRef::View(id), PropertyId::Name) => PropertyValue::Text(
                 self.views
@@ -112,6 +163,8 @@ impl DrawingDocument {
             value,
             access: if property == PropertyId::Identity {
                 PropertyAccess::ReadOnly(PropertyRestriction::Identity)
+            } else if !property.descriptor().editable || matches!(target, ObjectRef::Anchor(_)) {
+                PropertyAccess::ReadOnly(PropertyRestriction::StructuralOperation)
             } else {
                 PropertyAccess::Editable
             },
@@ -185,6 +238,15 @@ impl DrawingDocument {
             return Err(PropertyError::NotInheritable(property).into());
         }
         match target {
+            ObjectRef::Route(id) => {
+                let mut object = self
+                    .routes
+                    .get(&id)
+                    .ok_or(RouteError::MissingRoute(id))?
+                    .clone();
+                set_patch(&mut object.appearance.overrides, property, value)?;
+                self.replace_route(object)?;
+            }
             ObjectRef::Label(id) => {
                 let mut object = self
                     .labels
@@ -237,6 +299,20 @@ impl DrawingDocument {
             .into());
         }
         match target {
+            ObjectRef::Route(id) => {
+                let mut object = self
+                    .routes
+                    .get(&id)
+                    .ok_or(RouteError::MissingRoute(id))?
+                    .clone();
+                match value {
+                    PropertyValue::Points(points) => object.points = points,
+                    PropertyValue::Object(ObjectRef::View(view)) => object.view = view,
+                    PropertyValue::Style(style) => object.appearance.style = style,
+                    _ => unreachable!("descriptor validated route field"),
+                }
+                self.replace_route(object)?;
+            }
             ObjectRef::View(id) => {
                 let mut object = self
                     .views

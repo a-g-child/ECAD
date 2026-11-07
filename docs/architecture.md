@@ -1,6 +1,6 @@
 # Architecture direction
 
-Status: architecture direction with an initial headless implementation. Domain, application, JSON adapter, and local check-runner boundaries now exist; desktop, hierarchy, and other broader capabilities remain planned. See the [implementation checklist](implementation-checklist.md) and [first implementation decision](decisions/0001-headless-foundation.md).
+Status: architecture direction with an initial headless implementation. Domain, application, JSON adapter, and local check-runner boundaries now exist; hierarchy, reusable revisions, drawing styles, whole conductor routes, and action contracts are implemented; desktop and broader capabilities remain planned. See the [implementation checklist](implementation-checklist.md) and [first implementation decision](decisions/0001-headless-foundation.md).
 
 ## Principles
 
@@ -74,6 +74,8 @@ Keep internal mutable collections private. Queries return read views or purpose-
 
 Property definitions describe stable identity, type, units, applicability, ownership, constraints, and inheritance. Build typed access to real model fields; do not flatten the whole domain into an unvalidated string-to-value map to simplify the inspector. Custom properties will have an explicit schema and extension mechanism. The first implemented registry maps 15 typed fields directly onto existing electrical objects, with typed reference constraints, effective pin/structural restrictions, union inspection, and preflighted compound commands. It adds no generic persisted property bags or new schema fields. See [decision 0009](decisions/0009-electrical-property-contract.md). Creation presets and inherited graphical styles now use distinct persisted contracts on drawing views, annotations, and graphical polylines. Per-property resolution preserves explicit override intent, including equal-valued assignments, and localized history restores intent as well as value. See [decision 0010](decisions/0010-drawing-defaults-and-styles.md). Visual fields remain separate from device/conductor identity.
 
+Whole conductor routes reference existing electrical IDs; view-local anchors place real terminals. One conductor may have one route per view with independent geometry. Project validation enforces exact A/B terminal continuity, while reverse indexes limit anchor movement to touching routes. Geometry never infers junctions or changes electrical topology. See [decision 0012](decisions/0012-whole-conductor-routes.md).
+
 ## Commands, transactions, and undo
 
 A proposed edit carries explicit parameters and targets. The application resolves applicability, validates the complete operation, and prepares a change before committing it. Success produces a change summary and an undo record; failure leaves the authoritative document and history unchanged.
@@ -108,7 +110,7 @@ The authoritative document is the in-memory validated project; the authoritative
 
 The persistence adapter translates between domain objects and explicit disk DTOs, validates loaded projects, and handles migrations deliberately. An internal struct refactor should not silently alter the disk format. Stable IDs, deterministic ordering, defined numeric encoding, and deliberate file boundaries support useful Git diffs.
 
-The implemented v5 format stores a separate drawing aggregate and portable style/default settings alongside project lineage, hierarchy, interfaces, cables, immutable subsystem revisions, occurrence mappings, and local ancestry. V2/v3/v4 loading preserves electrical identities; v1 migration remains explicit. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md) for reuse, ownership, and undo semantics. See [decision 0004](decisions/0004-local-hierarchy-and-cables.md) for the initial hierarchy semantics. `Document<S>` orchestrates observed-version saves, save-as, and validated reloads through `VersionedProjectStore`. See [decision 0003](decisions/0003-project-identity-and-guarded-reload.md) for the optimistic file-check guarantees and remaining concurrent-writer limitations.
+The implemented v6 format stores a separate drawing aggregate, electrically anchored routes, and portable style/default settings alongside project lineage, hierarchy, interfaces, cables, immutable subsystem revisions, occurrence mappings, and local ancestry. V2–v5 loading preserves electrical identities and existing drawing content; v1 migration remains explicit. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md) for reuse, ownership, and undo semantics. See [decision 0004](decisions/0004-local-hierarchy-and-cables.md) for the initial hierarchy semantics. `Document<S>` orchestrates observed-version saves, save-as, and validated reloads through `VersionedProjectStore`. See [decision 0003](decisions/0003-project-identity-and-guarded-reload.md) for the optimistic file-check guarantees and remaining concurrent-writer limitations.
 
 Saving a multi-file project needs a defined recovery protocol; independent per-file atomic writes alone do not make a whole-project save atomic. Prototype crash recovery and detection of externally changed files before claiming reliable saves.
 
