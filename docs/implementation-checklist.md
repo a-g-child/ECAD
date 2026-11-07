@@ -1,6 +1,6 @@
 # Implementation checklist
 
-Status: headless lifecycle plus project-local hierarchy, interfaces, and cable grouping implemented. Immutable reusable definitions, independent instances, and make-local ancestry are implemented. Explicit pinned-instance adoption is implemented; external publication and local-variant merging remain planned. Checked items describe executable behavior or completed checks, not the full intended CAD product.
+Status: headless lifecycle plus project-local hierarchy, interfaces, and cable grouping implemented. Immutable reusable definitions, independent instances, and make-local ancestry are implemented. Explicit pinned-instance adoption and local shared-library publication/recommendations are implemented; known-use discovery and local-variant merging remain planned. Checked items describe executable behavior or completed checks, not the full intended CAD product.
 
 ## 1. Working foundation
 
@@ -77,7 +77,9 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [ ] Add project-owned/pinned library content and explicit update adoption.
 - [ ] Evaluate importing existing Pinout Generator documents; implement live connection-label bindings.
 - [x] Retain project-local variant ancestry and verify two-project pinned adoption independently.
-- [ ] Implement shared subsystem publication, recommended revisions, known-use discovery, and local-variant revision merging.
+- [x] Publish immutable revisions to a local shared library with explicit recommendations, strict canonical schema, and guarded coherent persistence.
+- [x] Coordinate cooperating library writers, reject history rewrites/stale versions, and test independent two-project import/adoption plus offline reopening.
+- [ ] Implement known-use discovery, cross-machine library coordination, and local-variant revision merging.
 - [ ] Add a Git adapter and document lifecycle orchestration for status, commits, branches, conflicts, and reload. Existing tests demonstrate interoperability, not this application feature.
 - [ ] Add basic connection/cable outputs and verify a small system can be built from its documentation.
 
@@ -106,6 +108,7 @@ Current test owners:
 - Hierarchy and cable invariants: [hierarchy tests](../crates/ecad-domain/tests/hierarchy_contract.rs) and [cable tests](../crates/ecad-domain/tests/cable_contract.rs).
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
+- Shared-library publication and persistence: [library contracts](../crates/ecad-adapters/tests/library_contract.rs) and [consuming-project workflows](../crates/ecad-adapters/tests/library/workflow.rs).
 - Revision review/adoption: [adoption workflows](../crates/ecad-adapters/tests/adoption_workflow.rs) and [identity compatibility](../crates/ecad-adapters/tests/adoption/identity_contract.rs).
 - History contracts: [session tests](../crates/ecad-app/tests/history_contract.rs) and internal overflow test.
 - Transaction atomicity and session-token isolation: [transaction tests](../crates/ecad-app/tests/transaction_contract.rs).

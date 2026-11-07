@@ -18,6 +18,7 @@ mod cable;
 mod error;
 mod hierarchy;
 mod identity;
+mod library;
 mod objects;
 mod project;
 mod reuse;
@@ -31,6 +32,7 @@ pub use identity::{
     CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, IdError, InterfacePortId,
     ProjectId, SubsystemId, TerminalId,
 };
+pub use library::{LibraryError, SubsystemLibrary};
 pub use objects::{Conductor, Device, End, Terminal};
 pub use project::Project;
 pub use reuse::{

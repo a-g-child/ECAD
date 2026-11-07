@@ -24,6 +24,7 @@ Read the relevant planning documents before implementation:
 - Respect stable identities, explicit units, structured routes, property ownership, and style inheritance.
 - Distinguish reusable definitions, immutable revisions, and occurrences. Publish shared changes explicitly and keep consuming projects pinned until they adopt an update. Known-use discovery is advisory and may be incomplete.
 - New electrical mutators must respect indexed pinned-instance ownership. Make-local retains historical ancestry; forgetting it is explicit and undoable. Preserve exact instance state through transaction rollback and undo.
+- Keep shared-library publication outside project undo. Library writes preserve published bodies, validate recommendations, and coordinate cooperating writers; never infer adoption from a recommendation change or automatically steal retained locks.
 - Start with modules and crates needed by working features; avoid speculative plugin frameworks and empty scaffolding.
 
 ## Maintainability

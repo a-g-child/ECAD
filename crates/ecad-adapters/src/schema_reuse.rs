@@ -1,13 +1,12 @@
 //! V4 persistence bundles immutable local bodies once and pins instance mappings.
 
+use crate::schema_definition::DefinitionData;
 use crate::{
     ProjectFileError,
     schema::{ConductorData, DeviceData, ProjectData},
     schema_structure::{CableData, PortData, SubsystemData},
 };
-use ecad_domain::{
-    DefinitionRef, InstanceBinding, InstanceIds, ModelError, Project, ReuseError, SubsystemRevision,
-};
+use ecad_domain::{DefinitionRef, InstanceBinding, InstanceIds, ModelError, Project, ReuseError};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fmt::Display, str::FromStr, sync::Arc};
 
@@ -24,15 +23,6 @@ pub(crate) struct ReusableProjectData {
     definitions: Vec<DefinitionData>,
     instances: Vec<InstanceData>,
     local_origins: Vec<InstanceData>,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct DefinitionData {
-    definition: String,
-    revision: String,
-    root: String,
-    body: ProjectData,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -114,15 +104,7 @@ impl TryFrom<MappingData> for InstanceIds {
 impl From<&Project> for ReusableProjectData {
     fn from(project: &Project) -> Self {
         let core = ProjectData::from(project);
-        let definitions = project
-            .definitions()
-            .map(|definition| DefinitionData {
-                definition: definition.source().definition().to_string(),
-                revision: definition.source().revision().to_string(),
-                root: definition.root().to_string(),
-                body: ProjectData::from(definition.content()),
-            })
-            .collect();
+        let definitions = project.definitions().map(DefinitionData::from).collect();
         let instances = project
             .instances()
             .map(|instance| InstanceData {
@@ -173,17 +155,12 @@ impl TryFrom<ReusableProjectData> for Project {
         };
         let mut project = Project::try_from(core)?;
         for definition in data.definitions {
-            let source =
-                DefinitionRef::new(definition.definition.parse()?, definition.revision.parse()?);
+            let revision = ecad_domain::SubsystemRevision::try_from(definition)?;
+            let source = revision.source();
             if project.definition(source).is_some() {
                 return Err(ModelError::from(ReuseError::DuplicateRevision(source)).into());
             }
-            let body = Project::try_from(definition.body)?;
-            project.insert_definition(Arc::new(SubsystemRevision::new(
-                source,
-                definition.root.parse()?,
-                body,
-            )?))?;
+            project.insert_definition(Arc::new(revision))?;
         }
         for instance in data.instances {
             let source =

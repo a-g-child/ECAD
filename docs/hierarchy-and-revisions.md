@@ -1,6 +1,6 @@
 # Hierarchy, scale, and shared revisions
 
-Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Project-bundled immutable revisions, independent occurrences, and make-local ancestry are also implemented. Explicit adoption of exact pins is implemented. External publication, known-use discovery, and local-variant merging below remain planned. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md).
+Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Project-bundled immutable revisions, independent occurrences, and make-local ancestry are also implemented. Explicit adoption of exact pins is implemented. Local shared-library publication and explicit recommendations are implemented. Known-use discovery and local-variant merging below remain planned. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md).
 
 ## Target and object boundaries
 
@@ -49,7 +49,15 @@ Make-local removes the lock while retaining the original source and ID mapping, 
 
 Placement currently caps each occurrence at 100,000 objects including terminals, with a caller-selectable lower limit. This provisional guard is not a project-wide memory budget. Definitions share an immutable body, but occurrence content is materialized; whole-project validation checks it against the source. Ownership indexes keep ordinary mutation guards local; placement and full validation still perform broad scans. The scale probe covers 1/10/100 repeated instances and does not establish production capacity.
 
-## Editing and publishing workflow (planned)
+## Implemented local shared library
+
+`SubsystemLibrary` stores immutable validated bodies and optional advisory recommendations. Recommendations change only by explicit request; revision IDs are opaque and imply no chronological order. Recommending an earlier revision or clearing a pointer retains all published history. `LibraryPublisher` persists the body and optional recommendation coherently before updating its observed state, and offers explicit reload after conflicts. Even no-op publications check the observed storage version.
+
+`LibraryFile` uses a separate schema v1, a canonical-parent path/content token, and exclusive sidecar creation around the complete read/check/write sequence. It enforces append-only bodies at the storage boundary. Canonical parent aliases share a lock; destination symlinks are rejected. A retained writer lock is reported without automatic stealing. This coordinates cooperating local writers; hard-link aliases, uncooperative writers, cross-machine filesystem guarantees, power-loss recovery, and directory durability are outside the current contract.
+
+Explicit import bundles a chosen revision through ordinary project commands. Publication does not modify consuming projects, and project undo does not retract library history. Projects remain self-contained offline. The first executable workflow publishes standalone local hierarchies; extracting an arbitrary occurrence/local variant for publication and known-use indexing remain future work. See [decision 0007](decisions/0007-shared-subsystem-library.md).
+
+## Editing and publishing workflow (broader UI planned)
 
 When changing reusable content, make its scope explicit. Offer:
 
@@ -74,7 +82,7 @@ Use stable identities to find uses, not matching file paths or display names. Re
 
 The headless implementation provides a typed source-body change report and a validated adoption plan for a selected exact pin. Matching local IDs retain placed IDs; additions require fresh IDs, and removed IDs cannot be recycled for different local objects. Selected plans may execute in one compound transaction. Root name/parent remain occurrence parameters. Commit rechecks the expected binding and all resulting connections, including newly added external references. Undo restores the previous revision, mapping, and content. There is no file-format change beyond v4. See [decision 0006](decisions/0006-explicit-revision-adoption.md).
 
-Adoption currently requires one lineage, a stable definition-local root, and stable device ownership of surviving terminals. It rejects local variants rather than overwriting their edits. Interface conflicts return typed model errors without mutation; reconnect/disconnect explicitly, then create a fresh plan. An interactive resolution panel, local merge, discovery/default notifications, and publication remain planned. `RevisionChanges::between` can inspect source changes even when an adoption plan fails validation.
+Adoption currently requires one lineage, a stable definition-local root, and stable device ownership of surviving terminals. It rejects local variants rather than overwriting their edits. Interface conflicts return typed model errors without mutation; reconnect/disconnect explicitly, then create a fresh plan. An interactive resolution panel, local merge, discovery/default notifications, and publication UI remain planned. `RevisionChanges::between` can inspect source changes even when an adoption plan fails validation.
 
 When a newer shared revision is available, a consuming project can compare, accept, defer, or stay pinned. Do not silently write changes into closed projects. Reopen/update checks can identify available revisions without forcing adoption or requiring network access.
 
@@ -97,4 +105,4 @@ Update selected project occurrences as a coherent command with validation, undo/
 
 ## Next decisions
 
-Choose the representative system and scale fixtures; extend occurrence parameters and structural variants; define nested dependency locks and local-variant update matching; and decide the first shared-library storage and known-project indexing workflow. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.
+Choose the representative system and scale fixtures; extend occurrence parameters and structural variants; define nested dependency locks and local-variant update matching; and measure larger shared catalogs and design the first known-project indexing workflow. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.

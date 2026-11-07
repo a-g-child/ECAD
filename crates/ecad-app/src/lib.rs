@@ -23,6 +23,7 @@ mod document;
 mod document_error;
 mod error;
 mod instantiation;
+mod library;
 mod revision;
 mod session;
 mod transaction;
@@ -34,6 +35,9 @@ pub use document::{Document, ReloadPolicy};
 pub use document_error::DocumentError;
 pub use error::EditError;
 pub use instantiation::instance_commands;
+pub use library::{
+    LibraryPublisher, LibrarySnapshot, Recommendation, VersionedLibraryStore, library_import,
+};
 pub use revision::{Revision, SessionEpoch};
 pub use session::Session;
 pub use versioned_store::{ProjectSnapshot, VersionedProjectStore};

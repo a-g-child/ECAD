@@ -19,16 +19,15 @@ pub struct FileVersion {
     digest: [u8; 32],
 }
 
-impl JsonFile {
-    fn version_for(&self, bytes: &[u8]) -> Result<FileVersion, ProjectFileError> {
-        let name = self.path().file_name().ok_or_else(|| {
+impl FileVersion {
+    pub(crate) fn for_path(path: &Path, bytes: &[u8]) -> Result<FileVersion, ProjectFileError> {
+        let name = path.file_name().ok_or_else(|| {
             io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "project path needs a file name",
             )
         })?;
-        let parent = self
-            .path()
+        let parent = path
             .parent()
             .filter(|p| !p.as_os_str().is_empty())
             .unwrap_or(Path::new("."));
@@ -36,6 +35,12 @@ impl JsonFile {
             location: parent.canonicalize()?.join(name),
             digest: Sha256::digest(bytes).into(),
         })
+    }
+}
+
+impl JsonFile {
+    fn version_for(&self, bytes: &[u8]) -> Result<FileVersion, ProjectFileError> {
+        FileVersion::for_path(self.path(), bytes)
     }
 }
 
