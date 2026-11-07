@@ -10,13 +10,17 @@ pub enum ReuseError {
     InvalidDefinitionRoot,
     /// Nested reusable references are deferred; local nested blocks remain supported.
     NestedDefinitionsUnsupported,
+    /// Adoption must preserve lineage, root identity, and surviving local-to-placed IDs.
+    IncompatibleAdoption,
+    /// The occurrence no longer has the binding used to prepare this adoption.
+    StaleAdoption(SubsystemId),
     /// A published key already names different immutable content.
     RevisionConflict(DefinitionRef),
     /// A persisted catalog repeats one revision key instead of describing it once.
     DuplicateRevision(DefinitionRef),
     /// The required revision is not bundled into this project.
     MissingRevision(DefinitionRef),
-    /// An occurrence still pins this revision.
+    /// A pin or retained local origin still references this revision.
     RevisionInUse(DefinitionRef),
     /// A mapping is incomplete, has extra keys, or reuses an occurrence ID.
     InvalidMapping,
@@ -42,6 +46,12 @@ pub enum ReuseError {
 impl fmt::Display for ReuseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::IncompatibleAdoption => {
+                f.write_str("adoption must preserve lineage and compatible object identities")
+            }
+            Self::StaleAdoption(id) => {
+                write!(f, "instance {id} changed since adoption was prepared")
+            }
             Self::InvalidDefinitionRoot => {
                 f.write_str("definition must be a self-contained rooted hierarchy")
             }
@@ -53,7 +63,9 @@ impl fmt::Display for ReuseError {
             }
             Self::DuplicateRevision(id) => write!(f, "catalog repeats revision {id}"),
             Self::MissingRevision(id) => write!(f, "revision {id} is not available in the project"),
-            Self::RevisionInUse(id) => write!(f, "revision {id} is pinned by an instance"),
+            Self::RevisionInUse(id) => {
+                write!(f, "revision {id} is referenced by a pin or local origin")
+            }
             Self::InvalidMapping => {
                 f.write_str("instance mapping must cover every local object exactly once")
             }

@@ -13,6 +13,7 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+mod adoption_changes;
 mod cable;
 mod error;
 mod hierarchy;
@@ -22,6 +23,7 @@ mod project;
 mod reuse;
 mod reuse_error;
 
+pub use adoption_changes::{ObjectChanges, RevisionChanges};
 pub use cable::{Cable, CableEndpoint};
 pub use error::ModelError;
 pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};

@@ -1,7 +1,7 @@
 //! Repeated-instance placement and local interface-edit scaling, with complete validation.
 
 use ecad_adapters::{decode_project, encode_project};
-use ecad_app::{Command, Session, instance_commands};
+use ecad_app::{Command, Session, adoption_plan, instance_commands};
 use ecad_domain::*;
 use serde_json::{Value, json};
 use std::{collections::BTreeMap, error::Error, num::NonZeroUsize, sync::Arc, time::Instant};
@@ -105,6 +105,10 @@ fn probe(count: usize) -> Result<Value, Box<dyn Error>> {
     if encode_project(session.project())? != baseline {
         return Err("reusable-instance undo changed the project".into());
     }
+    let adoption = probe_adoption(&mut session, source)?;
+    if encode_project(session.project())? != baseline {
+        return Err("adoption/import undo changed the project".into());
+    }
     times.sort_unstable();
     Ok(json!({
         "instances": count, "bundled_revisions": session.project().definition_count(),
@@ -112,6 +116,56 @@ fn probe(count: usize) -> Result<Value, Box<dyn Error>> {
         "validation_ms": validation_ms, "decode_ms": decode_ms, "document_bytes": baseline.len(),
         "local_edit_samples": super::SAMPLES, "local_edit_p50_ns": times[super::SAMPLES / 2],
         "local_edit_p95_ns": times[super::SAMPLES * 95 / 100], "local_edit_max_ns": times[super::SAMPLES - 1],
-        "correctness": "one bundled body, independent mappings, interface edits, round trip and complete undo verified"
+        "adoption": adoption,
+        "correctness": "independent mappings, interface edits, round trip, one-instance adoption and complete undo verified"
     }))
+}
+
+fn probe_adoption(session: &mut Session, source: DefinitionRef) -> Result<Value, Box<dyn Error>> {
+    let original = session
+        .project()
+        .definition(source)
+        .ok_or("missing revision")?;
+    let mut body = original.content().clone();
+    body.set_termination(ConductorId::new(2)?, End::B, None)?;
+    let target = DefinitionRef::new(source.definition(), DefinitionRevisionId::new(2)?);
+    let revision = Arc::new(SubsystemRevision::new(target, original.root(), body)?);
+    session.execute(session.revision(), Command::InsertDefinition(revision))?;
+    let before = session.project().clone();
+    let root = SubsystemId::new(1_010)?;
+    let start = Instant::now();
+    let plan = adoption_plan(
+        session.project(),
+        root,
+        target,
+        ids(1_000)?,
+        InstanceLimits::default(),
+    )?;
+    let preview_ms = super::millis(start.elapsed());
+    let start = Instant::now();
+    session.execute(session.revision(), plan.command)?;
+    let commit_ms = super::millis(start.elapsed());
+    if session
+        .project()
+        .instances()
+        .filter(|pin| pin.source() == target)
+        .count()
+        != 1
+        || session
+            .project()
+            .conductor(ConductorId::new(99)?)
+            .and_then(|wire| wire.endpoint(End::A))
+            != Some(TerminalId::new(1_201)?)
+        || decode_project(&encode_project(session.project())?)? != *session.project()
+    {
+        return Err("adoption changed other pins, external wiring, or round-trip content".into());
+    }
+    let start = Instant::now();
+    session.undo(session.revision())?;
+    let undo_ms = super::millis(start.elapsed());
+    if session.project() != &before {
+        return Err("adoption undo failed to restore exact project".into());
+    }
+    session.undo(session.revision())?; // Remove the otherwise unused imported revision.
+    Ok(json!({"preview_ms": preview_ms, "commit_ms": commit_ms, "undo_ms": undo_ms, "samples": 1}))
 }

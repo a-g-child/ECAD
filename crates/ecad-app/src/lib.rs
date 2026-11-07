@@ -17,6 +17,7 @@
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
+mod adoption;
 mod command;
 mod document;
 mod document_error;
@@ -27,6 +28,7 @@ mod session;
 mod transaction;
 mod versioned_store;
 
+pub use adoption::{AdoptionPlan, adoption_plan};
 pub use command::Command;
 pub use document::{Document, ReloadPolicy};
 pub use document_error::DocumentError;

@@ -1,6 +1,6 @@
 # Implementation checklist
 
-Status: headless lifecycle plus project-local hierarchy, interfaces, and cable grouping implemented. Immutable reusable definitions, independent instances, and make-local ancestry are implemented. Revision publication and update adoption remain planned. Checked items describe executable behavior or completed checks, not the full intended CAD product.
+Status: headless lifecycle plus project-local hierarchy, interfaces, and cable grouping implemented. Immutable reusable definitions, independent instances, and make-local ancestry are implemented. Explicit pinned-instance adoption is implemented; external publication and local-variant merging remain planned. Checked items describe executable behavior or completed checks, not the full intended CAD product.
 
 ## 1. Working foundation
 
@@ -47,7 +47,9 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Instantiate immutable project-bundled revisions with complete independent ID mappings, locked internals, and root-interface wiring.
 - [x] Make an occurrence local while retaining ancestry; restore pinning and metadata through undo/redo.
 - [x] Persist reuse in v4, preserving v2/v3 electrical identities; reject malformed mappings, aliases, and conflicting revision bodies.
-- [ ] Implement explicit revision adoption, compatible identity preservation, and interface-conflict resolution.
+- [x] Compare immutable revisions and explicitly adopt selected pinned occurrences with compatible identity preservation, atomic undo, and rejection of invalid external references.
+- [x] Test independent two-project adoption, offline reopening, stale plans, structural changes, and exact rollback.
+- [ ] Build interactive conflict resolution and a deliberate local-variant merge/migration workflow.
 
 ## 4. Foundational editing contracts
 
@@ -74,7 +76,8 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [ ] Add generic device/symbol, cable/wire, and manufacturer-part definitions with explicit terminal mapping.
 - [ ] Add project-owned/pinned library content and explicit update adoption.
 - [ ] Evaluate importing existing Pinout Generator documents; implement live connection-label bindings.
-- [ ] Implement shared subsystem publication, project-local variants, known-use discovery, and two-project adoption tests.
+- [x] Retain project-local variant ancestry and verify two-project pinned adoption independently.
+- [ ] Implement shared subsystem publication, recommended revisions, known-use discovery, and local-variant revision merging.
 - [ ] Add a Git adapter and document lifecycle orchestration for status, commits, branches, conflicts, and reload. Existing tests demonstrate interoperability, not this application feature.
 - [ ] Add basic connection/cable outputs and verify a small system can be built from its documentation.
 
@@ -83,7 +86,7 @@ Status: headless lifecycle plus project-local hierarchy, interfaces, and cable g
 - [x] Local release-build sweep of 100, 1,000, and 10,000 unique devices, with 1,000 local edits and complete undo checks per case.
 - [ ] Establish an actual representative car-scale fixture and usable reference hardware budgets.
 - [x] Add headless hierarchy probes for unrelated block growth and depths through the 256-level guard, preserving interface/cable invariants and undo correctness.
-- [x] Probe 1/10/100 materialized instances sharing one bundled revision, with placement, validation, round-trip, and external-edit/undo checks.
+- [x] Probe 1/10/100 materialized instances sharing one bundled revision, with placement, validation, round-trip, external-edit/undo, and one-occurrence adoption measurements.
 - [ ] Expand probes to nested reusable dependencies, visible geometry, properties/styles, libraries, and assets.
 - [ ] Measure memory, cache invalidation, object visits, save/load IO, native frame times, and foreground response during background work.
 - [ ] Add bounded soak/cancellation/failure cases and establish stable performance regression gates from measured variance.
@@ -103,6 +106,7 @@ Current test owners:
 - Hierarchy and cable invariants: [hierarchy tests](../crates/ecad-domain/tests/hierarchy_contract.rs) and [cable tests](../crates/ecad-domain/tests/cable_contract.rs).
 - Controller/conveyor persistence and history: [hierarchy workflow](../crates/ecad-adapters/tests/hierarchy_workflow.rs).
 - Reusable revisions, ownership, and local ancestry: [instance contracts](../crates/ecad-app/tests/reuse_contract.rs), [local-origin contracts](../crates/ecad-app/tests/local_origin_contract.rs), and [reuse persistence](../crates/ecad-adapters/tests/reuse_persistence.rs).
+- Revision review/adoption: [adoption workflows](../crates/ecad-adapters/tests/adoption_workflow.rs) and [identity compatibility](../crates/ecad-adapters/tests/adoption/identity_contract.rs).
 - History contracts: [session tests](../crates/ecad-app/tests/history_contract.rs) and internal overflow test.
 - Transaction atomicity and session-token isolation: [transaction tests](../crates/ecad-app/tests/transaction_contract.rs).
 - Saved checkpoints and reopen behavior: [saved-state tests](../crates/ecad-adapters/tests/saved_state_contract.rs).

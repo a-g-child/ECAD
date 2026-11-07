@@ -1,6 +1,6 @@
 # Hierarchy, scale, and shared revisions
 
-Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Project-bundled immutable revisions, independent occurrences, and make-local ancestry are also implemented. External publication, known-use discovery, and update adoption below remain planned. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md).
+Status: project-local containment, explicit terminal exposure, cable grouping, and a depth guard are implemented. Project-bundled immutable revisions, independent occurrences, and make-local ancestry are also implemented. Explicit adoption of exact pins is implemented. External publication, known-use discovery, and local-variant merging below remain planned. See [decision 0005](decisions/0005-reusable-subsystem-revisions.md).
 
 ## Target and object boundaries
 
@@ -72,6 +72,10 @@ Use stable identities to find uses, not matching file paths or display names. Re
 
 ## Adopting updates
 
+The headless implementation provides a typed source-body change report and a validated adoption plan for a selected exact pin. Matching local IDs retain placed IDs; additions require fresh IDs, and removed IDs cannot be recycled for different local objects. Selected plans may execute in one compound transaction. Root name/parent remain occurrence parameters. Commit rechecks the expected binding and all resulting connections, including newly added external references. Undo restores the previous revision, mapping, and content. There is no file-format change beyond v4. See [decision 0006](decisions/0006-explicit-revision-adoption.md).
+
+Adoption currently requires one lineage, a stable definition-local root, and stable device ownership of surviving terminals. It rejects local variants rather than overwriting their edits. Interface conflicts return typed model errors without mutation; reconnect/disconnect explicitly, then create a fresh plan. An interactive resolution panel, local merge, discovery/default notifications, and publication remain planned. `RevisionChanges::between` can inspect source changes even when an adoption plan fails validation.
+
 When a newer shared revision is available, a consuming project can compare, accept, defer, or stay pinned. Do not silently write changes into closed projects. Reopen/update checks can identify available revisions without forcing adoption or requiring network access.
 
 Before applying an update, show changes to interfaces, terminals, components, wiring, library dependencies, and local variants. Preserve compatible instance identities and parameters. Stable interface/terminal IDs support matching; position in a list or equal display names are not sufficient.
@@ -93,4 +97,4 @@ Update selected project occurrences as a coherent command with validation, undo/
 
 ## Next decisions
 
-Choose the representative system and scale fixtures; extend occurrence parameters and structural variants; define nested dependency locks and update matching; and decide the first shared-library storage and known-project indexing workflow. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.
+Choose the representative system and scale fixtures; extend occurrence parameters and structural variants; define nested dependency locks and local-variant update matching; and decide the first shared-library storage and known-project indexing workflow. Defer automatic cross-project propagation and sophisticated variant merging until the simpler explicit update workflow works reliably.

@@ -56,8 +56,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         None
     };
     let report = json!({
-        "report_version": 4,
-        "recipe": "electrical-hierarchy-and-reuse-v4",
+        "report_version": 5,
+        "recipe": "electrical-hierarchy-and-adoption-v5",
         "project_schema": 4,
         "seed": 0,
         "build": if cfg!(debug_assertions) { "debug" } else { "release" },

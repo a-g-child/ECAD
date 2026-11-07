@@ -10,9 +10,16 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Adopt one reviewed revision; inverse restores the previous binding and content.
+    AdoptInstance {
+        /// Pin observed during planning; rejects stale or locally detached content.
+        expected: InstanceBinding,
+        /// Same-lineage target with preserved surviving identities.
+        target: InstanceBinding,
+    },
     /// Bundle one immutable reusable revision into the project.
     InsertDefinition(Arc<SubsystemRevision>),
-    /// Remove a bundled revision only when no occurrence pins it.
+    /// Remove a bundled revision only when no pin or local origin references it.
     RemoveDefinition(DefinitionRef),
     /// Pin an already-materialized occurrence after exact correspondence checks.
     BindInstance(InstanceBinding),
@@ -76,6 +83,16 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::AdoptInstance { expected, target } => {
+                project.adopt_instance(expected, target)?;
+                if expected == target {
+                    return Ok(None);
+                }
+                Self::AdoptInstance {
+                    expected: target.clone(),
+                    target: expected.clone(),
+                }
+            }
             Self::InsertDefinition(revision) => {
                 if !project.insert_definition(Arc::clone(revision))? {
                     return Ok(None);

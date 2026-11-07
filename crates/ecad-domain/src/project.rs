@@ -9,6 +9,8 @@ use crate::{DefinitionRef, InstanceBinding, SubsystemRevision};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
+#[path = "project_adoption.rs"]
+mod adoption;
 #[path = "project_cables.rs"]
 mod cables;
 #[path = "project_hierarchy.rs"]

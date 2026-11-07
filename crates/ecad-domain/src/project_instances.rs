@@ -46,7 +46,7 @@ impl Project {
         Ok(true)
     }
 
-    /// Remove a bundled revision only when no occurrence pins it.
+    /// Remove a bundled revision only when no pin or local origin references it.
     /// # Errors
     /// Rejects unavailable or still-used revisions without mutation.
     pub fn remove_definition(
