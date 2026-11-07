@@ -68,6 +68,7 @@ async function page() {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.errors = errors;
+  page.setDefaultTimeout(10000);
   await page.goto('http://127.0.0.1:1421');
   await page.waitForFunction(() =>
     document.querySelector('.status-message')?.textContent?.startsWith('Ready'),
@@ -250,6 +251,108 @@ test('report action uses actual electrical identities and external save conflict
   await pressAction(p, 'Save project', 'Project saved');
   await pressAction(p, 'Undo', 'Undo complete');
   await pressAction(p, 'Save project', 'Project saved');
+  assert.deepEqual(p.errors, []);
+  await p.close();
+});
+
+test('move group previews connected routes, cancels cleanly and commits one exact undoable edit', async () => {
+  const p = await page();
+  const a = 'anchor:00000000000000000000000000000001';
+  const b = 'anchor:00000000000000000000000000000002';
+  const points = () =>
+    p.locator(`svg [data-object="${route}"] polyline.ink`).getAttribute('points');
+  const original = await points();
+  const before = await bounds(p);
+  await tree(p, a).click();
+  await tree(p, b).click({ modifiers: ['Shift'] });
+  await p.locator('.canvas').focus();
+  await p.keyboard.press('m');
+  const x = p.getByRole('textbox', { name: 'Move X (µm)', exact: true });
+  const y = p.getByRole('textbox', { name: 'Move Y (µm)', exact: true });
+  await x.waitFor();
+  assert.deepEqual(await bounds(p), before);
+  await x.fill('10000');
+  await y.fill('5000');
+  await until(async () => (await points()) === '10,5 30,5 30,20 60,20 60,5');
+  assert.doesNotMatch(await p.title(), /^●/);
+  await y.press('Escape');
+  await until(async () => !(await x.isVisible()));
+  assert.equal(await points(), original);
+  assert.deepEqual(await bounds(p), before);
+  assert.doesNotMatch(await p.title(), /^●/);
+  await p.locator('.canvas').focus();
+  await p.keyboard.press('m');
+  await x.waitFor();
+  await x.fill('10000');
+  await y.fill('5000');
+  await until(async () => (await points()) === '10,5 30,5 30,20 60,20 60,5');
+  await x.fill('invalid');
+  await until(async () => (await points()) === original);
+  assert.equal(await button(p, 'Apply').isDisabled(), true);
+  await x.fill('10000');
+  await until(async () => !(await button(p, 'Apply').isDisabled()));
+  await button(p, 'Apply').click();
+  await p.waitForFunction(
+    () =>
+      document.querySelector('.status-message')?.textContent ===
+      'Selection moved · one undo operation',
+  );
+  assert.equal(await points(), '10,5 30,5 30,20 60,20 60,5');
+  assert.match(await p.title(), /^●/);
+  await pressAction(p, 'Save project', 'Project saved');
+  const saved = JSON.parse(await readFile(project, 'utf8'));
+  assert.deepEqual(saved.drawing.routes[0].points_um, [
+    [10000, 5000],
+    [30000, 5000],
+    [30000, 20000],
+    [60000, 20000],
+    [60000, 5000],
+  ]);
+  await pressAction(p, 'Undo', 'Undo complete');
+  assert.equal(await points(), original);
+  await pressAction(p, 'Redo', 'Redo complete');
+  assert.equal(await points(), '10,5 30,5 30,20 60,20 60,5');
+  await pressAction(p, 'Undo', 'Undo complete');
+  await pressAction(p, 'Save project', 'Project saved');
+  assert.deepEqual(p.errors, []);
+  await p.close();
+});
+
+test('pointer move uses visible terminal snapping, cycling and temporary suppression', async () => {
+  const p = await page();
+  await tree(p, label).click();
+  await p.locator('.canvas').focus();
+  await p.keyboard.press('m');
+  await p.getByRole('textbox', { name: 'Move X (µm)', exact: true }).waitFor();
+  const screen = await p.locator('svg.drawing').evaluate((svg) => {
+    const point = new DOMPoint(100, 0).matrixTransform(svg.getScreenCTM());
+    return { x: point.x, y: point.y };
+  });
+  await p.mouse.move(screen.x, screen.y);
+  await until(async () => (await p.locator('.snap-marker').count()) === 1);
+  await p.waitForFunction(() =>
+    document.querySelector('.status-message')?.textContent?.startsWith('Terminal snap'),
+  );
+  await p.keyboard.press('Tab');
+  await p.waitForFunction(() =>
+    document.querySelector('.status-message')?.textContent?.startsWith('Endpoint snap'),
+  );
+  await p.keyboard.down('Alt');
+  await until(async () => (await p.locator('.snap-marker').count()) === 0);
+  await p.keyboard.up('Alt');
+  await until(async () => (await p.locator('.snap-marker').count()) === 1);
+  await p.screenshot({ path: resolve(root, 'target/ui/move-preview.png') });
+  await until(async () => !(await button(p, 'Apply').isDisabled()));
+  await p.mouse.click(screen.x, screen.y);
+  await p.waitForFunction(
+    () =>
+      document.querySelector('.status-message')?.textContent ===
+      'Selection moved · one undo operation',
+  );
+  assert.equal(await p.locator(`svg [data-object="${label}"] text.ink`).getAttribute('x'), '100');
+  assert.equal(await p.locator(`svg [data-object="${label}"] text.ink`).getAttribute('y'), '0');
+  await pressAction(p, 'Undo', 'Undo complete');
+  assert.doesNotMatch(await p.title(), /^●/);
   assert.deepEqual(p.errors, []);
   await p.close();
 });

@@ -7,12 +7,55 @@ export class DrawingCanvas {
   private drag: { x: number; y: number; box: number[]; moved: boolean } | null = null;
   private selected = new Set<string>();
   private rows: SceneRow[] = [];
+  movement: {
+    point: (x: string, y: string, tolerance: number) => void;
+    commit: () => void;
+  } | null = null;
+  pointerTolerance() {
+    return Math.min(
+      4294967295,
+      Math.max(
+        0,
+        Math.round(
+          (this.box[2] * 1000 * 10) / Math.max(1, this.shell.svg.getBoundingClientRect().width),
+        ),
+      ),
+    );
+  }
+  preview(rows: SceneRow[], snap?: [number, number]) {
+    const base = this.rows;
+    const patches = new Map(rows.map((r) => [keyOf(r.target), r]));
+    this.render(base.map((r) => patches.get(keyOf(r.target)) ?? r));
+    this.rows = base;
+    for (const node of this.shell.svg.querySelectorAll<SVGElement>('[data-object]'))
+      node.classList.toggle('move-preview', patches.has(node.dataset.object!));
+    if (snap) {
+      const marker = document.createElementNS(this.shell.svg.namespaceURI, 'circle');
+      marker.setAttribute('cx', String(snap[0]));
+      marker.setAttribute('cy', String(snap[1]));
+      marker.setAttribute(
+        'r',
+        String((this.box[2] * 6) / Math.max(1, this.shell.svg.getBoundingClientRect().width)),
+      );
+      marker.setAttribute('class', 'snap-marker');
+      this.shell.svg.append(marker);
+    }
+  }
+  clearPreview() {
+    this.render(this.rows);
+  }
   constructor(
     private shell: Shell,
     private choose: (target: Target | null, add: boolean) => void,
   ) {
     shell.svg.addEventListener('pointerdown', (event) => {
       if (event.button !== 0 && event.button !== 1) return;
+      if (this.movement && event.button === 0) {
+        event.preventDefault();
+        this.movement.commit();
+        shell.canvas.focus();
+        return;
+      }
       const hit = (event.target as Element).closest<SVGElement>('[data-object]');
       if (hit && event.button === 0) {
         const row = this.rows.find((r) => keyOf(r.target) === hit.dataset.object);
@@ -26,13 +69,25 @@ export class DrawingCanvas {
       shell.canvas.focus();
     });
     shell.svg.addEventListener('contextmenu', (event) => {
+      if (this.movement) return;
       const hit = (event.target as Element).closest<SVGElement>('[data-object]');
       const row = this.rows.find((r) => keyOf(r.target) === hit?.dataset.object);
       if (row && !this.selected.has(keyOf(row.target))) this.choose(row.target, false);
       shell.canvas.focus();
     });
     shell.svg.addEventListener('pointermove', (event) => {
-      if (!this.drag) return;
+      if (!this.drag) {
+        if (this.movement) {
+          const matrix = shell.svg.getScreenCTM();
+          if (!matrix) return;
+          const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+          const x = Math.round(p.x * 1000),
+            y = Math.round(p.y * 1000);
+          if (Number.isSafeInteger(x) && Number.isSafeInteger(y))
+            this.movement.point(String(x), String(y), this.pointerTolerance());
+        }
+        return;
+      }
       const bounds = shell.svg.getBoundingClientRect();
       const dx = ((event.clientX - this.drag.x) * this.box[2]) / bounds.width;
       const dy = ((event.clientY - this.drag.y) * this.box[3]) / bounds.height;
@@ -42,7 +97,7 @@ export class DrawingCanvas {
       this.paintBox();
     });
     shell.svg.addEventListener('pointerup', (event) => {
-      if (this.drag && !this.drag.moved) this.choose(null, event.shiftKey);
+      if (!this.movement && this.drag && !this.drag.moved) this.choose(null, event.shiftKey);
       this.drag = null;
     });
     shell.svg.addEventListener('pointercancel', () => (this.drag = null));

@@ -1,5 +1,5 @@
 //! Guarded document ownership and one shared action/key routing path for desktop requests.
-use crate::{dto::*, projection, properties};
+use crate::{dto::*, movement::Movement, projection, properties};
 use ecad_adapters::JsonFile;
 use ecad_app::*;
 
@@ -18,6 +18,9 @@ pub struct DesktopBridge {
     dispatcher: ActionDispatcher,
     demo: bool,
     last_input: u64,
+    clock: std::time::Instant,
+    movement: Option<Movement>,
+    move_serial: u64,
 }
 impl DesktopBridge {
     /// Start an explicitly unsaved demonstration backed by the real electrical/drawing model.
@@ -48,6 +51,9 @@ impl DesktopBridge {
             dispatcher: ActionDispatcher::default(),
             demo: true,
             last_input: 0,
+            clock: std::time::Instant::now(),
+            movement: None,
+            move_serial: 0,
         })
     }
     /// Opaque current session token for guarding asynchronous native file choosers.
@@ -79,6 +85,7 @@ impl DesktopBridge {
         let document =
             Document::open(JsonFile::new(path)).map_err(|e| BridgeError::new("open", e))?;
         self.document = document;
+        self.movement = None;
         self.demo = false;
         self.path = Some(path.into());
         self.router.cancel_pending();
@@ -161,10 +168,11 @@ impl DesktopBridge {
             selection,
             view,
             focus,
+            tool_active: self.movement.is_some(),
             ..ActionContext::default()
         })
     }
-    fn outcome(&self, outcome: ActionOutcome) -> Result<Response, BridgeError> {
+    fn outcome(&mut self, outcome: ActionOutcome) -> Result<Response, BridgeError> {
         let mut response = self.snapshot();
         match outcome {
             ActionOutcome::Edited(_) => {}
@@ -181,6 +189,12 @@ impl DesktopBridge {
                         ActionRequestKind::Palette => "palette",
                         ActionRequestKind::OpenProject => "open",
                         ActionRequestKind::FitDrawing => "fit",
+                        ActionRequestKind::MoveSelection => "move",
+                        ActionRequestKind::CancelPlacement => {
+                            self.movement = None;
+                            response.message = Some("Move cancelled".into());
+                            "cancel_move"
+                        }
                         _ => "unsupported",
                     }
                     .into(),
@@ -243,9 +257,13 @@ impl DesktopBridge {
     }
     /// Validate and execute one strict bridge request through normal core contracts.
     /// # Errors
-    /// Invalid/stale input, model validation, replay/protected input, and IO errors retain state.
+    /// Invalid/stale input, model validation, replay/protected input, and IO errors preserve
+    /// the document/history. Invalid move updates deliberately invalidate older proposals.
     pub fn handle(&mut self, request: Request) -> Result<Response, BridgeError> {
-        if let Request::Action { input, .. } | Request::Key { input, .. } = &request {
+        if let Request::Action { input, .. }
+        | Request::Key { input, .. }
+        | Request::CommitMove { input, .. } = &request
+        {
             let id = input_id(input)?.get();
             if id <= self.last_input {
                 return Err(BridgeError::new("replayed", "Input was already handled"));
@@ -253,6 +271,68 @@ impl DesktopBridge {
             self.last_input = id;
         }
         match request {
+            Request::BeginMove { context, reference } => {
+                let context = self.context(context)?;
+                let reference: Target = serde_json::from_value(reference)
+                    .map_err(|e| BridgeError::new("reference", e))?;
+                self.move_serial = self
+                    .move_serial
+                    .checked_add(1)
+                    .ok_or_else(|| BridgeError::new("move", "Movement identity exhausted"))?;
+                self.movement = None;
+                let scene = self.snapshot().snapshot.expect("snapshot").scene;
+                let movement = Movement::begin(
+                    self.document.session(),
+                    context,
+                    reference.object()?,
+                    self.move_serial,
+                    scene,
+                )?;
+                let reply = movement.response()?;
+                self.movement = Some(movement);
+                Ok(reply)
+            }
+            Request::PreviewMove {
+                session,
+                x,
+                y,
+                exact,
+                suppressed,
+                candidate,
+                tolerance_um,
+            } => {
+                let movement = self
+                    .movement
+                    .as_mut()
+                    .ok_or_else(|| BridgeError::new("move", "No active movement"))?;
+                movement.update(
+                    self.document.session(),
+                    &session,
+                    &x,
+                    &y,
+                    exact,
+                    suppressed,
+                    candidate,
+                    tolerance_um,
+                )
+            }
+            Request::CommitMove { token, input } => {
+                let movement = self
+                    .movement
+                    .as_mut()
+                    .ok_or_else(|| BridgeError::new("move", "No active movement"))?;
+                let (context, preview) = movement.take(&token)?;
+                let result = self.invoke(ActionInvocation {
+                    input_id: input_id(&input)?,
+                    action: ActionId::new("drawing.selection.move").expect("builtin"),
+                    source: InvocationSource::Toolbar,
+                    repeat: false,
+                    context,
+                    parameters: ActionParameters::CommitMove(preview),
+                });
+                self.movement = None;
+                result
+            }
             Request::Snapshot {} => Ok(self.snapshot()),
             Request::Inspect { context } => {
                 let context = self.context(context)?;
@@ -307,7 +387,7 @@ impl DesktopBridge {
                 repeat,
                 composing,
                 input,
-                now_ms,
+                now_ms: _,
             } => {
                 let mut context = self.context(context)?;
                 context.composing = composing;
@@ -337,6 +417,7 @@ impl DesktopBridge {
                     },
                     repeat,
                 };
+                let now_ms = u64::try_from(self.clock.elapsed().as_millis()).unwrap_or(u64::MAX);
                 match self.router.route(&self.registry, event, &context, now_ms) {
                     KeyRoute::Invoke(invocation) => self.invoke(*invocation),
                     KeyRoute::Pending { .. } => Ok(Response {

@@ -20,6 +20,7 @@ export function createShell(action: (id: string) => void) {
         ['Undo', 'document.undo'],
         ['Redo', 'document.redo'],
         ['Properties', 'selection.properties'],
+        ['Move selection', 'drawing.selection.move'],
       ],
     ],
     [
@@ -63,7 +64,11 @@ export function createShell(action: (id: string) => void) {
   toolbar.append(separator());
   const select = tool('Select objects · Shift to add', 'select', () => canvas.focus());
   select.classList.add('active');
+  select.dataset.tool = 'select';
   toolbar.append(select);
+  const move = tool('Move selection · M', 'move', () => action('drawing.selection.move'));
+  move.dataset.action = 'drawing.selection.move';
+  toolbar.append(move);
   const fit = tool('Fit drawing · F', 'fit', () => action('drawing.view.fit'));
   fit.dataset.action = 'drawing.view.fit';
   toolbar.append(fit, separator());

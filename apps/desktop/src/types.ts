@@ -63,7 +63,18 @@ export interface PropertyRow {
   origin: string;
   reason: string;
 }
+export interface MoveRow {
+  session: string;
+  token: string;
+  x: string;
+  y: string;
+  scene: SceneRow[];
+  candidates: number;
+  chosen: number | null;
+  snap: string | null;
+}
 export interface Reply {
+  movement: MoveRow | null;
   snapshot: Snapshot | null;
   properties: PropertyRow[] | null;
   report: string[][] | null;

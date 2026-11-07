@@ -204,6 +204,7 @@ pub(crate) fn snapshot(
                 d.handler,
                 ActionHandler::OpenProject
                     | ActionHandler::FitDrawing
+                    | ActionHandler::MoveSelection
                     | ActionHandler::Undo
                     | ActionHandler::Redo
                     | ActionHandler::Save
@@ -215,7 +216,12 @@ pub(crate) fn snapshot(
             ActionRow {
                 id: d.id.to_string(),
                 label: d.label.clone(),
-                enabled: supported && (state.enabled() || d.handler == ActionHandler::Properties),
+                enabled: supported
+                    && (state.enabled()
+                        || matches!(
+                            d.handler,
+                            ActionHandler::Properties | ActionHandler::MoveSelection
+                        )),
                 reason: if !supported {
                     Some("Tool UI is planned".into())
                 } else {

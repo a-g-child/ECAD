@@ -130,6 +130,37 @@ pub enum Request {
         /// One shared monotonic host input identity, encoded losslessly.
         input: String,
     },
+    /// Start transient movement with an explicitly selected reference origin.
+    BeginMove {
+        /// Original view, selection and revision.
+        context: serde_json::Value,
+        /// Selected label, polyline or terminal anchor.
+        reference: serde_json::Value,
+    },
+    /// Replace the held proposal. Invalid updates invalidate the previous proposal.
+    PreviewMove {
+        /// Opaque movement lifetime identity.
+        session: String,
+        /// Exact micrometre coordinate text.
+        x: String,
+        /// Exact micrometre coordinate text.
+        y: String,
+        /// Numeric placement bypasses snapping.
+        exact: bool,
+        /// Temporary pointer snap suppression.
+        suppressed: bool,
+        /// Explicit ranked candidate, otherwise best.
+        candidate: Option<usize>,
+        /// Inclusive pointer tolerance in micrometres.
+        tolerance_um: u32,
+    },
+    /// Commit only the retained immutable proposal, through the shared dispatcher.
+    CommitMove {
+        /// Opaque proposal identity, superseded by every update.
+        token: String,
+        /// Shared monotonic host input identity.
+        input: String,
+    },
     /// Route one logical keyboard event using the core keymap and protected-input policy.
     Key {
         /// Captured targets/focus/revision.
@@ -150,7 +181,7 @@ pub enum Request {
         composing: bool,
         /// Shared monotonic host input ID.
         input: String,
-        /// Caller monotonic clock, in milliseconds.
+        /// Legacy caller timing hint; the host uses its own monotonic clock across reloads.
         now_ms: u64,
     },
 }
@@ -162,6 +193,7 @@ pub struct Response {
     pub(crate) report: Option<Vec<Vec<String>>>,
     pub(crate) request: Option<String>,
     pub(crate) message: Option<String>,
+    pub(crate) movement: Option<MoveRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
@@ -222,4 +254,17 @@ pub(crate) struct PropertyRow {
     pub restricted: usize,
     pub origin: String,
     pub reason: String,
+}
+
+/// Transient read projection; commit accepts its token rather than client geometry.
+#[derive(Clone, Debug, Serialize)]
+pub(crate) struct MoveRow {
+    pub session: String,
+    pub token: String,
+    pub x: String,
+    pub y: String,
+    pub scene: Vec<SceneRow>,
+    pub candidates: usize,
+    pub chosen: Option<usize>,
+    pub snap: Option<String>,
 }

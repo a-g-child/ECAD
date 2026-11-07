@@ -74,3 +74,50 @@
 .canvas-empty[hidden] {
   display: none;
 }
+.move-bar {
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--line);
+  background: #f4f6f7;
+  min-width: 0;
+  font-size: 11px;
+  overflow: hidden;
+}
+.move-coordinate {
+  width: 76px;
+  min-width: 0;
+}
+.move-reference {
+  width: 92px;
+  min-width: 0;
+}
+.move-bar input,
+.move-bar select {
+  height: 26px;
+  font-size: 11px;
+}
+.move-note {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+.move-bar [hidden] {
+  display: none;
+}
+.move-bar:not(.moving) > span:not(.move-note) {
+  display: none;
+}
+.move-preview .ink {
+  opacity: 0.65;
+}
+.snap-marker {
+  fill: none;
+  stroke: #176ca3;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
