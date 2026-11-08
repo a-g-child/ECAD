@@ -182,6 +182,10 @@ Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents
 - [ ] Migrate legacy free views and paper placements without geometry/style/electrical loss, implicit renumbering or silent changes to shared views.
 - [ ] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated coordinate input.
 - [ ] Supply a basic standard frame/drawing-info template for every drawing sheet; expand custom table/template editing afterward.
+- [ ] Make pages/sheets the default Project explorer, retaining electrical structure as an alternate mode.
+- [ ] Add selectable sheet tabs/panes with retained camera/selection, stable tab identity and shared project history.
+- [ ] Include cover/generated drawing-list/overview/detail page roles; every page resolves its CAD template.
+- [ ] Add off-sheet continuation representations tied to actual connectivity and stable target references.
 - [ ] Keep symbol/component/footprint/template-definition editors separate from project sheet workspaces.
 - [ ] Link hierarchical overview blocks to stable sheet identities and electrical interfaces independently of document ownership.
 - [x] Include reusable sheets/title-block tables, scoped variables, company profiles and standard/draft/cover/contents layouts in [the feature scope](sheets-and-templates.md).

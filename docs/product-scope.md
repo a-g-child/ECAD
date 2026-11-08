@@ -37,6 +37,8 @@ Tauri with a Rust core is a preferred candidate, subject to interaction and rend
 
 ## Drawing sheets and reusable layouts
 
+The left Project explorer should primarily show pages: cover, generated drawing list, overview schematics and detailed wire/terminal/connector sheets, with document groups where useful. Open sheets in selectable tabs/panes in the main workspace. Keep electrical structure available separately. Every page adopts its CAD template; hierarchical sheet blocks and off-sheet connectors navigate and represent shared electrical interfaces without duplicating the underlying model.
+
 Organize actual drawings as Project → Documents → Sheets. Cable overviews, hierarchical diagrams and detailed wire/connector schematics are edited directly on template-backed CAD sheets with borders and drawing information. The separate Model view/read-only paper workflow in the v8 prototype is superseded. Symbol/component/footprint and template-definition editors are different workspace kinds with their own appropriate coordinate surfaces. Logical drawing documents and sheet organization remain independent of electrical subsystem hierarchy and output drawing sets.
 
 Include structured sheet layouts and title-block tables with row/cell split/merge, multiline entries, bulk formatting, scoped variables and explicit local overrides. Personal/company profiles supply copied project values; sheet-local and derived values remain distinct. Plan standard, draft, cover and generated contents layouts, pinned template revisions, paper-space sizing, portable logos and reproducible issued output. See [sheets and templates](sheets-and-templates.md) for the feature contract and delivery checklist.

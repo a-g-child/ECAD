@@ -16,6 +16,8 @@ Actual project drawing workspaces are Project → Documents → Sheets. A logica
 
 Keep internal representation geometry, sheet/template geometry, electrical topology and viewport state separate. Apply validated sheet-coordinate mappings to pointer/snapping/edit commands rather than treating the rendered sheet as an output-only wrapper. Library symbol/component/footprint and template-definition editors use distinct workspace contexts; they are not forced into schematic paper sheets. Electrical hierarchy links to stable sheet identities/interfaces independently of document ownership. Output sets select sheets/documents without owning them.
 
+The default left explorer is a page/sheet navigator, with electrical structure available separately. Main-area sheet tabs retain local camera/selection while sharing the project session/history. Hierarchical blocks and continuation connectors reference stable sheet/interface/connectivity identities, not displayed text. Cover, generated drawing-list, overview and detailed sheets all resolve a CAD template.
+
 The next implementation must introduce logical document ownership and a content-preserving migration before unifying the sheet editor and template frame. Existing v8 geometry, mappings and identifiers must not be flattened, silently duplicated, renumbered or rewired. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
 ## Dependency direction

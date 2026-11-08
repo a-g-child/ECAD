@@ -14,6 +14,14 @@ Symbol, generic component/device, footprint and template-definition editors are 
 
 Electrical functional hierarchy and document/sheet organization remain independent. A hierarchical block references its target sheet by stable identity and its subsystem/interfaces explicitly. Renumbering or moving a sheet between documents must preserve links and connectivity. Output/issue drawing sets select documents/sheets; they do not replace document ownership.
 
+## Explorer, tabs and page roles
+
+The default left Project explorer lists the project's cover, drawing list, overview and detailed sheets/pages. Document groups organize related pages; a default single document group can be omitted from the displayed tree so its sheets appear directly under the project. The electrical/functional structure tree remains a separate mode rather than the primary page navigator.
+
+The main workspace uses selectable sheet tabs/panes. Tree selection and hierarchical navigation open or focus a tab using stable sheet identity. Preserve per-sheet viewport/selection on switching; navigation must not dirty the project, duplicate electrical objects or implicitly commit/cancel a draft. Active tools retain their original sheet context; preserve their draft or explicitly block switching until finish/cancel, never silently retarget it. All project sheet tabs share the project session/history. Library/definition editors retain their distinct contexts. Split panes are a later workspace feature, not required for the first tab implementation.
+
+Every page resolves its CAD template, including cover and generated drawing-list pages. The drawing list derives from actual document/sheet order and metadata. Overview blocks reference target sheets/interfaces for drill-down; off-sheet continuation connectors represent real shared connectivity without introducing phantom physical devices. Physical connector components remain actual device/terminal occurrences. Page labels and displayed connector names must not become identity or connectivity keys. Navigation retains a way back to the originating sheet.
+
 ## Metadata and identity
 
 - Stable document IDs are distinct from sheet IDs, view IDs, filenames and drawing numbers.
@@ -32,8 +40,8 @@ Electrical functional hierarchy and document/sheet organization remain independe
 
 ## Required evidence
 
-Test exact migration of old free views, placed/blank sheets, shared source views and electrical bindings; deterministic identity mapping; strict schema boundaries; document/sheet ordering and moves; numbering preservation; template resolution; undo/redo/rollback/checkpoints; cross-sheet hierarchy links; and geometry-preserving template/paper updates.
+Test exact migration of old free views, placed/blank sheets, shared source views and electrical bindings; deterministic identity mapping; strict schema boundaries; document/sheet ordering and moves; numbering preservation; template resolution; undo/redo/rollback/checkpoints; cross-sheet hierarchy links; and geometry-preserving template/paper updates. Include generated drawing-list updates after rename/reorder, continuation-connector identity and bidirectional hierarchy navigation.
 
-Real browser tests must create/open and edit an actual sheet, including wires/paths/annotations, selection, drag, numeric placement, snapping, zoom and transformed origins/scales. Verify there is no need to switch to a free Model view and that definition editors retain independent contexts. Native/platform and output parity remain separate checks.
+Real browser tests must create/open and edit an actual sheet, including wires/paths/annotations, selection, drag, numeric placement, snapping, zoom and transformed origins/scales. Verify default page-explorer navigation, stable sheet tabs, retained per-sheet camera/selection, a shared project history and no layout shifts on tab changes. Verify there is no need to switch to a free Model view and that definition editors retain independent contexts. Native/platform and output parity remain separate checks.
 
 The current code is not changed by this decision. Existing v8 tests still describe its implemented behavior; they must be replaced or extended alongside the migration and unified sheet editor, not relabelled as proof of the new workflow.

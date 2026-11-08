@@ -15,6 +15,16 @@ Symbol, generic component/device, footprint and template-definition editors are 
 Keep electrical hierarchy independent of document ownership. A hierarchical block on an overview links to the target sheet by stable identity and to its electrical subsystem/interfaces explicitly. Moving a sheet between documents or renumbering it must not change electrical containment or break navigation. Drawing sets are output/issue selections over documents/sheets, not a replacement for the document hierarchy.
 
 
+## Project explorer and sheet workspace
+
+The left Project explorer defaults to the project's pages/sheets, rather than devices and conductors. Typical entries are Cover, Drawing list, Overview schematics and detailed wire-to-terminal/connector sheets. Logical documents can group related pages. When there is only a default document group, omit its group node from the displayed tree and show its pages directly under the project. Electrical/functional structure remains accessible as a separate explorer mode.
+
+The main workspace opens sheets in selectable tabs/panes. Selecting a page opens or focuses its existing tab by stable sheet identity; it does not create another sheet or another electrical model. Tab switches preserve each sheet's viewport/selection and do not dirty the project or commit/cancel a tool implicitly. Active tools remain bound to their original sheet; an initial implementation may block switching until finish/cancel or retain the draft, but must never silently retarget it. Project sheet tabs share the authoritative project session and history. Split views may follow later; tab content must stay inside stable shell-owned pane bounds.
+
+Each page adopts its resolved CAD template, including border and drawing information, and is edited directly in that frame. Cover, generated drawing-list, overview and detailed pages have different content roles, not different requirements for paper/template backing. Drawing-list entries derive from project document/sheet identity, order, titles, drawing numbers and revisions rather than a manually maintained index.
+
+Hierarchical sheet blocks and off-sheet connectors support drill-down and cross-reference navigation. A block targets a stable sheet and electrical interface; a continuation connector represents shared electrical connectivity, not a new physical connector/device. Actual connector components retain their device/terminal identities. Displayed sheet names, drawing numbers and text labels are not connectivity keys. Navigating a link opens/focuses the target tab and retains a route back to the source sheet.
+
 Variables have explicit scopes:
 
 | Scope | Examples | Ownership |
@@ -80,6 +90,8 @@ Project schema v8 adds an ordered sheets array alongside v7 metadata. V2–v7 lo
 - [ ] Add logical project documents with stable identities, ordered owned sheets, document metadata and default templates.
 - [ ] Migrate existing v8 layouts/free views without losing geometry, electrical bindings, appearance or numbering; preserve or explicitly reconcile shared legacy views.
 - [ ] Replace Model view/read-only paper navigation with direct template-backed sheet editing, including transformed pointer/snapping input and one coherent viewport.
+- [ ] Replace the default component tree with a page/sheet explorer; retain electrical structure as an alternate mode.
+- [ ] Add sheet tabs/panes with stable identity, retained per-sheet workspace state and one project session/history.
 - [ ] Separate library/definition editor workspace kinds from project drawing sheets.
 - [ ] Add stable hierarchical-sheet navigation independently of document ownership and output drawing sets.
 - [ ] Add table/cell geometry and editing with stable identities and bulk properties.
