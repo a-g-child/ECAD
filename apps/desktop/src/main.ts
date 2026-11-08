@@ -10,7 +10,8 @@ import { SheetsDialog } from './sheets';
 import { SheetWorkspace } from './sheet-workspace';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
-import { renderProperties, renderReport, renderTree } from './panels';
+import { renderProperties, renderReport } from './panels';
+import { ProjectExplorer } from './project-explorer';
 import { element } from './ui';
 import { chooseFile, errorText, inputId, native, send, syncInput } from './transport';
 import { keyOf, type Context, type Reply, type Snapshot, type Target } from './types';
@@ -77,6 +78,15 @@ const paper = new SheetWorkspace(
   },
   () => void action('drawing.sheets.edit'),
 );
+const explorer = new ProjectExplorer(
+  shell,
+  choose,
+  (id) => paper.show(id),
+  (id) => {
+    if (paper.show(id)) void action('drawing.sheets.edit');
+  },
+  (id) => void action(id),
+);
 function toolActive() {
   return !!(movement?.active || layout?.active || annotation?.active || path?.active);
 }
@@ -129,6 +139,7 @@ function availableAction(id: string, enabled: boolean) {
   )
     return false;
   if (id === 'drawing.view.fit' && !paper.id) return false;
+  if (id.startsWith('workspace.explorer.') && drawing.gestureActive) return false;
   if (id === 'selection.properties') return selection.length > 0;
   if (layoutActions.has(id))
     return (
@@ -141,6 +152,7 @@ function availableAction(id: string, enabled: boolean) {
   return true;
 }
 function buttons() {
+  if (snapshot) explorer.setLocked(busy || toolActive() || drawing.gestureActive);
   shell.sheets.disabled = busy || toolActive();
   for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-action]')) {
     const id = button.dataset.action!;
@@ -200,7 +212,7 @@ async function apply(reply: Reply) {
     shell.selectionStatus.textContent = selection.length
       ? `${selection.length} selected`
       : 'No selection';
-    renderTree(shell, next, selection, (target, add) => choose(target, add));
+    explorer.update(next, selection, paper.id, replaced);
     buttons();
     await inspect();
   }
@@ -214,11 +226,14 @@ async function apply(reply: Reply) {
     await layout?.begin(context(), reply.request);
   if (reply.request === 'cancel_move') {
     clearTools();
+    shell.canvas.focus();
   }
   if (reply.request === 'fit') {
     drawing.fit();
   }
   if (reply.request === 'sheets' && snapshot) await sheets.open(context(), snapshot, paper.id);
+  if (reply.request === 'explorer_pages') explorer.show('pages');
+  if (reply.request === 'explorer_electrical') explorer.show('electrical');
   if (reply.request === 'palette') openPalette();
   if (reply.request === 'profiles' && reply.profiles) profiles.open(context(), reply.profiles);
   if (reply.request === 'metadata' && reply.metadata) metadata.open(context(), reply.metadata);
@@ -267,7 +282,7 @@ function selectMany(targets: Target[], add: boolean) {
 function selectionChanged() {
   if (!snapshot) return;
   drawing.setSelection(selection);
-  renderTree(shell, snapshot, selection, (target, add) => choose(target, add));
+  explorer.update(snapshot, selection, paper.id);
   shell.selectionStatus.textContent = selection.length
     ? `${selection.length} selected`
     : 'No selection';
@@ -444,7 +459,6 @@ window.addEventListener('blur', () => {
   annotation?.releaseAlt();
   path?.releaseAlt();
 });
-shell.tree.addEventListener('contextmenu', () => void action('selection.properties'));
 shell.canvas.addEventListener('contextmenu', (event) => {
   event.preventDefault();
   const target = event.target as Element;

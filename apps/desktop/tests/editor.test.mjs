@@ -1,7 +1,8 @@
 /** Local integration tests: real Rust controller + Vite + Chromium, no mocked electrical model. */
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -18,11 +19,17 @@ import { registerMetadataTests } from './metadata.mjs';
 import { registerProfileTests } from './profiles.mjs';
 import { registerSheetTests } from './sheets.mjs';
 import { registerSheetEditingTests } from './sheet-editing.mjs';
+import { registerExplorerTests } from './explorer.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
 let directory;
 let project;
+let backendLog;
+const hostBinary = resolve(
+  root,
+  `target/debug/examples/browser_host${process.platform === 'win32' ? '.exe' : ''}`,
+);
 const route = 'route:00000000000000000000000000000001';
 const label = 'label:00000000000000000000000000000001';
 const primary = process.platform === 'darwin' ? 'Meta' : 'Control';
@@ -36,7 +43,14 @@ function start(command, args, cwd, env = {}) {
   child.stdout.on('data', (d) => (output += d));
   child.stderr.on('data', (d) => (output += d));
   processes.push(child);
-  return () => output;
+  const log = () => output;
+  log.stop = () =>
+    new Promise((done) => {
+      if (child.exitCode !== null || child.signalCode !== null) return done();
+      child.once('exit', done);
+      child.kill('SIGTERM');
+    });
+  return log;
 }
 async function until(fn, timeout = 20000) {
   const end = Date.now() + timeout;
@@ -51,12 +65,12 @@ async function until(fn, timeout = 20000) {
 before(async () => {
   directory = await mkdtemp(resolve(tmpdir(), 'ecad-ui-'));
   project = resolve(directory, 'demo.ecad.json');
-  const backendLog = start(
+  await promisify(execFile)(
     'cargo',
-    ['run', '--offline', '--locked', '-p', 'ecad-bridge', '--example', 'browser_host'],
-    root,
-    { ECAD_UI_PROJECT: project },
+    ['build', '--offline', '--locked', '-p', 'ecad-bridge', '--example', 'browser_host'],
+    { cwd: root },
   );
+  backendLog = start(hostBinary, [], root, { ECAD_UI_PROJECT: project });
   await until(() => backendLog().includes('Browser harness listening'));
   const frontendLog = start(
     'npm',
@@ -75,7 +89,8 @@ after(async () => {
   for (const child of processes) child.kill('SIGTERM');
   if (directory) await rm(directory, { recursive: true, force: true });
 });
-async function page() {
+// Object-editing suites explicitly choose Electrical; explorer suites exercise the default Pages mode.
+async function page({ electrical = true } = {}) {
   const page = await browser.newPage({ viewport: { width: 1360, height: 880 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -85,6 +100,17 @@ async function page() {
   await page.waitForFunction(() =>
     document.querySelector('.status-message')?.textContent?.startsWith('Ready'),
   );
+  if (electrical) {
+    await page.getByRole('button', { name: 'Electrical explorer', exact: true }).click();
+    await page.waitForFunction(
+      () => document.querySelector('.tree')?.dataset.mode === 'electrical',
+    );
+  }
+  await until(
+    async () =>
+      !(await page.getByRole('button', { name: 'Save project', exact: true }).isDisabled()),
+  );
+  await page.locator('.canvas').focus();
   return page;
 }
 const tree = (p, target) => p.locator(`.tree-item[data-object="${target}"]`);
@@ -454,3 +480,21 @@ registerProfileTests({ page, button, until, bounds, root, project: () => project
 registerSheetTests({ page, button, until, bounds, root, project: () => project, pressAction });
 
 registerSheetEditingTests({ page, button, until, bounds, project: () => project, pressAction });
+
+// Fixtures are written outside the app, then opened by a fresh real Rust host. No test mutation API.
+async function replaceProject(data) {
+  await backendLog.stop();
+  await writeFile(project, JSON.stringify(data, null, 2) + '\n');
+  backendLog = start(hostBinary, [], root, { ECAD_UI_PROJECT: project });
+  await until(() => backendLog().includes('Browser harness listening'));
+}
+registerExplorerTests({
+  page,
+  button,
+  until,
+  bounds,
+  root,
+  project: () => project,
+  pressAction,
+  replaceProject,
+});

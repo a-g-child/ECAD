@@ -234,6 +234,8 @@ impl DesktopBridge {
             ActionOutcome::Request(r) => {
                 response.request = Some(
                     match r.kind {
+                        ActionRequestKind::ExplorerPages => "explorer_pages",
+                        ActionRequestKind::ExplorerElectrical => "explorer_electrical",
                         ActionRequestKind::Sheets => "sheets",
                         ActionRequestKind::CompanyProfiles => {
                             response.profiles = self.profiles.load()?.profiles;

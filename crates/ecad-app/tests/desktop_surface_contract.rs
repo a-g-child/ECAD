@@ -80,3 +80,22 @@ fn blank_sheet_fit_uses_captured_identity_and_rejects_missing_or_mismatched_shee
         Some(ActionDisabled::CanvasRequired)
     );
 }
+
+#[test]
+fn explorer_modes_are_discoverable_unbound_document_requests() {
+    let registry = ActionRegistry::builtins();
+    let session = Session::new(Project::new(ProjectId::new(1).unwrap()));
+    let context = ActionContext::for_session(&session);
+    for name in ["workspace.explorer.pages", "workspace.explorer.electrical"] {
+        let id = ActionId::new(name).unwrap();
+        assert!(registry.state(&id, &context, Some(&session)).enabled());
+        assert_eq!(
+            registry.state(&id, &context, None).disabled,
+            Some(ActionDisabled::NoDocument)
+        );
+        assert!(matches!(
+            registry.get(&id).unwrap().defaults,
+            DefaultBindings::Unbound
+        ));
+    }
+}

@@ -40,6 +40,7 @@ export interface ActionRow {
 }
 export interface DrawingDocumentRow {
   id: string;
+  is_default: boolean;
   number: string;
   title: string;
   revision: string;

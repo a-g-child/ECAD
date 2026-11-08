@@ -38,6 +38,8 @@ export function createShell(action: (id: string) => void) {
       'View',
       [
         ['Fit drawing', 'drawing.view.fit'],
+        ['Project pages', 'workspace.explorer.pages'],
+        ['Electrical explorer', 'workspace.explorer.electrical'],
         ['Command palette', 'workspace.palette'],
       ],
     ],
@@ -67,8 +69,12 @@ export function createShell(action: (id: string) => void) {
   left.dataset.focus = 'tree';
   left.setAttribute('aria-label', 'Project explorer');
   const leftHeader = element('div', 'pane-header');
-  leftHeader.append(element('strong', '', 'Project'), element('span', 'pane-tag', 'ELECTRICAL'));
-  const tree = element('div', 'tree');
+  leftHeader.append(element('strong', '', 'Project'));
+  const explorerModes = element('div', 'explorer-modes');
+  explorerModes.setAttribute('role', 'group');
+  explorerModes.setAttribute('aria-label', 'Explorer mode');
+  leftHeader.append(explorerModes);
+  const tree = element('nav', 'tree');
   left.append(leftHeader, tree);
   const center = element('section', 'drawing-pane');
   const tabs = element('div', 'drawing-tabs');
@@ -131,6 +137,7 @@ export function createShell(action: (id: string) => void) {
     app,
     title,
     tree,
+    explorerModes,
     sheets,
     canvas,
     placement,

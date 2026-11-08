@@ -6,6 +6,10 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Show project pages and logical drawing packages in the host explorer.
+    ExplorerPages,
+    /// Show the selected project's electrical structure in the host explorer.
+    ExplorerElectrical,
     /// Manage logical drawing-package metadata and ownership.
     DrawingDocuments,
     /// Manage paper sheets and drawing-view placements.

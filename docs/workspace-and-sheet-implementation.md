@@ -1,6 +1,6 @@
 # Multi-project workspace and sheet-first implementation tasks
 
-Status: implementation started with a headless ProjectWorkspace owning independent project controllers. Logical drawing-document ownership, schema-v10 template defaults and the first bundled frame are also implemented. The desktop still has one DesktopBridge/project, now with direct template-backed sheet editing. Checked items are executable foundations; UI migration is not yet complete.
+Status: implementation started with a headless ProjectWorkspace owning independent project controllers. Logical drawing-document ownership, schema-v10 template defaults and the first bundled frame are also implemented. The desktop still has one DesktopBridge/project, now with direct template-backed sheet editing. Default page navigation and the alternate electrical explorer are implemented for that one project. Checked items are executable foundations; multi-project UI integration remains incomplete.
 
 ## Target and boundaries
 
@@ -75,11 +75,14 @@ Every actual drawing is edited directly on a CAD-template sheet. Cover, generate
 
 ### 5. Page explorer, electrical explorer and tabs
 
-- [ ] Show multiple project roots with document groups/sheets; elide only a default group node when useful.
-- [ ] Add selected-project electrical/component view as a separate explorer mode.
+- [x] Show the current real project root, document groups and ordered sheets; elide only a sole untouched default package.
+- [ ] Show multiple open-project roots after native workspace integration.
+- [x] Add an alternate electrical/component explorer for the current project, with independent expansion state and preserved drawing selection.
 - [ ] Open/focus sheet tabs by scoped stable identity and preserve per-sheet camera/selection.
-- [ ] Keep shell bounds stable and action metadata consistent across tree/tabs/ribbons/menus/search.
-- [ ] Test project switches, closing inactive/active tabs/projects, keyboard routing and draft protection.
+- [x] Keep explorer bounds stable and mode action metadata consistent across header controls, View menu and command search.
+- [ ] Apply the same contracts to project-scoped tabs.
+- [x] Test page/mode switching, loaded group ownership, context menus, keyboard activation and draft protection in the single-project explorer.
+- [ ] Test project switches and closing inactive/active tabs/projects after host integration.
 
 ### 6. Hierarchy and production layouts
 

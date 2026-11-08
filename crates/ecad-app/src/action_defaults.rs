@@ -27,6 +27,26 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "workspace.explorer.pages",
+                "Project pages",
+                "View",
+                "Show logical drawing documents and sheets in the project explorer",
+                Handler::ExplorerPages,
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "workspace.explorer.electrical",
+                "Electrical explorer",
+                "View",
+                "Show electrical components, connections and drawing representations for the project",
+                Handler::ExplorerElectrical,
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "drawing.documents.edit",
                 "Drawing documents",
                 "Drawing",

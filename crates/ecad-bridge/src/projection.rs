@@ -167,6 +167,8 @@ pub(crate) fn snapshot(
             let supported = matches!(
                 d.handler,
                 ActionHandler::Sheets
+                    | ActionHandler::ExplorerPages
+                    | ActionHandler::ExplorerElectrical
                     | ActionHandler::OpenProject
                     | ActionHandler::CompanyProfiles
                     | ActionHandler::ProjectMetadata

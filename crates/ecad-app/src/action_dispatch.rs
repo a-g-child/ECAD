@@ -84,6 +84,12 @@ impl ActionDispatcher {
             .revision
             .expect("document availability checked revision");
         let outcome = match (handler, invocation.parameters) {
+            (ActionHandler::ExplorerPages, ActionParameters::None) => {
+                request(ActionRequestKind::ExplorerPages, None)
+            }
+            (ActionHandler::ExplorerElectrical, ActionParameters::None) => {
+                request(ActionRequestKind::ExplorerElectrical, None)
+            }
             (ActionHandler::FitDrawing, ActionParameters::None) => {
                 request(ActionRequestKind::FitDrawing, None)
             }

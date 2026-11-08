@@ -181,7 +181,8 @@ Follow the ordered [workspace and sheet task list](workspace-and-sheet-implement
 - [x] Add headless ProjectWorkspace with independent Document<S> controllers, runtime handles, active selection, normalized-location keys and captured-project operations.
 - [x] Verify same-lineage file copies, isolated history/dirty/save/reload state, reserved/failed Save-as, stale/dirty close, shared input replay protection and failed operations with real temporary files.
 - [ ] Integrate the owner into the native host/bridge; desktop currently still has one project context.
-- [ ] Add multiple project explorer roots and selected-project electrical/component mode alongside page navigation.
+- [x] Add default project/document/page navigation and an alternate electrical/component explorer for the currently open project.
+- [ ] Add multiple project roots and selected-project context after native workspace integration.
 - [ ] Add project-scoped sheet tabs and lifecycle/preview routing, with all-project close/quit protection.
 
 ## Drawing sheets and templates
@@ -197,7 +198,7 @@ Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents
 - [x] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated inverse placement input.
 - [x] Resolve a basic standard frame/eight live fields for every drawing sheet in paper preview and numeric review, with small-paper/overflow diagnostics.
 - [ ] Expand custom table/template editing and output preflight.
-- [ ] Make pages/sheets the default Project explorer, retaining electrical structure as an alternate mode.
+- [x] Make pages/sheets the default Project explorer, retaining electrical structure as an alternate mode, with stable selection/expansion and guarded page context menus.
 - [ ] Add selectable sheet tabs/panes with retained camera/selection, stable tab identity and shared project history.
 - [ ] Include cover/generated drawing-list/overview/detail page roles; every page resolves its CAD template.
 - [ ] Add off-sheet continuation representations tied to actual connectivity and stable target references.
@@ -226,3 +227,5 @@ Local branch `main` is initialized and `origin` points to `https://github.com/a-
 Frame slice: see [decision 0033](decisions/0033-bundled-sheet-frame.md), [frame workflows](../crates/ecad-adapters/tests/sheet_frames.rs) and sheet bridge/browser regressions. Direct sheet input and per-view reviewed attachment are now implemented; bulk wrapping and multi-project host integration remain unchecked.
 
 Editable sheets: [decision 0034](decisions/0034-editable-sheet-workspace.md), [sheet-context bridge regressions](../crates/ecad-bridge/tests/sheet_editor_bridge.rs) and [scaled editing/attachment workflows](../apps/desktop/tests/sheet-editing.mjs). Native execution on Windows/Linux remains unverified.
+
+Explorer slice: [decision 0035](decisions/0035-project-page-and-electrical-explorers.md), [bridge contracts](../crates/ecad-bridge/tests/explorer_bridge.rs) and [browser workflows](../apps/desktop/tests/explorer.mjs). One desktop project/root is supported; multi-project host integration, document management and page tabs remain pending.

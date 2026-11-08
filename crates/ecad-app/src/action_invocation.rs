@@ -115,6 +115,10 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Switch the host explorer to project documents/pages without editing the project.
+    ExplorerPages,
+    /// Switch the host explorer to project electrical structure without editing the project.
+    ExplorerElectrical,
     /// Open the logical drawing-document editor.
     DrawingDocuments,
     /// Open the sheet and paper manager.

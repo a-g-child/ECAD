@@ -93,7 +93,7 @@ See [the workspace and sheet implementation task list](workspace-and-sheet-imple
 - [ ] Add actual document default-template references with the basic frame implementation.
 - [ ] Migrate existing v8 layouts/free views without losing geometry, electrical bindings, appearance or numbering; preserve or explicitly reconcile shared legacy views.
 - [x] Replace Model view/read-only paper navigation with direct template-backed sheet editing, including source-unit pointer/snapping input through inverse placement and one coherent viewport.
-- [ ] Replace the default component tree with a page/sheet explorer; retain electrical structure as an alternate mode.
+- [x] Replace the default component tree with a project/document/sheet explorer; retain electrical structure as an alternate mode for the current project.
 - [ ] Add sheet tabs/panes with stable identity, retained per-sheet workspace state and one project session/history.
 - [ ] Separate library/definition editor workspace kinds from project drawing sheets.
 - [ ] Add stable hierarchical-sheet navigation independently of document ownership and output drawing sets.
@@ -118,3 +118,9 @@ Each drawing package now persists standard-v1 as its mandatory default. All shee
 Font/value height/stroke/colour inherit project drawing fallbacks; caption height is a template override. Literal multiline values remain unchanged; the browser clips overflowing cell text, marks a corner and exposes the full value in a tooltip. Small valid paper retains its border and reports that the table cannot fit. These diagnostics do not establish output/font parity. Custom cells, alternative templates, sheet overrides, logos, required-field checks and print/export remain planned. See [decision 0033](decisions/0033-bundled-sheet-frame.md).
 
 Schema v10 requires a known default_template in each package. V2–v9 upgrade deterministically to standard-v1 without changing source drawing/electrical data or wrapping unplaced views. The desktop now uses the unified editable sheet surface described in [decision 0034](decisions/0034-editable-sheet-workspace.md). Unplaced sources attach through explicit reviewed sheet edits; bulk wrapping remains future work.
+
+## Implemented page and electrical explorers
+
+Pages is now the desktop default: one real project root, ordered document memberships and sheets, including blank pages and empty packages. A sole unchanged default package is elided; custom and multiple packages remain visible. Page clicks and context menus target stable sheet identities through the shared sheet-switch guard. Electrical mode retains real functional/component objects and drawing representations with the full inspector, while mode changes preserve drawing selection and each mode's expansion state. Header buttons, View menu and command search use two explicit unbound registry actions.
+
+This slice supports the currently open desktop project. Multiple roots, document-management controls, new drawing-source creation and project-scoped tabs remain pending. See [decision 0035](decisions/0035-project-page-and-electrical-explorers.md).
