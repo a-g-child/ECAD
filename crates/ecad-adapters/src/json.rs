@@ -1,6 +1,6 @@
 //! Canonical JSON encoding and same-directory temporary-file replacement.
 
-use crate::schema_documents::DocumentProjectData;
+use crate::schema_documents::{DocumentProjectData, TemplatedDocumentData};
 use crate::schema_metadata::MetadataProjectData;
 use crate::schema_reuse::ReusableProjectData;
 use crate::schema_sheets::SheetProjectData;
@@ -17,7 +17,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Encode v9 JSON in identity order, with two-space indentation and a final LF.
+/// Encode v10 JSON in identity order, with two-space indentation and a final LF.
 ///
 /// No timestamps, session history, or platform line endings are embedded.
 /// # Errors
@@ -44,6 +44,11 @@ pub fn decode_project(text: &str) -> Result<Project, ProjectFileError> {
     }
     if envelope.schema_version == 3 {
         return Project::try_from(serde_json::from_str::<ProjectData>(text)?);
+    }
+    if envelope.schema_version == 10 {
+        return Project::try_from(serde_json::from_str::<
+            DocumentProjectData<TemplatedDocumentData>,
+        >(text)?);
     }
     if envelope.schema_version == 9 {
         return Project::try_from(serde_json::from_str::<DocumentProjectData>(text)?);

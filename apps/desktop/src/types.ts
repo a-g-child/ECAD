@@ -42,11 +42,13 @@ export interface DrawingDocumentRow {
   number: string;
   title: string;
   revision: string;
+  default_template: string;
   sheets: string[];
 }
 export interface Snapshot {
   drawing_documents: DrawingDocumentRow[];
   sheets: SheetRow[];
+  sheet_frames: FrameRow[];
   bridge_version: 1;
   next_input: string;
   revision: Revision;
@@ -145,9 +147,21 @@ export interface SheetRow {
   numerator: string;
   denominator: string;
 }
+export interface FrameRow {
+  sheet: string;
+  template: string;
+  border: { x: number; y: number; width: number; height: number };
+  cells: { key: string; caption: string; value: string | null; bounds: FrameRow['border'] }[];
+  title_block_too_small: boolean;
+  font: string;
+  text_height: number;
+  stroke_width: number;
+  colour: string;
+}
 export interface SheetPreview {
   token: string;
   sheet: SheetRow;
+  frame: FrameRow;
   scene: SceneRow[];
 }
 export interface Reply {
@@ -180,6 +194,7 @@ export function validateReply(value: unknown): Reply {
       typeof s.revision?.sequence !== 'string' ||
       !Array.isArray(s.drawing_documents) ||
       !Array.isArray(s.sheets) ||
+      !Array.isArray(s.sheet_frames) ||
       !Array.isArray(s.objects) ||
       !Array.isArray(s.scene) ||
       !Array.isArray(s.actions)

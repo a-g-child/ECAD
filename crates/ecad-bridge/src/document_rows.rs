@@ -7,6 +7,7 @@ pub(crate) struct DrawingDocumentRow {
     number: String,
     title: String,
     revision: String,
+    default_template: &'static str,
     sheets: Vec<String>,
 }
 impl From<DrawingDocumentLayout> for DrawingDocumentRow {
@@ -17,6 +18,7 @@ impl From<DrawingDocumentLayout> for DrawingDocumentRow {
             number: d.number,
             title: d.title,
             revision: d.revision,
+            default_template: d.default_template.key(),
             sheets: layout.sheets.into_iter().map(|id| id.to_string()).collect(),
         }
     }

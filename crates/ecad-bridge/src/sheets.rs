@@ -93,6 +93,7 @@ pub(crate) struct SheetPreviewRow {
     pub token: String,
     pub sheet: SheetRow,
     pub scene: Vec<SceneRow>,
+    pub frame: crate::frame_rows::FrameRow,
 }
 #[derive(Default)]
 pub(crate) struct SheetTool {
@@ -175,6 +176,7 @@ impl DesktopBridge {
                 let row = SheetPreviewRow {
                     token: token.clone(),
                     sheet: preview.sheet().into(),
+                    frame: crate::frame_rows::FrameRow::new(preview.sheet().id, preview.frame()),
                     scene,
                 };
                 self.sheet_tool.preview = Some((token, preview));

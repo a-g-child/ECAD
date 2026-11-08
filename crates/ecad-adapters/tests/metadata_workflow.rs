@@ -42,7 +42,7 @@ fn metadata_is_literal_portable_and_one_exact_saved_history_edit() {
     );
     let mut after: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
-    assert_eq!(after["schema_version"], 9);
+    assert_eq!(after["schema_version"], 10);
     after["metadata"] = before["metadata"].clone();
     assert_eq!(after, before);
     document.undo(document.session().revision()).unwrap();

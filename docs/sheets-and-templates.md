@@ -1,6 +1,6 @@
 # Drawing sheets, layouts and metadata
 
-Status: target architecture revised to Project → Documents → Sheets. The current prototype still implements an editable Model view plus read-only paper display; that workflow is superseded and must be migrated before further template UI expansion. Project metadata, profiles, paper/history primitives and v9 logical document ownership are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
+Status: target architecture revised to Project → Documents → Sheets. The current prototype still implements an editable Model view plus read-only paper display; that workflow is superseded and must be migrated before further template UI expansion. Project metadata, profiles, paper/history primitives, logical document ownership and v10 bundled frame defaults are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
 ## Scope and ownership
 
@@ -110,3 +110,11 @@ Each slice requires headless invariant/history/persistence tests and real bridge
 ProjectDrawingDocument carries stable identity, unique project-level document number, literal multiline title and engineering revision. Each project starts with an empty Drawings package. Each sheet has exactly one owner and an owner-local order; documents also have explicit order. Sheet drawing numbers remain project-wide unique as in v8, with no automatic renumbering on transfer. At least one package remains in a project; nonempty packages cannot be removed. Metadata, document order, sheet transfers and complete membership changes use reversible commands without changing view geometry or electrical content.
 
 Schema v9 stores physical sheet records by stable ID and records order only in each document's sheet-ID membership list. Missing/duplicate ownership and invalid metadata are rejected. V2–v8 ownership upgrades create the initial package deterministically from the project ID in a separate typed namespace, preserving existing sheet IDs/order/numbers/transforms and shared/unplaced views. No random document IDs are generated on decode; unplaced views are not yet wrapped into template sheets. The bridge exposes document metadata/membership, while the current UI remains flat and does not yet manage packages. Its legacy flattened sheet moves cannot cross a document boundary; new workflows use explicit owner-local operations.
+
+## Implemented bundled standard frame
+
+Each drawing package now persists standard-v1 as its mandatory default. All sheets resolve a margin border and a fixed 180 × 40 mm title block in paper units. Its eight live fields use portable company/project metadata, package title/number/revision, sheet title/number and owner-local sheet ordinal/count. The numeric proposal preview and paper display use the same Rust-resolved frame, including proposed title/count changes without editing the live project.
+
+Font/value height/stroke/colour inherit project drawing fallbacks; caption height is a template override. Literal multiline values remain unchanged; the browser clips overflowing cell text, marks a corner and exposes the full value in a tooltip. Small valid paper retains its border and reports that the table cannot fit. These diagnostics do not establish output/font parity. Custom cells, alternative templates, sheet overrides, logos, required-field checks and print/export remain planned. See [decision 0033](decisions/0033-bundled-sheet-frame.md).
+
+Schema v10 requires a known default_template in each package. V2–v9 upgrade deterministically to standard-v1 without changing source drawing/electrical data or wrapping unplaced views. The desktop still uses its existing model/paper surfaces; direct sheet editing is the next migration.

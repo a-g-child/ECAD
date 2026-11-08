@@ -9,6 +9,7 @@ fn doc(id: u128, number: &str) -> ProjectDrawingDocument {
         number: number.into(),
         title: format!("Package {number}\nTitle"),
         revision: "A".into(),
+        default_template: ecad_domain::SheetTemplate::StandardV1,
     }
 }
 fn sheet(id: u128) -> DrawingSheet {
@@ -85,7 +86,7 @@ fn ownership_metadata_and_order_roundtrip_and_undo_exactly_without_rewriting_sou
     );
     assert_eq!(saved.drawing(), before.drawing());
     let data: Value = serde_json::from_str(&std::fs::read_to_string(file.path()).unwrap()).unwrap();
-    assert_eq!(data["schema_version"], 9);
+    assert_eq!(data["schema_version"], 10);
     assert_eq!(
         data["drawing_documents"][0]["sheets"],
         json!([format!("{:032x}", 2)])

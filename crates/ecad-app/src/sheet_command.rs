@@ -81,9 +81,14 @@ impl SheetCommand {
 pub struct SheetPreview {
     revision: Revision,
     sheet: DrawingSheet,
+    frame: SheetFrame,
     pub(crate) command: SheetCommand,
 }
 impl SheetPreview {
+    /// Resolved frame from the validated candidate, including new owner-local sheet counts.
+    pub fn frame(&self) -> &SheetFrame {
+        &self.frame
+    }
     /// Revision and session which authorized the proposal.
     pub fn revision(&self) -> Revision {
         self.revision
@@ -114,6 +119,7 @@ pub fn preview_sheet(
     command.apply(&mut candidate)?;
     Ok(SheetPreview {
         revision: session.revision(),
+        frame: candidate.sheet_frame(sheet.id)?,
         sheet,
         command,
     })

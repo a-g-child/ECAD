@@ -1,8 +1,9 @@
 /** Read-only paper-space projection. Source scene coordinates and document records remain intact. */
-import type { SceneRow, SheetRow, Snapshot } from './types';
+import type { FrameRow, SceneRow, SheetRow, Snapshot } from './types';
 import type { Shell } from './shell';
 import { element } from './ui';
 import { renderText } from './text';
+import { renderFrame } from './frame';
 import { CanvasInput } from './canvas-input';
 const ns = 'http://www.w3.org/2000/svg';
 function node(tag: string, attrs: Record<string, string | number>) {
@@ -11,7 +12,12 @@ function node(tag: string, attrs: Record<string, string | number>) {
   return n;
 }
 let serial = 0;
-export function renderPaper(svg: SVGSVGElement, sheet: SheetRow, scene: SceneRow[]) {
+export function renderPaper(
+  svg: SVGSVGElement,
+  sheet: SheetRow,
+  scene: SceneRow[],
+  frame: FrameRow,
+) {
   svg.replaceChildren();
   const mm = (value: string) => Number(value) / 1000,
     w = mm(sheet.width),
@@ -32,19 +38,7 @@ export function renderPaper(svg: SVGSVGElement, sheet: SheetRow, scene: SceneRow
       class: 'paper-boundary',
     }),
   );
-  svg.append(
-    node('rect', {
-      x: mm(sheet.left),
-      y: mm(sheet.top),
-      width: w - mm(sheet.left) - mm(sheet.right),
-      height: h - mm(sheet.top) - mm(sheet.bottom),
-      fill: 'none',
-      stroke: '#b9c4cc',
-      'stroke-width': 0.2,
-      'stroke-dasharray': '2 1',
-      class: 'paper-margins',
-    }),
-  );
+  renderFrame(svg, frame);
   if (!sheet.view) return;
   const clipped = node('g', { 'clip-path': `url(#${clip})` });
   const placed = node('g', {
@@ -201,8 +195,11 @@ export class PaperSurface {
       this.shell.inspector.inert = !!sheet;
     }
     if (!sheet) return;
-    renderPaper(this.svg, sheet, this.snapshot!.scene);
+    const frame = this.snapshot!.sheet_frames.find((f) => f.sheet === sheet.id)!;
+    renderPaper(this.svg, sheet, this.snapshot!.scene, frame);
     this.badge.textContent = `${sheet.number} · ${sheet.title} · Paper preview · edit source in Model view`;
+    if (frame.title_block_too_small) this.badge.textContent += ' · Title block cannot fit';
+    this.badge.title = this.badge.textContent;
     if (fit) this.fit();
     else this.paint();
   }

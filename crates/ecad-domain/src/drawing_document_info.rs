@@ -12,6 +12,8 @@ pub struct ProjectDrawingDocument {
     pub title: String,
     /// Explicit engineering revision text, unrelated to undo/Git revisions.
     pub revision: String,
+    /// Immutable bundled frame inherited by every sheet in this package.
+    pub default_template: crate::SheetTemplate,
 }
 impl ProjectDrawingDocument {
     /// Deterministic initial package for new/legacy projects. Its typed ID uses the project ID's
@@ -25,6 +27,7 @@ impl ProjectDrawingDocument {
             number: "1".into(),
             title: "Drawings".into(),
             revision: String::new(),
+            default_template: crate::SheetTemplate::StandardV1,
         }
     }
     /// Validate required display metadata without changing literal text.

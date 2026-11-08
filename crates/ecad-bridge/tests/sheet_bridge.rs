@@ -136,3 +136,32 @@ fn sheets_can_be_blank_reordered_and_removed_without_deleting_or_renumbering_vie
     action(&mut b, "document.undo");
     assert_eq!(snap(&b)["sheets"][0]["id"], first["id"]);
 }
+
+#[test]
+fn frame_projection_matches_review_then_refreshes_live_values_and_undo() {
+    let mut b = DesktopBridge::demo().unwrap();
+    let before = snap(&b);
+    let mut row = seed(&mut b);
+    row["title"] = json!("Harness\nSheet");
+    let p = preview(&mut b, row.clone(), true).unwrap();
+    assert_eq!(p["frame"]["template"], "standard-v1");
+    assert_eq!(p["frame"]["sheet"], row["id"]);
+    assert_eq!(p["frame"]["cells"][3]["value"], "Harness\nSheet");
+    assert_eq!(p["frame"]["cells"][7]["value"], "1 / 1");
+    assert_eq!(snap(&b)["sheet_frames"], json!([]));
+    commit(&mut b, &p).unwrap();
+    assert_eq!(snap(&b)["sheet_frames"][0], p["frame"]);
+    let v = json!({"type":"update_metadata","context":ctx(&b),"values":{"company.name":"Literal <company>\nAddress"},"input":snap(&b)["next_input"]});
+    call(&mut b, v).unwrap();
+    assert_eq!(
+        snap(&b)["sheet_frames"][0]["cells"][0]["value"],
+        "Literal <company>\nAddress"
+    );
+    assert_eq!(snap(&b)["scene"], before["scene"]);
+    action(&mut b, "document.undo");
+    assert_eq!(snap(&b)["sheet_frames"][0], p["frame"]);
+    action(&mut b, "document.undo");
+    assert_eq!(snap(&b)["sheet_frames"], json!([]));
+    action(&mut b, "document.redo");
+    assert_eq!(snap(&b)["sheet_frames"][0], p["frame"]);
+}

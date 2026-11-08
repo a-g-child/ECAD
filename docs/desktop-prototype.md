@@ -50,7 +50,7 @@ It is written under `src-tauri/target/debug/` and runs without a Vite server. Th
 
 An untouched loaded project is clean. Actual edits change its core history/checkpoint, and undo/redo can return to a saved state. A report or selection change does not dirty the document. Exact IDs, revisions, and editor values cross the bridge as strings; only scene display coordinates use floating-point millimetres.
 
-Logical document metadata and ordered sheet IDs are exposed by the bridge, but package creation/rename/transfer controls are not yet in the desktop. The current flat sheet manager preserves owners on property edits/removal undo and rejects cross-document flattened moves. Document templates, wrapping unplaced views and the direct sheet editor are subsequent slices.
+Logical document metadata and ordered sheet IDs are exposed by the bridge, but package creation/rename/transfer controls are not yet in the desktop. The current flat sheet manager preserves owners on property edits/removal undo and rejects cross-document flattened moves. Each package now has a persisted standard-v1 default; both sheet review and paper display render its border and eight live fields. Cell overflow is clipped/marked with full-value tooltips, and insufficient paper shows a diagnostic. Custom template editing, wrapping unplaced views and the direct sheet editor remain subsequent slices.
 
 ## Local verification
 
@@ -69,7 +69,7 @@ cargo xtask ui
 cargo xtask desktop
 ```
 
-`full` includes the headless bridge contracts and remains independent of Node/Tauri. `ui` checks bridge tests, Prettier, TypeScript/build, and thirty-one browser workflows. It starts an isolated Rust harness on port 3838 and Vite on 1421, operating on a temporary approved project. It does not mock the electrical model and does not contact GitHub. Screenshots are written to ignored `target/ui/`. The harness is an example/test program, not a production HTTP service; it binds loopback, accepts bounded JSON requests only from the known local frontend origins, and exposes no arbitrary file-open endpoint. Native desktop uses IPC instead.
+`full` includes the headless bridge contracts and remains independent of Node/Tauri. `ui` checks bridge tests, Prettier, TypeScript/build, and thirty-two browser workflows. It starts an isolated Rust harness on port 3838 and Vite on 1421, operating on a temporary approved project. It does not mock the electrical model and does not contact GitHub. Screenshots are written to ignored `target/ui/`. The harness is an example/test program, not a production HTTP service; it binds loopback, accepts bounded JSON requests only from the known local frontend origins, and exposes no arbitrary file-open endpoint. Native desktop uses IPC instead.
 
 `desktop` checks frontend formatting/build and native Rust formatting/Clippy with the separate locked host manifest. It needs the platform's webview development dependencies. A native launch smoke test separately confirmed that the macOS webview invokes the Rust controller; browser tests do not prove native dialog, accessibility, font, or keyboard behavior.
 

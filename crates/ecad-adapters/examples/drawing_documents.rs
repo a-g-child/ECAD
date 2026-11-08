@@ -40,6 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 number: "HARNESS".into(),
                 title: "Harness drawings".into(),
                 revision: "A".into(),
+                default_template: ecad_domain::SheetTemplate::StandardV1,
             },
             index: 1,
         }),
@@ -62,7 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     d.undo(d.session().revision())?;
     assert_eq!(d.session().project(), &before);
     println!(
-        "Two drawing documents: explicit sheet ownership, preserved shared views, exact undo and v9 round trip passed."
+        "Two drawing documents: explicit sheet ownership, preserved shared views, exact undo and v10 round trip passed."
     );
     Ok(())
 }

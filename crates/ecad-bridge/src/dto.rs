@@ -372,6 +372,7 @@ pub struct Response {
 pub(crate) struct Snapshot {
     pub drawing_documents: Vec<crate::document_rows::DrawingDocumentRow>,
     pub sheets: Vec<crate::sheets::SheetRow>,
+    pub sheet_frames: Vec<crate::frame_rows::FrameRow>,
     pub bridge_version: u8,
     pub next_input: String,
     pub revision: Token,

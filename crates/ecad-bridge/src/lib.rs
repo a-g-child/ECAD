@@ -5,6 +5,7 @@ mod controller;
 mod defaults;
 mod document_rows;
 mod dto;
+mod frame_rows;
 mod layout_tool;
 mod metadata;
 mod movement;

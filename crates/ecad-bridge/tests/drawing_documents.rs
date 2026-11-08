@@ -35,6 +35,7 @@ fn bridge_projects_packages_and_preserves_nondefault_ownership_during_sheet_edit
             number: "WIRING".into(),
             title: "Harness\nDrawings".into(),
             revision: "A".into(),
+            default_template: ecad_domain::SheetTemplate::StandardV1,
         },
         1,
     )

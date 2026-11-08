@@ -40,6 +40,7 @@ mod route;
 mod route_error;
 mod route_geometry;
 mod sheet;
+mod sheet_frame;
 mod snapping;
 
 pub use adoption_changes::{ObjectChanges, RevisionChanges};
@@ -84,6 +85,7 @@ pub use drawing_transform::{DrawingTransform, MirrorAxis, QuarterTurn};
 pub use project_metadata::{MetadataField, ProjectMetadata};
 
 pub use sheet::{DrawingSheet, SheetError, SheetPaper, SheetViewPlacement};
+pub use sheet_frame::{FrameCell, FrameField, FrameRect, SheetFrame, SheetTemplate};
 
 pub use drawing_document_info::{
     DrawingDocumentError, DrawingDocumentLayout, ProjectDrawingDocument,

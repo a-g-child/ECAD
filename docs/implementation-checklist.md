@@ -189,11 +189,13 @@ Follow the ordered [workspace and sheet task list](workspace-and-sheet-implement
 Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. Current v8 Model view/read-only paper behavior remains implemented but is not the intended final workflow.
 
 - [x] Add logical drawing-document IDs, metadata, ordered ownership, transfer/rename/reorder commands and deterministic v9 ownership upgrade.
-- [ ] Add document default templates with the basic frame and unified sheet editor.
+- [x] Add mandatory standard-v1 document default, bundled frame/live fields and strict v10 persistence with deterministic legacy upgrades.
+- [ ] Integrate the frame with the unified sheet editor.
 - [x] Preserve legacy sheets, source records and shared/unplaced views in a deterministic initial drawing document without renumbering or copying.
 - [ ] Migrate unplaced views into template-backed sheets and expose shared-view editing behavior when the frame/editor is implemented.
 - [ ] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated coordinate input.
-- [ ] Supply a basic standard frame/drawing-info template for every drawing sheet; expand custom table/template editing afterward.
+- [x] Resolve a basic standard frame/eight live fields for every drawing sheet in paper preview and numeric review, with small-paper/overflow diagnostics.
+- [ ] Expand custom table/template editing and output preflight.
 - [ ] Make pages/sheets the default Project explorer, retaining electrical structure as an alternate mode.
 - [ ] Add selectable sheet tabs/panes with retained camera/selection, stable tab identity and shared project history.
 - [ ] Include cover/generated drawing-list/overview/detail page roles; every page resolves its CAD template.
@@ -219,3 +221,5 @@ Visual-bounds alignment and edge-gap distribution, retained arrays, advanced dra
 ## Source repository
 
 Local branch `main` is initialized and `origin` points to `https://github.com/a-g-child/ECAD.git`. `main` has been pushed and tracks `origin/main`. Repository setup does not imply that application-level Git integration or hosted CI has been implemented.
+
+Frame slice: see [decision 0033](decisions/0033-bundled-sheet-frame.md), [frame workflows](../crates/ecad-adapters/tests/sheet_frames.rs) and sheet bridge/browser regressions. Direct sheet input, unplaced-view wrapping and multi-project host integration remain unchecked.

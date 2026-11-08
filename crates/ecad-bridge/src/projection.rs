@@ -213,6 +213,16 @@ pub(crate) fn snapshot(
     Snapshot {
         drawing_documents: crate::document_rows::project(project),
         sheets: project.sheets().iter().map(Into::into).collect(),
+        sheet_frames: project
+            .sheets()
+            .iter()
+            .map(|s| {
+                crate::frame_rows::FrameRow::new(
+                    s.id,
+                    &project.sheet_frame(s.id).expect("validated sheet owner"),
+                )
+            })
+            .collect(),
         bridge_version: 1,
         next_input: "1".into(),
         revision: session.revision().into(),

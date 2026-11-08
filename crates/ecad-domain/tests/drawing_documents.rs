@@ -6,6 +6,7 @@ fn doc(id: u128, number: &str) -> ProjectDrawingDocument {
         number: number.into(),
         title: format!("Package {number}\nTitle"),
         revision: "A".into(),
+        default_template: ecad_domain::SheetTemplate::StandardV1,
     }
 }
 fn sheet(id: u128) -> DrawingSheet {

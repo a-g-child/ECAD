@@ -62,6 +62,23 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
       'translate(30 70) scale(0.5) translate(-10 5)',
     );
     assert.equal(await dialog(p).locator('.sheet-draft-preview polyline').count(), 2);
+    assert.equal(
+      await dialog(p).locator('.sheet-frame').getAttribute('data-template'),
+      'standard-v1',
+    );
+    assert.equal(await dialog(p).locator('.frame-cell').count(), 8);
+    assert.equal(
+      await dialog(p)
+        .locator('[data-field="sheet.title"] text.frame-value')
+        .getAttribute('aria-label'),
+      'Harness\nDetail',
+    );
+    assert.equal(await dialog(p).locator('[data-field="sheet.title"] tspan').count(), 3);
+    assert.equal(
+      await dialog(p).locator('[data-field="document.sheet_count"] text.frame-value').textContent(),
+      '1 / 1',
+    );
+    const frameBorder = await dialog(p).locator('.frame-border').getAttribute('width');
     assert.deepEqual(await bounds(p), before);
     await p.setViewportSize({ width: 960, height: 640 });
     const rect = await dialog(p).boundingBox(),
@@ -76,7 +93,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await save(p);
     const saved = JSON.parse(await readFile(project(), 'utf8')),
       sheet = saved.sheets[0];
-    assert.equal(saved.schema_version, 9);
+    assert.equal(saved.schema_version, 10);
     assert.deepEqual(sheet.paper, {
       width_um: 297000,
       height_um: 420000,
@@ -90,6 +107,12 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.deepEqual(saved, original);
     await display(p).selectOption(sheet.id);
     await p.getByRole('img', { name: 'Paper sheet preview' }).waitFor();
+    assert.equal(
+      await p.locator('.sheet-surface .frame-border').getAttribute('width'),
+      frameBorder,
+    );
+    assert.equal(await p.locator('.sheet-surface .frame-cell').count(), 8);
+    assert.equal(saved.drawing_documents[0].default_template, 'standard-v1');
     assert.equal(
       await p.getByRole('combobox', { name: 'Drawing view', exact: true }).isDisabled(),
       true,
@@ -188,6 +211,56 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     const final = JSON.parse(await readFile(project(), 'utf8'));
     assert.deepEqual(final.sheets, []);
     assert.deepEqual(final.drawing, source);
+    assert.deepEqual(p.errors, []);
+    await p.close();
+  });
+  test('frame fields refresh from project metadata with literal multiline overflow and undo; small sheets diagnose missing table', async () => {
+    const p = await page(),
+      before = await bounds(p);
+    await open(p);
+    await field(p, 'Sheet title').fill('Frame check');
+    await dialog(p).getByRole('combobox', { name: 'Placed drawing view' }).selectOption('');
+    await preview(p);
+    await apply(p);
+    await p.getByRole('tab', { name: 'File', exact: true }).click();
+    await button(p, 'Project information').click();
+    const info = p.getByRole('dialog', { name: 'Project information', exact: true });
+    await info
+      .getByRole('textbox', { name: 'Company name', exact: true })
+      .fill('ACME <literal>\nSecond line\nThird line');
+    await info.getByRole('button', { name: 'Apply information', exact: true }).click();
+    await info.waitFor({ state: 'hidden' });
+    await until(async () => (await display(p).locator('option').count()) === 2);
+    const id = await display(p).locator('option').nth(1).getAttribute('value');
+    await display(p).selectOption(id);
+    const company = p.locator('.sheet-surface [data-field="company.name"]');
+    assert.equal(
+      await company.locator('text.frame-value').getAttribute('aria-label'),
+      'ACME <literal>\nSecond line\nThird line',
+    );
+    assert.equal(await company.locator('literal').count(), 0);
+    assert.equal(await company.locator('.overflow-marker').count(), 1);
+    assert.match(await company.locator('title').textContent(), /full value is preserved/);
+    assert.deepEqual(await bounds(p), before);
+    await p.getByRole('tab', { name: 'Drawing', exact: true }).click();
+    await pressAction(p, 'Undo', 'Undo complete');
+    assert.notEqual(
+      await company.locator('text.frame-value').getAttribute('aria-label'),
+      'ACME <literal>\nSecond line\nThird line',
+    );
+    await pressAction(p, 'Redo', 'Redo complete');
+    assert.equal(await company.locator('.overflow-marker').count(), 1);
+    await pressAction(p, 'Undo', 'Undo complete');
+    await open(p);
+    await field(p, 'Paper width (µm)').fill('100000');
+    await preview(p);
+    assert.match(await dialog(p).getByRole('alert').innerText(), /cannot fit/);
+    assert.equal(await dialog(p).locator('.frame-cell').count(), 0);
+    assert.equal(await dialog(p).locator('.frame-border').count(), 1);
+    await control(p, 'Close').click();
+    await dialog(p).waitFor({ state: 'hidden' });
+    await pressAction(p, 'Undo', 'Undo complete');
+    assert.equal(await display(p).locator('option').count(), 1);
     assert.deepEqual(p.errors, []);
     await p.close();
   });

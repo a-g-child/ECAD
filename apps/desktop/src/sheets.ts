@@ -99,7 +99,7 @@ export class SheetsDialog {
       element(
         'p',
         'settings-note',
-        'Paper and margins use integer µm. Scale is paper/model (1/2 is half size). One optional view per sheet; guides do not resize it. Preview is clipped to paper. Templates and output are planned.',
+        'Paper and margins use integer µm. Scale is paper/model (1/2 is half size). One optional view per sheet; guides do not resize it. Preview is clipped to paper. The document supplies its standard frame. Custom templates and output are planned.',
       ),
       this.select,
       layout,
@@ -264,9 +264,11 @@ export class SheetsDialog {
     });
     if (!reply.sheet_preview) throw new Error('Missing sheet preview');
     this.proposal = reply.sheet_preview;
-    renderPaper(this.previewSvg, this.proposal.sheet, this.proposal.scene);
+    renderPaper(this.previewSvg, this.proposal.sheet, this.proposal.scene, this.proposal.frame);
     this.previewSvg.setAttribute('viewBox', paperBox(this.proposal.sheet, 1.25).join(' '));
-    this.message.textContent = 'Reviewed paper layout · Apply sheet commits one edit.';
+    this.message.textContent = this.proposal.frame.title_block_too_small
+      ? 'Title block cannot fit: the standard frame needs a 180 × 40 mm interior. The border is retained.'
+      : 'Reviewed paper layout · Apply sheet commits one edit.';
   }
   private async commit() {
     if (!this.proposal) return;

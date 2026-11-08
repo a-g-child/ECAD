@@ -1,6 +1,6 @@
 # Multi-project workspace and sheet-first implementation tasks
 
-Status: implementation started with a headless ProjectWorkspace owning independent project controllers. Logical drawing-document ownership and schema-v9 upgrades are also implemented. The desktop still has one DesktopBridge/project and the prototype Model view/paper split. Checked items are executable foundations; UI migration is not yet complete.
+Status: implementation started with a headless ProjectWorkspace owning independent project controllers. Logical drawing-document ownership, schema-v10 template defaults and the first bundled frame are also implemented. The desktop still has one DesktopBridge/project and the prototype Model view/paper split. Checked items are executable foundations; UI migration is not yet complete.
 
 ## Target and boundaries
 
@@ -53,11 +53,11 @@ Every actual drawing is edited directly on a CAD-template sheet. Cover, generate
 - [x] Preserve shared and unplaced view references unchanged during ownership upgrade, without electrical copies.
 - [ ] Expose shared-view editing implications in the unified sheet workspace before any explicit materialization policy.
 - [x] Test ownership migration round trips, stable IDs, rollback, source geometry and strict membership validation.
-- [ ] Add document default-template references and their migration/validation with the actual frame implementation.
+- [x] Add mandatory standard-v1 document defaults, strict v10 persistence/legacy upgrades and the actual bundled frame.
 
 ### 3. Template-backed sheet editor
 
-- [ ] Add a basic bundled CAD frame and drawing-info fields with mandatory resolved template/default.
+- [x] Add a basic bundled CAD frame and eight live drawing-info fields with mandatory document default; paper preview and numeric sheet review share the projection.
 - [ ] Open/create drawings directly on sheets; remove the normal free Model view/paper-preview switch.
 - [ ] Unify paper drawing, hit testing, selection, marquee, drag, snapping, numeric placement and navigation through validated coordinate transforms.
 - [ ] Retain blank cover/content pages and independent definition-editor contexts.
