@@ -43,3 +43,6 @@ pub use versioned_file::FileVersion;
 pub use connection_csv::{ConnectionCsvKind, encode_connection_csv, encode_current_connection_csv};
 
 pub use profile_file::{ProfileFile, ProfileFileError, ProfileSnapshot};
+
+mod template_json;
+pub use template_json::{TemplateFileError, decode_template_variant, encode_template_variant};

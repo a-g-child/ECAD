@@ -133,6 +133,27 @@ identity!(
     "Identity of a logical drawing package, not an application session."
 );
 
+identity!(
+    TemplateDefinitionId,
+    "Lineage identity of a reusable sheet-template definition."
+);
+identity!(
+    TemplateRevisionId,
+    "Identity of an immutable saved sheet-template revision."
+);
+identity!(
+    TemplateVariantId,
+    "Identity of a paper/layout variant within a template definition."
+);
+identity!(
+    TemplateTableId,
+    "Identity of a retained title-block table within a template layout."
+);
+identity!(
+    TemplateCellId,
+    "Identity of a template cell, independent of its field or position."
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;

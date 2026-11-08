@@ -235,12 +235,19 @@ Explorer slice: [decision 0035](decisions/0035-project-page-and-electrical-explo
 
 Project-page creation: [decision 0036](decisions/0036-project-template-defaults-and-typed-pages.md), [project/default/list workflows](../crates/ecad-adapters/tests/project_pages.rs), [typed bridge contracts](../crates/ecad-bridge/tests/project_creation_bridge.rs) and [project-menu browser workflows](../apps/desktop/tests/project-pages.mjs). Project schema v11 preserves v2–v10 input; actual PDF generation, annotations/outlines, custom template authoring and native Windows/Linux execution remain pending.
 
-## Consolidated template library/editor plan
+## Consolidated template library/editor
 
-See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [requirements/task sequence](template-editor-plan.md). These are planned changes, not working features.
+See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [requirements/task sequence](template-editor-plan.md). The first headless layout/serialization foundation is implemented; the library/editor workflow remains planned.
 
+- [x] Add immutable template-variant bodies with typed IDs, explicit content bounds and validated structured table/cell partitions, including unequal rows/spans and literal/known-field text runs.
+- [x] Add strict standalone template-variant schema v1 serialization and route existing sheet frames through project-independent legacy layout projection, preserving exact geometry/tiny-sheet behavior.
+- [ ] Complete library publication, transitive project bundling and deterministic preservation migration; project persistence remains v11 and current assignments/controls remain unchanged.
 - [ ] Move paper/profile/margin/title-block structure ownership into saved template variants.
 - [ ] Add Libraries access, a separate template editor view, contextual ribbon and template/table/cell properties.
 - [ ] Add ISO/ANSI paper/profile presets with verified edition-specific layout rules and Custom provenance.
 - [ ] Add structured unequal-row tables, coherent sizing/split/merge and stable field bindings.
 - [ ] Implement saved-only sheet assignment with deterministic legacy preservation, project bundling and explicit revision adoption.
+
+Template foundations: [layout/partition regressions](../crates/ecad-domain/tests/template_layout.rs) and [standalone format checks](../crates/ecad-adapters/tests/template_variants.rs). No template manager/editor view is exposed yet; encoding a variant does not publish it or make it selectable.
+
+Template foundation validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (41 browser workflows) and `cargo xtask desktop` passed, including nine new headless layout/serialization checks. The browser harness required loopback permissions outside the filesystem sandbox. Native Windows/Linux execution and template-editor interaction remain unverified.

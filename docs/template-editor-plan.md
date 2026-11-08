@@ -1,6 +1,6 @@
 # Consolidated drawing-template library editor
 
-Status: agreed planning scope, not implemented. This replaces inline template/layout authoring in new-sheet creation with a dedicated library workspace. The current v11 prototype still has three bundled frame enums and editable per-sheet paper/margins. See [current behavior](decisions/0036-project-template-defaults-and-typed-pages.md) and [template requirements](sheets-and-templates.md).
+Status: implementation started with headless layout/variant bodies and a standalone serialization contract; library publication, project bundling/migration and editor UI remain planned. This replaces inline template/layout authoring in new-sheet creation with a dedicated library workspace. The current v11 prototype still has three bundled frame enums and editable per-sheet paper/margins. See [current behavior](decisions/0036-project-template-defaults-and-typed-pages.md) and [template requirements](sheets-and-templates.md).
 
 ## 1. User workflow and separation
 
@@ -107,7 +107,9 @@ Legacy layouts which do not meet new authoring validation still need faithful re
 ## 8. Ordered implementation checklist
 
 - [ ] Record ownership/reference contracts and exact standard-profile sources, editions and numeric acceptance fixtures.
-- [ ] Implement saved template/title-block IDs, immutable revisions/variants, partition validation, field schemas and deterministic headless paper/layout projection.
+- [x] Add template definition/revision/variant and table/cell IDs, immutable variant bodies, validated rectangular partitions, literal/known-field runs and project-independent legacy layout projection.
+- [x] Add strict standalone template-variant schema v1 encoding/decoding with exact units and retained presentation order.
+- [ ] Complete reusable title-block revisions, custom field schemas, style/overflow intent and general anchored layout projection.
 - [ ] Implement canonical library persistence/publication, project bundling and a preservation migration for all current v11 layouts/defaults/inheritance.
 - [ ] Integrate the saved-template picker and project defaults; lock inline paper/margin/template-structure authoring out of sheet creation/properties only after legacy layouts are preserved.
 - [ ] Add Libraries → Drawing templates manager and a separate template workspace/session with independent save/close/undo and contextual ribbon/properties.
@@ -130,4 +132,14 @@ Ship foundational storage/migration before enforcing the new picker contract. Th
 - Exercise malformed partitions/references/units, unknown bindings, failed/conflicting saves, missing library files, recommendation changes and archived definitions.
 - Measure deterministic 10/100/1,000-cell fixtures and reuse across many sheets; record layout/cache invalidation, memory and visible editing costs before setting performance gates.
 
-Implementation runs cargo xtask full, cargo xtask ui and cargo xtask desktop where relevant, plus migration/golden/regression fixtures and native host checks. Linux/Windows execution and PDF/font/output parity remain independently verified gates. This planning-only change does not change runtime behavior or require test execution.
+Implementation runs cargo xtask full, cargo xtask ui and cargo xtask desktop where relevant, plus migration/golden/regression fixtures and native host checks. Linux/Windows execution and PDF/font/output parity remain independently verified gates. The initial implementation routes existing sheet frames through the headless legacy layout projection, with exact geometry/field preservation regressions. Project persistence remains v11; standalone variant serialization is not yet library publication or project bundling.
+
+## First implemented foundation
+
+`TemplateLayout` owns exact paper/margins, an explicit content region and validated structured tables. `TemplateTable` accepts complete rectangular cell partitions, including unequal subdivisions per row and rectangular spans. It rejects overlaps, gaps, invalid extents and repeated identities using widened integer arithmetic. Table/cell geometry is immutable after construction; future editor commands will replace complete validated proposals rather than mutating loose edges.
+
+`TemplateCell` retains multiline captions and ordered literal/typed-field runs. Resolution uses an explicit caller-supplied context and reports missing fields separately from an intentionally empty value. No project, user profile or renderer is consulted implicitly. `SavedTemplateVariant` retains a typed definition/revision/variant pin and body; constructing or encoding it does not publish it. The standalone strict v1 DTO is separate from project persistence, rejects unknown bindings/fields and stores no sample data, timestamps or machine paths.
+
+The three existing enum templates now materialize this model through `SheetTemplate::layout`, used by actual `Project::sheet_frame` rendering. Existing border/table/content geometry, cell ordering, captions and missing-value behavior remain preserved, including tiny legacy sheets with no title block. These are explicitly legacy/custom borders, with no standards-compliance claim. This is the extraction needed before the preservation migration; it does not yet migrate assignments or remove paper controls.
+
+Checks cover unequal partitions/spans, repeated identities, overlap/gaps, owner containment, maximum integer extents, multiline runs, missing/empty values, exact legacy geometry, tiny-sheet preservation and strict canonical serialization. Library IO/concurrent publication, transitive project bundles, deterministic migration pins, paper catalogues/verified profiles, cell styling/border projection, independent application history, editor/ribbon/properties and saved-only pickers remain pending.

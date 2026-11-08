@@ -94,3 +94,15 @@ pub use sheet_frame::{FrameCell, FrameField, FrameRect, SheetFrame, SheetTemplat
 pub use drawing_document_info::{
     DrawingDocumentError, DrawingDocumentLayout, ProjectDrawingDocument,
 };
+
+mod template_layout;
+mod template_table;
+pub use identity::{
+    TemplateCellId, TemplateDefinitionId, TemplateRevisionId, TemplateTableId, TemplateVariantId,
+};
+pub use template_layout::{SavedTemplateVariant, TemplateLayout, TemplateVariantRef};
+pub use template_table::{
+    TemplateCell, TemplateError, TemplateTable, TemplateText, TemplateTextRun,
+};
+
+mod legacy_template_layout;

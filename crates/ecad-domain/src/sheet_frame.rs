@@ -66,6 +66,22 @@ pub enum FrameField {
     DocumentSheetCount,
 }
 impl FrameField {
+    /// Resolve a known semantic key without treating an unknown field as literal text.
+    pub fn from_key(key: &str) -> Option<Self> {
+        if let Some(field) = MetadataField::from_key(key) {
+            return Some(Self::Metadata(field));
+        }
+        [
+            Self::DocumentTitle,
+            Self::DocumentNumber,
+            Self::DocumentRevision,
+            Self::SheetTitle,
+            Self::SheetNumber,
+            Self::DocumentSheetCount,
+        ]
+        .into_iter()
+        .find(|field| field.key() == key)
+    }
     /// Stable semantic identity, also used by the bundled template's cells.
     pub fn key(self) -> &'static str {
         match self {
@@ -78,7 +94,7 @@ impl FrameField {
             Self::DocumentSheetCount => "document.sheet_count",
         }
     }
-    fn caption(self) -> &'static str {
+    pub(crate) fn caption(self) -> &'static str {
         match self {
             Self::Metadata(field) => field.label(),
             Self::DocumentTitle => "Document",
@@ -129,91 +145,42 @@ impl Project {
         let (owner, ordinal) = self.document_sheet_position(id)?;
         let document = self.drawing_document(owner).expect("validated owner");
         let count = self.sheets_in_document(owner)?.len();
-        let p = &sheet.paper;
-        let border = FrameRect {
-            x: p.left,
-            y: p.top,
-            width: p.width - p.left - p.right,
-            height: p.height - p.top - p.bottom,
-        };
         let template = sheet.template.unwrap_or(document.default_template);
-        let (columns, row_height) = match template {
-            SheetTemplate::StandardV1 => (2, 10_000),
-            SheetTemplate::CoverV1 => (2, 20_000),
-            SheetTemplate::DrawingListV1 => (4, 10_000),
-        };
-        let block_height = (8 / columns) * row_height;
-        let too_small = border.width < 180_000 || border.height < block_height;
-        let block_x = if template == SheetTemplate::CoverV1 {
-            border.x + border.width.saturating_sub(180_000) / 2
-        } else {
-            p.width - p.right - 180_000.min(border.width)
-        };
-        let block_y = if template == SheetTemplate::CoverV1 {
-            border.y + border.height.saturating_sub(block_height) / 2
-        } else {
-            p.height - p.bottom - block_height.min(border.height)
-        };
-        let content = FrameRect {
-            x: border.x + 5_000.min(border.width),
-            y: border.y + 5_000.min(border.height),
-            width: border.width.saturating_sub(10_000),
-            height: if too_small {
-                border.height.saturating_sub(10_000)
-            } else {
-                block_y.saturating_sub(border.y).saturating_sub(10_000)
-            },
-        };
-        let fields = [
-            FrameField::Metadata(MetadataField::CompanyName),
-            FrameField::Metadata(MetadataField::ProjectTitle),
-            FrameField::DocumentTitle,
-            FrameField::SheetTitle,
-            FrameField::DocumentNumber,
-            FrameField::SheetNumber,
-            FrameField::DocumentRevision,
-            FrameField::DocumentSheetCount,
-        ];
-        let cells = if too_small {
-            Vec::new()
-        } else {
-            fields
-                .into_iter()
-                .enumerate()
-                .map(|(i, field)| {
-                    let value = match field {
-                        FrameField::Metadata(field) => {
-                            self.metadata().value(field).map(str::to_owned)
-                        }
-                        FrameField::DocumentTitle => Some(document.title.clone()),
-                        FrameField::DocumentNumber => Some(document.number.clone()),
-                        FrameField::DocumentRevision => Some(document.revision.clone()),
-                        FrameField::SheetTitle => Some(sheet.title.clone()),
-                        FrameField::SheetNumber => Some(sheet.number.clone()),
-                        FrameField::DocumentSheetCount => {
-                            Some(format!("{} / {count}", ordinal + 1))
-                        }
-                    };
-                    FrameCell {
-                        field,
-                        caption: field.caption(),
-                        value,
-                        bounds: FrameRect {
-                            x: block_x + (i as u32 % columns) * (180_000 / columns),
-                            y: block_y + (i as u32 / columns) * row_height,
-                            width: 180_000 / columns,
-                            height: row_height,
-                        },
-                    }
-                })
-                .collect()
-        };
+        let layout = template.layout(&sheet.paper)?;
+        let mut cells = Vec::new();
+        for table in layout.tables() {
+            for cell in table.cells() {
+                let crate::TemplateTextRun::Field(field) = cell.contents[0] else {
+                    unreachable!("legacy layout contains one typed field per cell");
+                };
+                let resolved = cell.resolve(|field| match field {
+                    FrameField::Metadata(field) => self.metadata().value(field).map(str::to_owned),
+                    FrameField::DocumentTitle => Some(document.title.clone()),
+                    FrameField::DocumentNumber => Some(document.number.clone()),
+                    FrameField::DocumentRevision => Some(document.revision.clone()),
+                    FrameField::SheetTitle => Some(sheet.title.clone()),
+                    FrameField::SheetNumber => Some(sheet.number.clone()),
+                    FrameField::DocumentSheetCount => Some(format!("{} / {count}", ordinal + 1)),
+                });
+                cells.push(FrameCell {
+                    field,
+                    caption: field.caption(),
+                    value: resolved.missing.is_empty().then_some(resolved.value),
+                    bounds: FrameRect {
+                        x: table.bounds().x + cell.bounds.x,
+                        y: table.bounds().y + cell.bounds.y,
+                        width: cell.bounds.width,
+                        height: cell.bounds.height,
+                    },
+                });
+            }
+        }
         Ok(SheetFrame {
             template,
-            border,
-            content,
+            border: layout.border(),
+            content: layout.content(),
             cells,
-            title_block_too_small: too_small,
+            title_block_too_small: layout.tables().is_empty(),
             appearance: self.drawing().settings().base.clone(),
         })
     }

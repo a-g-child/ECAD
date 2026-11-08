@@ -98,11 +98,12 @@ Every actual drawing is edited directly on a CAD-template sheet. Cover, generate
 
 Each code slice runs cargo xtask full and focused real-file regressions. UI/host slices also run cargo xtask ui and cargo xtask desktop plus native build/launch on the available platform. Include failed opens/reloads/saves, wrong-project revisions, shared input replay, dirty inactive projects, copied project lineage and close/save-as races. UI tests must verify actual sheet editing and independent project roots; screenshots alone are not evidence of project isolation. Linux/Windows native execution and large-workspace rendering remain separate validation work.
 
-### 7. Consolidated template library/editor — planned
+### 7. Consolidated template library/editor — foundations started
 
 Follow [the detailed template-editor plan](template-editor-plan.md).
 
-- [ ] Model real saved template/title-block revisions, size variants, standard-profile provenance and structured cell partitions.
+- [x] Model immutable template-variant bodies, typed identities and validated structured cell partitions; add strict standalone serialization and project-independent legacy layout projection.
+- [ ] Complete reusable title-block revisions, style/field schemas, standard-profile provenance and anchored layout.
 - [ ] Preserve current layouts/defaults/overrides as deterministic bundled variants before changing assignment behavior.
 - [ ] Restrict new sheets to saved templates/variants; move paper/margin/structure editing to Libraries.
 - [ ] Add an independent template editor view/session, contextual ribbon and complete template/cell properties.
