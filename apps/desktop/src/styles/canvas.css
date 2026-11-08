@@ -31,7 +31,7 @@
   min-height: 0;
   min-width: 0;
   outline: none;
-  background: #fff;
+  background: #dde3e7;
 }
 .canvas:focus-visible {
   box-shadow: inset 0 0 0 1px #aac7b8;
@@ -220,20 +220,6 @@
   min-width: 0;
 }
 
-.sheet-surface {
-  position: absolute;
-  inset: 0;
-  background: #dde3e7;
-}
-.sheet-surface[hidden] {
-  display: none;
-}
-.sheet-surface > svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  touch-action: none;
-}
 .paper-badge {
   position: absolute;
   left: 10px;
@@ -246,13 +232,9 @@
   max-height: 30px;
   overflow: hidden;
 }
-.drawing-tabs .view-selector,
 .sheet-selector {
-  flex: 1 1 0;
+  flex: 1;
   min-width: 0;
-  max-width: 48%;
-}
-.sheet-selector {
   height: 35px;
   border: 0;
   border-right: 1px solid var(--line);
@@ -261,18 +243,6 @@
   font-size: 11px;
 }
 
-.placement-pane.paper-mode .move-bar {
-  display: none;
-}
-.paper-tip {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 39px;
-  padding: 0 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.paper-tip[hidden] {
-  display: none;
+.canvas-empty button {
+  margin-top: 12px;
 }

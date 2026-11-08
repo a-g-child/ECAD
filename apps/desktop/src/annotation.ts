@@ -84,7 +84,7 @@ export class AnnotationTool {
       node.disabled = this.committing || !this.row;
     this.applyButton.disabled = !this.valid || this.pumping || !!this.pending || this.committing;
     if (this.active) {
-      this.shell.views.disabled = true;
+      this.shell.sheets.disabled = true;
       this.shell.inspector.inert = true;
     }
     this.changed();
@@ -247,7 +247,7 @@ export class AnnotationTool {
     if (wasActive) {
       this.drawing.movement = null;
       this.drawing.clearPreview();
-      this.shell.views.disabled = false;
+      this.shell.sheets.disabled = false;
       this.shell.inspector.inert = false;
     }
     this.controls();

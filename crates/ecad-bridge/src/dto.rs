@@ -99,6 +99,7 @@ pub(crate) struct Context {
     pub revision: Token,
     pub selection: Vec<Target>,
     pub view: Option<String>,
+    pub sheet: Option<String>,
     pub focus: String,
 }
 /// Strict request envelope. IDs and exact document values cross JSON as strings.

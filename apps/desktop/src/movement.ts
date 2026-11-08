@@ -98,7 +98,7 @@ export class MovementTool {
     for (const node of [this.x, this.y, this.reference, this.cancelButton])
       node.disabled = this.committing || !this.row;
     this.applyButton.disabled = !this.valid || this.pumping || !!this.pending;
-    this.shell.views.disabled = this.active;
+    this.shell.sheets.disabled = this.active;
     this.shell.inspector.inert = this.active;
     this.changed();
   }

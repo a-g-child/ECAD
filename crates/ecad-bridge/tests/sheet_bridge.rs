@@ -61,17 +61,17 @@ fn paper_preview_commit_save_and_history_preserve_source_geometry_and_exact_edit
     assert_eq!(snap(&b)["revision"], before["revision"]);
     assert!(!b.is_dirty());
     commit(&mut b, &p).unwrap();
-    assert_eq!(snap(&b)["sheets"][0]["id"], id);
+    assert_eq!(snap(&b)["sheets"][1]["id"], id);
     assert_eq!(snap(&b)["scene"], before["scene"]);
     action(&mut b, "document.save");
     let loaded = DesktopBridge::from_path(&path).unwrap();
     assert_eq!(snap(&loaded)["sheets"], snap(&b)["sheets"]);
     let mut saved: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
-    saved["sheets"] = json!([]);
+    saved["sheets"] = original["sheets"].clone();
     saved["drawing_documents"] = original["drawing_documents"].clone();
     assert_eq!(saved, original);
     action(&mut b, "document.undo");
-    assert_eq!(snap(&b)["sheets"], json!([]));
+    assert_eq!(snap(&b)["sheets"], before["sheets"]);
     action(&mut b, "document.redo");
     assert!(!b.is_dirty());
     assert_eq!(seed(&mut b)["number"], "2");
@@ -127,14 +127,14 @@ fn sheets_can_be_blank_reordered_and_removed_without_deleting_or_renumbering_vie
     commit(&mut b, &p).unwrap();
     change(&mut b, &second["id"], "move", 0).unwrap();
     assert_eq!(snap(&b)["sheets"][0]["number"], "2");
-    assert_eq!(snap(&b)["sheets"][1]["number"], "1");
-    assert!(change(&mut b, &first["id"], "move", 2).is_err());
+    assert_eq!(snap(&b)["sheets"][2]["number"], "1");
+    assert!(change(&mut b, &first["id"], "move", 3).is_err());
     change(&mut b, &first["id"], "remove", 0).unwrap();
     assert_eq!(snap(&b)["scene"], scene);
     action(&mut b, "document.undo");
-    assert_eq!(snap(&b)["sheets"][1]["id"], first["id"]);
+    assert_eq!(snap(&b)["sheets"][2]["id"], first["id"]);
     action(&mut b, "document.undo");
-    assert_eq!(snap(&b)["sheets"][0]["id"], first["id"]);
+    assert_eq!(snap(&b)["sheets"][1]["id"], first["id"]);
 }
 
 #[test]
@@ -147,21 +147,21 @@ fn frame_projection_matches_review_then_refreshes_live_values_and_undo() {
     assert_eq!(p["frame"]["template"], "standard-v1");
     assert_eq!(p["frame"]["sheet"], row["id"]);
     assert_eq!(p["frame"]["cells"][3]["value"], "Harness\nSheet");
-    assert_eq!(p["frame"]["cells"][7]["value"], "1 / 1");
-    assert_eq!(snap(&b)["sheet_frames"], json!([]));
+    assert_eq!(p["frame"]["cells"][7]["value"], "2 / 2");
+    assert_eq!(snap(&b)["sheet_frames"], before["sheet_frames"]);
     commit(&mut b, &p).unwrap();
-    assert_eq!(snap(&b)["sheet_frames"][0], p["frame"]);
+    assert_eq!(snap(&b)["sheet_frames"][1], p["frame"]);
     let v = json!({"type":"update_metadata","context":ctx(&b),"values":{"company.name":"Literal <company>\nAddress"},"input":snap(&b)["next_input"]});
     call(&mut b, v).unwrap();
     assert_eq!(
-        snap(&b)["sheet_frames"][0]["cells"][0]["value"],
+        snap(&b)["sheet_frames"][1]["cells"][0]["value"],
         "Literal <company>\nAddress"
     );
     assert_eq!(snap(&b)["scene"], before["scene"]);
     action(&mut b, "document.undo");
-    assert_eq!(snap(&b)["sheet_frames"][0], p["frame"]);
+    assert_eq!(snap(&b)["sheet_frames"][1], p["frame"]);
     action(&mut b, "document.undo");
-    assert_eq!(snap(&b)["sheet_frames"], json!([]));
+    assert_eq!(snap(&b)["sheet_frames"], before["sheet_frames"]);
     action(&mut b, "document.redo");
-    assert_eq!(snap(&b)["sheet_frames"][0], p["frame"]);
+    assert_eq!(snap(&b)["sheet_frames"][1], p["frame"]);
 }

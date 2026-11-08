@@ -1,10 +1,7 @@
-/** Read-only paper-space projection. Source scene coordinates and document records remain intact. */
-import type { FrameRow, SceneRow, SheetRow, Snapshot } from './types';
-import type { Shell } from './shell';
-import { element } from './ui';
+/** Paper-space review projection; the editable canvas shares this background/frame renderer. */
+import type { FrameRow, SceneRow, SheetRow } from './types';
 import { renderText } from './text';
 import { renderFrame } from './frame';
-import { CanvasInput } from './canvas-input';
 const ns = 'http://www.w3.org/2000/svg';
 function node(tag: string, attrs: Record<string, string | number>) {
   const n = document.createElementNS(ns, tag);
@@ -28,17 +25,7 @@ export function renderPaper(
   path.append(node('rect', { width: w, height: h }));
   defs.append(path);
   svg.append(defs);
-  svg.append(
-    node('rect', {
-      width: w,
-      height: h,
-      fill: '#fff',
-      stroke: '#9aa5ad',
-      'stroke-width': 0.3,
-      class: 'paper-boundary',
-    }),
-  );
-  renderFrame(svg, frame);
+  renderPaperBackground(svg, sheet, frame);
   if (!sheet.view) return;
   const clipped = node('g', { 'clip-path': `url(#${clip})` });
   const placed = node('g', {
@@ -102,119 +89,19 @@ export function paperBox(sheet: SheetRow, aspect: number) {
     height = width / aspect;
   return [(w - width) / 2, (h - height) / 2, width, height];
 }
-export class PaperSurface {
-  private surface = element('div', 'sheet-surface');
-  private svg = document.createElementNS(ns, 'svg');
-  private badge = element('div', 'paper-badge');
-  private tip = element(
-    'div',
-    'paper-tip',
-    'Paper preview · F fits sheet · Return to Model view to edit',
+
+export function renderPaperBackground(svg: SVGElement, sheet: SheetRow, frame: FrameRow) {
+  const w = Number(sheet.width) / 1000,
+    h = Number(sheet.height) / 1000;
+  svg.append(
+    node('rect', {
+      width: w,
+      height: h,
+      fill: '#fff',
+      stroke: '#9aa5ad',
+      'stroke-width': 0.3,
+      class: 'paper-boundary',
+    }),
   );
-  private snapshot: Snapshot | null = null;
-  private box = [0, 0, 317, 230];
-  private current = '';
-  private showing = false;
-  get active() {
-    return !!this.current;
-  }
-  get id() {
-    return this.current;
-  }
-  constructor(
-    private shell: Shell,
-    private changed: () => void,
-  ) {
-    this.surface.hidden = true;
-    this.tip.hidden = true;
-    shell.placement.append(this.tip);
-    this.svg.setAttribute('aria-label', 'Paper sheet preview');
-    this.svg.setAttribute('role', 'img');
-    this.surface.append(this.svg, this.badge);
-    shell.canvas.append(this.surface);
-    // Reuse CAD navigation only; paper preview never selects or moves model objects.
-    this.svg.addEventListener(
-      'pointerdown',
-      (e) => {
-        if (e.button === 0) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-        }
-      },
-      true,
-    );
-    new CanvasInput({
-      svg: this.svg,
-      canvas: shell.canvas,
-      rows: () => [],
-      selected: () => new Set(),
-      box: () => this.box,
-      setBox: (box) => {
-        this.box = box;
-        this.paint();
-      },
-      choose: () => {},
-      selectMany: () => {},
-      startMove: async () => null,
-      movement: () => null,
-    });
-    shell.sheets.addEventListener('change', () => this.show(shell.sheets.value));
-    new ResizeObserver(() => {
-      if (this.active) this.paint();
-    }).observe(shell.canvas);
-  }
-  update(snapshot: Snapshot, replaced: boolean) {
-    this.snapshot = snapshot;
-    const previous = this.current;
-    if (replaced || !snapshot.sheets.some((s) => s.id === this.current)) this.current = '';
-    this.shell.sheets.replaceChildren();
-    for (const s of [{ id: '', number: '', title: 'Model view' }, ...snapshot.sheets]) {
-      const option = element('option', '', s.id ? `${s.number} · ${s.title}` : s.title);
-      option.value = s.id;
-      this.shell.sheets.append(option);
-    }
-    this.shell.sheets.value = this.current;
-    this.render(previous !== this.current);
-  }
-  show(id: string) {
-    const change = this.current !== id;
-    this.current = id;
-    this.shell.sheets.value = id;
-    this.render(change);
-    this.changed();
-  }
-  private render(fit: boolean) {
-    const sheet = this.snapshot?.sheets.find((s) => s.id === this.current);
-    const previouslyShowing = this.showing;
-    this.showing = !!sheet;
-    this.surface.hidden = !sheet;
-    this.tip.hidden = !sheet;
-    this.shell.placement.classList.toggle('paper-mode', !!sheet);
-    if (sheet || previouslyShowing) {
-      this.shell.views.disabled = !!sheet;
-      this.shell.inspector.inert = !!sheet;
-    }
-    if (!sheet) return;
-    const frame = this.snapshot!.sheet_frames.find((f) => f.sheet === sheet.id)!;
-    renderPaper(this.svg, sheet, this.snapshot!.scene, frame);
-    this.badge.textContent = `${sheet.number} · ${sheet.title} · Paper preview · edit source in Model view`;
-    if (frame.title_block_too_small) this.badge.textContent += ' · Title block cannot fit';
-    this.badge.title = this.badge.textContent;
-    if (fit) this.fit();
-    else this.paint();
-  }
-  fit() {
-    const sheet = this.snapshot?.sheets.find((s) => s.id === this.current);
-    if (!sheet) return;
-    this.box = paperBox(sheet, this.aspect());
-    this.paint();
-  }
-  private aspect() {
-    return Math.max(1, this.shell.canvas.clientWidth) / Math.max(1, this.shell.canvas.clientHeight);
-  }
-  private paint() {
-    this.box[3] = this.box[2] / this.aspect();
-    this.svg.setAttribute('viewBox', this.box.join(' '));
-    if (this.active) this.shell.zoom.textContent = 'Paper';
-  }
+  renderFrame(svg, frame);
 }

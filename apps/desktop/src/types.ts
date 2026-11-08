@@ -11,6 +11,7 @@ export interface Context {
   revision: Revision;
   selection: Target[];
   view: string | null;
+  sheet?: string | null;
   focus: string;
 }
 export interface TreeRow {

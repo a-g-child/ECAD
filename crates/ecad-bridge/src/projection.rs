@@ -186,7 +186,14 @@ pub(crate) fn snapshot(
                     | ActionHandler::Palette
                     | ActionHandler::ConnectionReport
             );
-            let state = registry.state(&d.id, &context, Some(session));
+            let mut target = context.clone();
+            if d.handler == ActionHandler::FitDrawing
+                && let Some(sheet) = project.sheets().first()
+            {
+                target.sheet = Some(sheet.id);
+                target.view = sheet.placement.as_ref().map(|p| p.view);
+            }
+            let state = registry.state(&d.id, &target, Some(session));
             ActionRow {
                 id: d.id.to_string(),
                 label: d.label.clone(),
@@ -326,6 +333,25 @@ pub(crate) fn demo() -> Result<Project, BridgeError> {
                 },
             },
         })?;
+        project.insert_sheet(
+            DrawingSheet {
+                id: SheetId::new(1).expect("constant"),
+                number: "DEMO".into(),
+                title: "Conveyor · detailed wiring".into(),
+                paper: SheetPaper::default(),
+                placement: Some(SheetViewPlacement {
+                    view,
+                    paper_origin: DrawingPoint {
+                        x: 20_000,
+                        y: 60_000,
+                    },
+                    view_origin: DrawingPoint::default(),
+                    numerator: 1,
+                    denominator: 1,
+                }),
+            },
+            0,
+        )?;
         project.validate()
     })();
     result.map_err(|e| BridgeError::new("sample", e))?;

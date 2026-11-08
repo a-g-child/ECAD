@@ -1,6 +1,6 @@
 # Drawing sheets, layouts and metadata
 
-Status: target architecture revised to Project → Documents → Sheets. The current prototype still implements an editable Model view plus read-only paper display; that workflow is superseded and must be migrated before further template UI expansion. Project metadata, profiles, paper/history primitives, logical document ownership and v10 bundled frame defaults are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
+Status: target architecture revised to Project → Documents → Sheets. The bounded desktop now edits directly on template-backed sheets; the numeric sheet review remains a separate clipped preview. Project metadata, profiles, paper/history primitives, logical document ownership and v10 bundled frame defaults are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
 ## Scope and ownership
 
@@ -67,9 +67,9 @@ Saving a profile is outside project undo and does not dirty a project or clear r
 
 Native profiles live in company-profiles.json under the Tauri-provided per-user application configuration directory. Startup/configuration and missing-file reads do not create it; explicit Save profile creates directories and writes it. Projects retain copied values and never reference this path. The browser test harness uses a separate file alongside its temporary project; ECAD_UI_PROFILES can explicitly override its location. Profile schema v1 is separate from project schema v7. Saves use observed-byte/location checks and staged replacement; concurrent uncooperative writers can still race between check and rename. Automatic default-profile selection, deletion, profile import/export packaging and logos remain future work.
 
-## Current v8 prototype: paper sheets and view placement
+## Paper sheets and view placement
 
-The following describes implemented prototype behavior, not the target workflow. Its Model view/read-only paper split is superseded by the sheet editor described above.
+The numeric paper editor and unified drawing canvas now share the same sheet/frame contract. The desktop still has a single open-project context and a flat sheet selector.
 
 Drawing → Sheets opens a complete numeric paper editor. Create a blank sheet or place one existing drawing view. Set a literal drawing number/title, oriented paper dimensions, nonnegative left/right/top/bottom guide margins, a positive rational scale, paper origin and source-view origin. A4/A3/Letter presets and portrait/landscape controls set editable dimensions; custom paper is supported. All dimensions/origins use integer micrometres; scale is paper/model, so 1/2 means half size. Margins must leave a positive interior.
 
@@ -77,9 +77,9 @@ The mapping is paper_point = paper_origin + (view_point - view_origin) × numera
 
 Preview validates and retains the exact proposed paper edit; Apply commits it once. Invalid input, cancellation and stale/superseded proposals cannot apply an older layout. Move up/down and Remove sheet are explicit undoable operations. Reordering never renumbers sheets. Changing an already-matching layout preserves redo and checkpoints. Source-view and paper layout edits use separate operations.
 
-The Sheet display selector switches between Model view and read-only paper preview. Paper preview clips to page bounds, draws margin guides, supports cursor zoom, modifier/middle-button panning and F fit, and disables source drawing tools. Return to Model view (or choose an object in the explorer) to edit source geometry. Right-click paper to open that sheet's manager. Model viewport/selection remain transient; deleting/undoing the displayed sheet returns to Model view. Margin guides are not printer hardware limits. This is not a PDF/print/export implementation.
+The Sheet display selector chooses an editable template-backed sheet. Cursor zoom, modifier/middle-button pan, marquee, dragging and exact numeric placement operate in source coordinates; the frame uses inverse placement. F fits the paper, including blank sheets. Source content outside paper remains visible for editing/recovery, while numeric paper review is clipped. Shared views display an editing warning. Right-click a source object opens its inspector; right-click the background opens sheet settings. No-sheet projects show a registered action for explicit reviewed attachment of a retained view, preserving clean loads. See [decision 0034](decisions/0034-editable-sheet-workspace.md).
 
-Project schema v8 adds an ordered sheets array alongside v7 metadata. V2–v7 load without invented sheets; explicit save writes v8. Older fixtures remain available and new v8 canonical outputs are tested. Sheet settings are outside electrical subsystem revision bodies. Title-block cells/bindings, template revisions, shared sheet defaults, multiple drawing sets, interactive paper placement, unified bulk sheet properties and output validation remain future work.
+Project schema v8 adds an ordered sheets array alongside v7 metadata. V2–v7 load without invented sheets; current explicit saves write v10 with document ownership and mandatory template defaults. Older fixtures remain available and new v8 canonical outputs are tested. Sheet settings are outside electrical subsystem revision bodies. Title-block cells/bindings, template revisions, shared sheet defaults, multiple drawing sets, interactive paper placement, unified bulk sheet properties and output validation remain future work.
 
 See [the workspace and sheet implementation task list](workspace-and-sheet-implementation.md) for dependency order and rework outside the sheet model.
 
@@ -92,7 +92,7 @@ See [the workspace and sheet implementation task list](workspace-and-sheet-imple
 - [x] Add logical drawing documents with stable IDs, ordered owned sheets and literal document metadata.
 - [ ] Add actual document default-template references with the basic frame implementation.
 - [ ] Migrate existing v8 layouts/free views without losing geometry, electrical bindings, appearance or numbering; preserve or explicitly reconcile shared legacy views.
-- [ ] Replace Model view/read-only paper navigation with direct template-backed sheet editing, including transformed pointer/snapping input and one coherent viewport.
+- [x] Replace Model view/read-only paper navigation with direct template-backed sheet editing, including source-unit pointer/snapping input through inverse placement and one coherent viewport.
 - [ ] Replace the default component tree with a page/sheet explorer; retain electrical structure as an alternate mode.
 - [ ] Add sheet tabs/panes with stable identity, retained per-sheet workspace state and one project session/history.
 - [ ] Separate library/definition editor workspace kinds from project drawing sheets.
@@ -117,4 +117,4 @@ Each drawing package now persists standard-v1 as its mandatory default. All shee
 
 Font/value height/stroke/colour inherit project drawing fallbacks; caption height is a template override. Literal multiline values remain unchanged; the browser clips overflowing cell text, marks a corner and exposes the full value in a tooltip. Small valid paper retains its border and reports that the table cannot fit. These diagnostics do not establish output/font parity. Custom cells, alternative templates, sheet overrides, logos, required-field checks and print/export remain planned. See [decision 0033](decisions/0033-bundled-sheet-frame.md).
 
-Schema v10 requires a known default_template in each package. V2–v9 upgrade deterministically to standard-v1 without changing source drawing/electrical data or wrapping unplaced views. The desktop still uses its existing model/paper surfaces; direct sheet editing is the next migration.
+Schema v10 requires a known default_template in each package. V2–v9 upgrade deterministically to standard-v1 without changing source drawing/electrical data or wrapping unplaced views. The desktop now uses the unified editable sheet surface described in [decision 0034](decisions/0034-editable-sheet-workspace.md). Unplaced sources attach through explicit reviewed sheet edits; bulk wrapping remains future work.

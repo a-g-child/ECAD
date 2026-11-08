@@ -1,4 +1,4 @@
-/** Paper sheets use real retained Rust previews and never edit their source drawing geometry. */
+/** Template-backed sheet editing uses real Rust geometry, retained reviews and exact history. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -30,12 +30,14 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
   async function save(p) {
     await pressAction(p, 'Save project', 'Project saved');
   }
-  test('sheet paper and exact view placement preview, validate, save and render independently from the editable model', async () => {
+  test('sheet paper and placement preview preserve geometry and open as an editable sheet', async () => {
     const p = await page(),
       original = JSON.parse(await readFile(project(), 'utf8')),
       before = await bounds(p),
       modelBox = await p.locator('svg.drawing').getAttribute('viewBox');
     await open(p);
+    await control(p, 'New sheet').click();
+    await until(async () => !(await field(p, 'Sheet title').isDisabled()));
     await field(p, 'Drawing number').fill('DWG-001');
     await field(p, 'Sheet title').fill('Harness\nDetail');
     await field(p, 'Paper width (µm)').fill('0');
@@ -76,7 +78,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.equal(await dialog(p).locator('[data-field="sheet.title"] tspan').count(), 3);
     assert.equal(
       await dialog(p).locator('[data-field="document.sheet_count"] text.frame-value').textContent(),
-      '1 / 1',
+      '2 / 2',
     );
     const frameBorder = await dialog(p).locator('.frame-border').getAttribute('width');
     assert.deepEqual(await bounds(p), before);
@@ -92,7 +94,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await p.setViewportSize({ width: 1360, height: 880 });
     await save(p);
     const saved = JSON.parse(await readFile(project(), 'utf8')),
-      sheet = saved.sheets[0];
+      sheet = saved.sheets.find((s) => s.number === 'DWG-001');
     assert.equal(saved.schema_version, 10);
     assert.deepEqual(sheet.paper, {
       width_um: 297000,
@@ -102,44 +104,58 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.deepEqual(sheet.placement.scale, [1, 2]);
     assert.deepEqual(sheet.placement.paper_origin_um, [30000, 70000]);
     assert.deepEqual(sheet.placement.view_origin_um, [10000, -5000]);
-    saved.sheets = [];
+    saved.sheets = original.sheets;
     saved.drawing_documents = original.drawing_documents;
     assert.deepEqual(saved, original);
     await display(p).selectOption(sheet.id);
-    await p.getByRole('img', { name: 'Paper sheet preview' }).waitFor();
-    assert.equal(
-      await p.locator('.sheet-surface .frame-border').getAttribute('width'),
-      frameBorder,
-    );
-    assert.equal(await p.locator('.sheet-surface .frame-cell').count(), 8);
+    await p.getByRole('img', { name: 'Electrical drawing' }).waitFor();
+    assert.equal(await p.getByRole('combobox', { name: 'Drawing view', exact: true }).count(), 0);
+    assert.equal(await p.locator('.sheet-surface').count(), 0);
+    assert.equal(await p.locator('svg.drawing .frame-border').getAttribute('width'), frameBorder);
+    assert.equal(await p.locator('svg.drawing .frame-cell').count(), 8);
     assert.equal(saved.drawing_documents[0].default_template, 'standard-v1');
-    assert.equal(
-      await p.getByRole('combobox', { name: 'Drawing view', exact: true }).isDisabled(),
-      true,
-    );
-    assert.equal(await button(p, 'Create annotation · T').isDisabled(), true);
+    assert.match(await p.locator('.paper-badge').textContent(), /Shared drawing on 2 sheets/);
+    assert.equal(await button(p, 'Create annotation · T').isDisabled(), false);
     await p.locator('.canvas').focus();
     await p.keyboard.press('t');
-    assert.equal(
-      await p.getByRole('textbox', { name: 'Annotation text', exact: true }).isVisible(),
-      false,
-    );
-    const paper = p.locator('.sheet-surface svg'),
+    await p.getByRole('textbox', { name: 'Annotation text', exact: true }).waitFor();
+    assert.equal(await display(p).isDisabled(), true);
+    await p.keyboard.press('Escape');
+    await until(async () => !(await display(p).isDisabled()));
+    const paper = p.locator('svg.drawing'),
       box = await paper.getAttribute('viewBox'),
       area = await paper.boundingBox();
     await p.mouse.move(area.x + area.width / 2, area.y + area.height / 2);
     await p.mouse.wheel(0, -120);
     await until(async () => (await paper.getAttribute('viewBox')) !== box);
+    await p.locator('.canvas').focus();
     await p.keyboard.press('f');
     await until(async () => (await paper.getAttribute('viewBox')) === box);
-    await p.screenshot({ path: resolve(root, 'target/ui/paper-view.png') });
-    await display(p).selectOption('');
-    assert.equal(await p.locator('svg.drawing').getAttribute('viewBox'), modelBox);
-    assert.equal(
-      await p.getByRole('combobox', { name: 'Drawing view', exact: true }).isDisabled(),
-      false,
+    await p.screenshot({ path: resolve(root, 'target/ui/editable-sheet.png') });
+    await display(p).selectOption(original.sheets[0].id);
+    assert.equal(await paper.getAttribute('viewBox'), modelBox);
+    const label = 'label:00000000000000000000000000000001';
+    await display(p).selectOption(sheet.id);
+    await p.locator(`.tree-item[data-object="${label}"]`).click();
+    await p.locator('[data-property="drawing_text"] textarea').fill('Shared drawing\nEdited');
+    await button(p, 'Apply Text').click();
+    await p.waitForFunction(
+      () =>
+        document.querySelector('.status-message')?.textContent ===
+        'Property updated · one undo operation',
     );
-    assert.equal(await button(p, 'Create annotation · T').isDisabled(), false);
+    await display(p).selectOption(original.sheets[0].id);
+    assert.equal(
+      await p.locator(`svg.drawing [data-object="${label}"] text.ink`).getAttribute('aria-label'),
+      'Shared drawing\nEdited',
+    );
+    await pressAction(p, 'Undo', 'Undo complete');
+    await display(p).selectOption(sheet.id);
+    assert.equal(
+      await p.locator(`svg.drawing [data-object="${label}"] text.ink`).getAttribute('aria-label'),
+      'CONVEYOR / SIGNAL HARNESS',
+    );
+    await display(p).selectOption(original.sheets[0].id);
     await pressAction(p, 'Undo', 'Undo complete');
     assert.equal(await display(p).locator('option').count(), 1);
     await pressAction(p, 'Redo', 'Redo complete');
@@ -162,7 +178,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await save(p);
     let sheets = JSON.parse(await readFile(project(), 'utf8')).sheets;
     const cover = sheets.find((s) => s.title === 'Cover'),
-      drawing = sheets.find((s) => s.title !== 'Cover');
+      drawing = sheets.find((s) => s.number === 'DWG-001');
     assert.equal(cover.number, '1');
     await open(p);
     await dialog(p).getByRole('combobox', { name: 'Edit sheet' }).selectOption(cover.id);
@@ -175,10 +191,18 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     );
     assert.deepEqual(
       sheets.map((s) => s.number),
-      ['1', 'DWG-001'],
+      ['DEMO', '1', 'DWG-001'],
     );
     await display(p).selectOption(cover.id);
-    await p.locator('.sheet-surface svg').click({ button: 'right' });
+    assert.equal(await button(p, 'Fit drawing · F').isDisabled(), false);
+    const coverBox = await p.locator('svg.drawing').getAttribute('viewBox');
+    await p.locator('.canvas').hover();
+    await p.mouse.wheel(0, -120);
+    await until(async () => (await p.locator('svg.drawing').getAttribute('viewBox')) !== coverBox);
+    await p.locator('.canvas').focus();
+    await p.keyboard.press('f');
+    await until(async () => (await p.locator('svg.drawing').getAttribute('viewBox')) === coverBox);
+    await p.locator('svg.drawing').click({ button: 'right' });
     await dialog(p).waitFor();
     assert.equal(
       await dialog(p).getByRole('combobox', { name: 'Edit sheet' }).inputValue(),
@@ -186,7 +210,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     );
     await control(p, 'Remove sheet').click();
     await dialog(p).waitFor({ state: 'hidden' });
-    assert.equal(await display(p).inputValue(), '');
+    assert.equal(await display(p).inputValue(), '00000000000000000000000000000001');
     await pressAction(p, 'Undo', 'Undo complete');
     assert.doesNotMatch(await p.title(), /^●/);
     await open(p);
@@ -209,7 +233,10 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     }
     await save(p);
     const final = JSON.parse(await readFile(project(), 'utf8'));
-    assert.deepEqual(final.sheets, []);
+    assert.deepEqual(
+      final.sheets.map((s) => s.number),
+      ['DEMO'],
+    );
     assert.deepEqual(final.drawing, source);
     assert.deepEqual(p.errors, []);
     await p.close();
@@ -218,6 +245,8 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     const p = await page(),
       before = await bounds(p);
     await open(p);
+    await control(p, 'New sheet').click();
+    await until(async () => !(await field(p, 'Sheet title').isDisabled()));
     await field(p, 'Sheet title').fill('Frame check');
     await dialog(p).getByRole('combobox', { name: 'Placed drawing view' }).selectOption('');
     await preview(p);
@@ -233,7 +262,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await until(async () => (await display(p).locator('option').count()) === 2);
     const id = await display(p).locator('option').nth(1).getAttribute('value');
     await display(p).selectOption(id);
-    const company = p.locator('.sheet-surface [data-field="company.name"]');
+    const company = p.locator('svg.drawing [data-field="company.name"]');
     assert.equal(
       await company.locator('text.frame-value').getAttribute('aria-label'),
       'ACME <literal>\nSecond line\nThird line',

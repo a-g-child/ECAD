@@ -38,3 +38,45 @@ fn open_project_is_available_without_a_document_and_fit_requires_a_real_canvas_v
         DefaultBindings::Suggested(_)
     ));
 }
+
+#[test]
+fn blank_sheet_fit_uses_captured_identity_and_rejects_missing_or_mismatched_sheets() {
+    let registry = ActionRegistry::builtins();
+    let fit = ActionId::new("drawing.view.fit").unwrap();
+    let mut p = Project::new(ProjectId::new(1).unwrap());
+    let id = SheetId::new(1).unwrap();
+    p.insert_sheet(
+        DrawingSheet {
+            id,
+            number: "COVER".into(),
+            title: "Cover".into(),
+            paper: SheetPaper::default(),
+            placement: None,
+        },
+        0,
+    )
+    .unwrap();
+    let session = Session::new(p);
+    let mut context = ActionContext::for_session(&session);
+    context.sheet = Some(id);
+    assert!(registry.state(&fit, &context, Some(&session)).enabled());
+    context.view = Some(ViewId::new(99).unwrap());
+    assert_eq!(
+        registry.state(&fit, &context, Some(&session)).disabled,
+        Some(ActionDisabled::InvalidSheetContext(id))
+    );
+    context.view = None;
+    context.sheet = Some(SheetId::new(99).unwrap());
+    assert_eq!(
+        registry.state(&fit, &context, Some(&session)).disabled,
+        Some(ActionDisabled::InvalidSheetContext(
+            SheetId::new(99).unwrap()
+        ))
+    );
+    context.sheet = Some(id);
+    context.focus = ActionFocus::TextInput;
+    assert_eq!(
+        registry.state(&fit, &context, Some(&session)).disabled,
+        Some(ActionDisabled::CanvasRequired)
+    );
+}

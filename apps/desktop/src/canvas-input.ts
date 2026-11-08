@@ -42,6 +42,9 @@ interface Gesture {
 }
 export class CanvasInput {
   private gesture: Gesture | null = null;
+  get active() {
+    return this.gesture !== null;
+  }
   private overlay: SVGRectElement | null = null;
   private lastClient: Point | null = null;
   constructor(private host: InputHost) {

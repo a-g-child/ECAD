@@ -7,7 +7,7 @@ import { DefaultsDialog } from './defaults';
 import { MetadataDialog } from './metadata';
 import { ProfilesDialog } from './profiles';
 import { SheetsDialog } from './sheets';
-import { PaperSurface } from './paper';
+import { SheetWorkspace } from './sheet-workspace';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
 import { renderProperties, renderReport, renderTree } from './panels';
@@ -66,10 +66,17 @@ const defaults = new DefaultsDialog(shell, apply, status);
 const metadata = new MetadataDialog(shell, apply, status);
 const profiles = new ProfilesDialog(shell, apply, status);
 const sheets = new SheetsDialog(shell, apply, status);
-const paper = new PaperSurface(shell, () => {
-  if (!paper.active && snapshot) drawing.render(snapshot.scene.filter((r) => r.view === view));
-  buttons();
-});
+const paper = new SheetWorkspace(
+  shell,
+  drawing,
+  () => !busy && !toolActive() && !drawing.gestureActive,
+  () => {
+    view = paper.view;
+    selection = [];
+    selectionChanged();
+  },
+  () => void action('drawing.sheets.edit'),
+);
 function toolActive() {
   return !!(movement?.active || layout?.active || annotation?.active || path?.active);
 }
@@ -102,7 +109,8 @@ function context(): Context {
     revision: snapshot.revision,
     selection: [...selection],
     view,
-    focus: paper.active ? 'workspace' : focus,
+    sheet: paper.id || null,
+    focus: !paper.id && focus === 'canvas' ? 'workspace' : focus,
   };
 }
 const layoutActions = new Set([
@@ -115,11 +123,12 @@ const layoutActions = new Set([
 function availableAction(id: string, enabled: boolean) {
   if (!enabled || (id === 'document.open' && !native)) return false;
   if (
-    paper.active &&
+    !view &&
     id.startsWith('drawing.') &&
     !['drawing.sheets.edit', 'drawing.styles.edit', 'drawing.view.fit'].includes(id)
   )
     return false;
+  if (id === 'drawing.view.fit' && !paper.id) return false;
   if (id === 'selection.properties') return selection.length > 0;
   if (layoutActions.has(id))
     return (
@@ -168,7 +177,6 @@ async function apply(reply: Reply) {
     }
     syncInput(next.next_input);
     const replaced = snapshot?.revision.epoch !== next.revision.epoch;
-    const oldView = view;
     snapshot = next;
     if (changed) {
       clearTools();
@@ -180,28 +188,18 @@ async function apply(reply: Reply) {
     const liveTargets = new Map(next.objects.map((row) => [keyOf(row.target), row.view]));
     objectViews = liveTargets;
     selection = selection.filter((target) => liveTargets.has(keyOf(target)));
-    shell.selectionStatus.textContent = selection.length
-      ? `${selection.length} selected`
-      : 'No selection';
-    if (!next.views.some((v) => v.id === view)) view = next.views[0]?.id ?? null;
+    const sheetChanged = paper.update(next, replaced);
+    view = paper.view;
+    selection = sheetChanged
+      ? []
+      : selection.filter((t) => !objectViews.get(keyOf(t)) || objectViews.get(keyOf(t)) === view);
     shell.title.textContent = `${next.name}${next.dirty ? '  •' : ''}`;
     shell.title.title = next.path ?? 'Built-in demonstration. Save as to create your own project.';
     document.title = `${next.dirty ? '● ' : ''}${next.name} — ECAD`;
-    shell.views.replaceChildren(
-      ...next.views.map((v) => {
-        const option = element('option', '', v.name);
-        option.value = v.id;
-        option.selected = v.id === view;
-        return option;
-      }),
-    );
-    shell.empty.hidden = !!view;
-    drawing.render(
-      next.scene.filter((r) => r.view === view),
-      replaced || oldView !== view,
-    );
     drawing.setSelection(selection);
-    paper.update(next, replaced);
+    shell.selectionStatus.textContent = selection.length
+      ? `${selection.length} selected`
+      : 'No selection';
     renderTree(shell, next, selection, (target, add) => choose(target, add));
     buttons();
     await inspect();
@@ -218,8 +216,7 @@ async function apply(reply: Reply) {
     clearTools();
   }
   if (reply.request === 'fit') {
-    if (paper.active) paper.fit();
-    else drawing.fit();
+    drawing.fit();
   }
   if (reply.request === 'sheets' && snapshot) await sheets.open(context(), snapshot, paper.id);
   if (reply.request === 'palette') openPalette();
@@ -241,25 +238,20 @@ async function inspect() {
 }
 function choose(target: Target | null, add: boolean) {
   if (!snapshot || busy || toolActive()) return;
-  if (paper.active) paper.show('');
   if (!target) {
     if (!add) selection = [];
   } else {
+    const row = snapshot.objects.find((r) => keyOf(r.target) === keyOf(target));
+    if (row?.view && !paper.showView(row.view)) {
+      status('This view has no sheet. Use Sheets and paper to review and attach it.', true);
+      return;
+    }
     const existing = selection.some((t) => keyOf(t) === keyOf(target));
     selection = add
       ? existing
         ? selection.filter((t) => keyOf(t) !== keyOf(target))
         : [...selection, target]
       : [target];
-    const row = snapshot.objects.find((r) => keyOf(r.target) === keyOf(target));
-    if (row?.view && row.view !== view) {
-      view = row.view;
-      shell.views.value = view;
-      drawing.render(
-        snapshot.scene.filter((r) => r.view === view),
-        true,
-      );
-    }
   }
   selectionChanged();
 }
@@ -335,7 +327,7 @@ async function action(id: string, captured?: Context) {
   });
 }
 async function edit(property: string, value: string) {
-  if (!snapshot || toolActive() || paper.active) return;
+  if (!snapshot || toolActive()) return;
   const captured = context();
   await run(async () => {
     const reply = await send({ type: 'edit', context: captured, property, value });
@@ -371,16 +363,6 @@ function paletteResults() {
   }
 }
 shell.search.addEventListener('input', paletteResults);
-shell.views.addEventListener('change', () => {
-  view = shell.views.value;
-  selection = [];
-  if (snapshot)
-    drawing.render(
-      snapshot.scene.filter((r) => r.view === view),
-      true,
-    );
-  void inspect();
-});
 document.addEventListener('pointerdown', (event) => {
   const target = event.target as HTMLElement;
   const surface = target.closest<HTMLElement>('[data-focus]');
@@ -410,17 +392,6 @@ document.addEventListener('keydown', (event) => {
     sheets.active
   )
     return;
-  if (
-    paper.active &&
-    event.key.toLowerCase() === 'f' &&
-    !event.ctrlKey &&
-    !event.metaKey &&
-    !event.altKey
-  ) {
-    event.preventDefault();
-    void action('drawing.view.fit');
-    return;
-  }
   if (event.key === 'Escape' && drawing.cancelGesture()) {
     event.preventDefault();
     return;
@@ -476,7 +447,8 @@ window.addEventListener('blur', () => {
 shell.tree.addEventListener('contextmenu', () => void action('selection.properties'));
 shell.canvas.addEventListener('contextmenu', (event) => {
   event.preventDefault();
-  void action(paper.active ? 'drawing.sheets.edit' : 'selection.properties');
+  const target = event.target as Element;
+  void action(target.closest('[data-object]') ? 'selection.properties' : 'drawing.sheets.edit');
 });
 if (native) {
   void import('@tauri-apps/api/event').then(({ listen }) =>

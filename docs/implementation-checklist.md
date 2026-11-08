@@ -186,14 +186,15 @@ Follow the ordered [workspace and sheet task list](workspace-and-sheet-implement
 
 ## Drawing sheets and templates
 
-Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. Current v8 Model view/read-only paper behavior remains implemented but is not the intended final workflow.
+Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. The bounded desktop now edits directly on template-backed sheets; logical document management, multi-project host integration and page tabs remain pending.
 
 - [x] Add logical drawing-document IDs, metadata, ordered ownership, transfer/rename/reorder commands and deterministic v9 ownership upgrade.
 - [x] Add mandatory standard-v1 document default, bundled frame/live fields and strict v10 persistence with deterministic legacy upgrades.
-- [ ] Integrate the frame with the unified sheet editor.
+- [x] Integrate the frame with a unified editable sheet canvas, paper Fit (including blank pages), source-unit input/tools and transient per-sheet cameras.
 - [x] Preserve legacy sheets, source records and shared/unplaced views in a deterministic initial drawing document without renumbering or copying.
-- [ ] Migrate unplaced views into template-backed sheets and expose shared-view editing behavior when the frame/editor is implemented.
-- [ ] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated coordinate input.
+- [x] Offer explicit reviewed per-view sheet attachment for unplaced views and expose shared-view editing behavior; no silent load-time geometry copies.
+- [ ] Add bulk wrapping and new drawing-source creation controls.
+- [x] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated inverse placement input.
 - [x] Resolve a basic standard frame/eight live fields for every drawing sheet in paper preview and numeric review, with small-paper/overflow diagnostics.
 - [ ] Expand custom table/template editing and output preflight.
 - [ ] Make pages/sheets the default Project explorer, retaining electrical structure as an alternate mode.
@@ -207,7 +208,7 @@ Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents
 - [x] Integrate File/menu/palette project-information editing with fixed modal bounds, portable saved fields, cancel/no-op redo behavior and local Rust/browser regressions.
 - [x] Add personal/company profile persistence and explicit reviewed selective copy/update into project values, with independent history, observed-file conflict checks and native/test host path isolation.
 - [x] Add stable ordered sheets, oriented paper/margins, unique drawing numbers, one optional scaled view placement, exact history and strict v8 persistence.
-- [x] Integrate reviewed paper editing, blank sheets, reorder/remove and read-only paper navigation, with source-record preservation and minimum-width browser regressions.
+- [x] Integrate reviewed paper editing, blank sheets, reorder/remove and direct template-backed sheet navigation/editing, with source-record preservation and minimum-width browser regressions.
 - [ ] Add multiple named drawing sets, multiple placements, interactive paper placement and unified bulk sheet properties.
 - [ ] Add stable table/cell identities, split/merge/resize and bulk formatting.
 - [ ] Add field bindings, sheet-specific entries, override/reset and missing/required-field diagnostics.
@@ -222,4 +223,6 @@ Visual-bounds alignment and edge-gap distribution, retained arrays, advanced dra
 
 Local branch `main` is initialized and `origin` points to `https://github.com/a-g-child/ECAD.git`. `main` has been pushed and tracks `origin/main`. Repository setup does not imply that application-level Git integration or hosted CI has been implemented.
 
-Frame slice: see [decision 0033](decisions/0033-bundled-sheet-frame.md), [frame workflows](../crates/ecad-adapters/tests/sheet_frames.rs) and sheet bridge/browser regressions. Direct sheet input, unplaced-view wrapping and multi-project host integration remain unchecked.
+Frame slice: see [decision 0033](decisions/0033-bundled-sheet-frame.md), [frame workflows](../crates/ecad-adapters/tests/sheet_frames.rs) and sheet bridge/browser regressions. Direct sheet input and per-view reviewed attachment are now implemented; bulk wrapping and multi-project host integration remain unchecked.
+
+Editable sheets: [decision 0034](decisions/0034-editable-sheet-workspace.md), [sheet-context bridge regressions](../crates/ecad-bridge/tests/sheet_editor_bridge.rs) and [scaled editing/attachment workflows](../apps/desktop/tests/sheet-editing.mjs). Native execution on Windows/Linux remains unverified.

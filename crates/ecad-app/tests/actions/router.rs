@@ -308,3 +308,54 @@ fn repeat_and_duplicate_delivery_do_not_create_uncontrolled_placement_or_extend_
         KeyRoute::Suppressed(InputSuppression::Replayed)
     ));
 }
+
+#[test]
+fn sequence_cannot_finish_on_another_sheet_even_when_the_source_view_is_shared() {
+    let registry = ActionRegistry::builtins();
+    let mut project = session().project().clone();
+    for n in 1..=2 {
+        project
+            .insert_sheet(
+                DrawingSheet {
+                    id: SheetId::new(n).unwrap(),
+                    number: n.to_string(),
+                    title: "Shared view".into(),
+                    paper: SheetPaper::default(),
+                    placement: Some(SheetViewPlacement {
+                        view: ViewId::new(1).unwrap(),
+                        paper_origin: DrawingPoint::default(),
+                        view_origin: DrawingPoint::default(),
+                        numerator: 1,
+                        denominator: 1,
+                    }),
+                },
+                project.sheets().len(),
+            )
+            .unwrap();
+    }
+    let session = Session::new(project);
+    let mut original = context(&session);
+    original.sheet = Some(SheetId::new(1).unwrap());
+    let mut router = router(&registry);
+    assert!(matches!(
+        router.route(
+            &registry,
+            event(1, chord('k', true, false), false),
+            &original,
+            0
+        ),
+        KeyRoute::Pending { .. }
+    ));
+    let mut other = original.clone();
+    other.sheet = Some(SheetId::new(2).unwrap());
+    assert!(matches!(
+        router.route(
+            &registry,
+            event(2, chord('s', false, false), false),
+            &other,
+            10
+        ),
+        KeyRoute::Suppressed(InputSuppression::ContextChanged)
+    ));
+    assert!(router.pending().is_none());
+}

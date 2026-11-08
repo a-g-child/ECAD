@@ -17,6 +17,7 @@ import { registerDefaultsTests } from './defaults.mjs';
 import { registerMetadataTests } from './metadata.mjs';
 import { registerProfileTests } from './profiles.mjs';
 import { registerSheetTests } from './sheets.mjs';
+import { registerSheetEditingTests } from './sheet-editing.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -451,3 +452,5 @@ registerMetadataTests({ page, button, until, bounds, root, project: () => projec
 registerProfileTests({ page, button, until, bounds, root, project: () => project, pressAction });
 
 registerSheetTests({ page, button, until, bounds, root, project: () => project, pressAction });
+
+registerSheetEditingTests({ page, button, until, bounds, project: () => project, pressAction });

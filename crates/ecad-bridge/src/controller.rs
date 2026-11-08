@@ -180,6 +180,24 @@ impl DesktopBridge {
             .map(|id| id.parse())
             .transpose()
             .map_err(|e| BridgeError::new("view", e))?;
+        let sheet = ctx
+            .sheet
+            .map(|id| id.parse::<ecad_domain::SheetId>())
+            .transpose()
+            .map_err(|e| BridgeError::new("sheet", e))?;
+        if let Some(id) = sheet
+            && self
+                .document
+                .session()
+                .project()
+                .sheet(id)
+                .is_none_or(|s| s.placement.as_ref().map(|p| p.view) != view)
+        {
+            return Err(BridgeError::new(
+                "sheet",
+                "The captured sheet is missing or has a different drawing view",
+            ));
+        }
         let focus = match ctx.focus.as_str() {
             "canvas" => ActionFocus::Canvas,
             "tree" => ActionFocus::ProjectTree,
@@ -193,6 +211,7 @@ impl DesktopBridge {
             revision: Some(self.document.session().revision()),
             selection,
             view,
+            sheet,
             focus,
             tool_active: self.movement.is_some()
                 || self.layout.is_some()

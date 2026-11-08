@@ -1,7 +1,7 @@
 //! Stable action identity and captured targeting, independent of widgets and IO.
 
 use crate::{Revision, Session};
-use ecad_domain::{DrawingPoint, ObjectRef, ViewId};
+use ecad_domain::{DrawingPoint, ObjectRef, SheetId, ViewId};
 use std::{collections::BTreeSet, error::Error, fmt};
 
 /// A stable namespaced action ID, never a translated menu label or executable code.
@@ -143,6 +143,8 @@ pub struct ActionContext {
     pub selection: BTreeSet<ObjectRef>,
     /// Original drawing view for placement actions.
     pub view: Option<ViewId>,
+    /// Optional captured project sheet; supplied by sheet workspaces, absent in definition editors.
+    pub sheet: Option<SheetId>,
     /// Original optional document anchor; popup coordinates never replace it.
     pub anchor: Option<DrawingPoint>,
     /// Host-owned transient placement state; it is not document data.
@@ -166,6 +168,7 @@ impl ActionContext {
             && self.focus == other.focus
             && self.selection == other.selection
             && self.view == other.view
+            && self.sheet == other.sheet
             && self.tool_active == other.tool_active
             && self.composing == other.composing
             && self.control_owns_key == other.control_owns_key
@@ -195,6 +198,8 @@ pub enum ActionDisabled {
     MissingTarget(ObjectRef),
     /// Placement requires an existing active drawing view.
     NoDrawingView,
+    /// Captured sheet is unavailable or its placed view differs from the captured source view.
+    InvalidSheetContext(SheetId),
     /// Placement is scoped to the original canvas context.
     CanvasRequired,
     /// There is no active transient tool to cancel.

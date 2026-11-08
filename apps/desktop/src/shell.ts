@@ -72,11 +72,9 @@ export function createShell(action: (id: string) => void) {
   left.append(leftHeader, tree);
   const center = element('section', 'drawing-pane');
   const tabs = element('div', 'drawing-tabs');
-  const views = element('select', 'view-selector');
-  views.setAttribute('aria-label', 'Drawing view');
   const sheets = element('select', 'sheet-selector');
   sheets.setAttribute('aria-label', 'Sheet display');
-  tabs.append(views, sheets, element('span', 'pane-tag', 'SCHEMATIC'));
+  tabs.append(sheets, element('span', 'pane-tag', 'SCHEMATIC'));
   const canvas = element('div', 'canvas');
   canvas.tabIndex = 0;
   canvas.dataset.focus = 'canvas';
@@ -89,7 +87,7 @@ export function createShell(action: (id: string) => void) {
   const empty = element(
     'div',
     'canvas-empty',
-    'This project has no drawing views. Electrical objects remain available in the explorer.',
+    'No drawing sheets. Use Sheets and paper to review a new sheet and attach an existing drawing view. Electrical objects remain available in the explorer.',
   );
   canvas.append(empty);
   const reportPane = element('section', 'report-pane');
@@ -133,7 +131,6 @@ export function createShell(action: (id: string) => void) {
     app,
     title,
     tree,
-    views,
     sheets,
     canvas,
     placement,

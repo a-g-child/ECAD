@@ -237,6 +237,14 @@ impl ActionRegistry {
         if context.revision != Some(session.revision()) {
             return Some(ActionDisabled::StaleContext);
         }
+        if let Some(id) = context.sheet
+            && session
+                .project()
+                .sheet(id)
+                .is_none_or(|s| s.placement.as_ref().map(|p| p.view) != context.view)
+        {
+            return Some(ActionDisabled::InvalidSheetContext(id));
+        }
         match handler {
             ActionHandler::Undo if session.undo_len() == 0 => Some(ActionDisabled::NothingToUndo),
             ActionHandler::Redo if session.redo_len() == 0 => Some(ActionDisabled::NothingToRedo),
@@ -283,6 +291,9 @@ impl ActionRegistry {
                     }
                     Ok(_) => None,
                 }
+            }
+            ActionHandler::FitDrawing if context.sheet.is_some() => {
+                (context.focus != ActionFocus::Canvas).then_some(ActionDisabled::CanvasRequired)
             }
             ActionHandler::FitDrawing
             | ActionHandler::CreateLabel

@@ -1,6 +1,6 @@
 # 0033: Pinned bundled sheet frame and derived drawing information
 
-Status: implemented as the first frame slice. Direct sheet editing is still the next migration; the desktop retains its existing Model view/read-only paper split.
+Status: implemented as the first frame slice. The subsequent [editable-sheet decision](0034-editable-sheet-workspace.md) replaces the Model view/read-only paper arrangement used during this slice.
 
 Every logical drawing document has a mandatory default_template. The first supported value is the immutable bundled standard-v1: a border at the paper margins and an eight-cell, two-column, four-row title block anchored at the bottom right. The block measures 180 × 40 mm independently of drawing-view origin or scale. Changing its geometry later requires a new template identity. Custom project-bundled revisions and per-sheet overrides are future work, not arbitrary strings accepted by this implementation.
 

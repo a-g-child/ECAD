@@ -1,6 +1,6 @@
 # Multi-project workspace and sheet-first implementation tasks
 
-Status: implementation started with a headless ProjectWorkspace owning independent project controllers. Logical drawing-document ownership, schema-v10 template defaults and the first bundled frame are also implemented. The desktop still has one DesktopBridge/project and the prototype Model view/paper split. Checked items are executable foundations; UI migration is not yet complete.
+Status: implementation started with a headless ProjectWorkspace owning independent project controllers. Logical drawing-document ownership, schema-v10 template defaults and the first bundled frame are also implemented. The desktop still has one DesktopBridge/project, now with direct template-backed sheet editing. Checked items are executable foundations; UI migration is not yet complete.
 
 ## Target and boundaries
 
@@ -49,19 +49,21 @@ Every actual drawing is edited directly on a CAD-template sheet. Cover, generate
 - [x] Add stable logical drawing-document IDs, metadata, ordered sheet ownership and undoable moves/renames.
 - [x] Keep document numbers unique per project and preserve the existing project-wide sheet-number rule without renumbering.
 - [x] Add strict v9 ownership persistence and deterministic default-package upgrades for v2–v8; v1 remains explicit.
-- [ ] Add reviewed migration of unplaced views into template-backed sheets when the frame/editor is ready.
+- [x] Add explicit per-view reviewed sheet attachment, including a no-sheet empty state, cancellation and normal undo; bulk wrapping remains future work.
 - [x] Preserve shared and unplaced view references unchanged during ownership upgrade, without electrical copies.
-- [ ] Expose shared-view editing implications in the unified sheet workspace before any explicit materialization policy.
+- [x] Show shared-view editing implications in the unified sheet workspace; retained sources are never silently materialized/copied.
 - [x] Test ownership migration round trips, stable IDs, rollback, source geometry and strict membership validation.
 - [x] Add mandatory standard-v1 document defaults, strict v10 persistence/legacy upgrades and the actual bundled frame.
 
 ### 3. Template-backed sheet editor
 
 - [x] Add a basic bundled CAD frame and eight live drawing-info fields with mandatory document default; paper preview and numeric sheet review share the projection.
-- [ ] Open/create drawings directly on sheets; remove the normal free Model view/paper-preview switch.
-- [ ] Unify paper drawing, hit testing, selection, marquee, drag, snapping, numeric placement and navigation through validated coordinate transforms.
-- [ ] Retain blank cover/content pages and independent definition-editor contexts.
-- [ ] Verify transformed pointer edits, paper/template changes, undo/redo and exact save/reopen.
+- [x] Open the demonstration and existing drawings directly on sheets; remove the normal free Model view/paper-preview switch.
+- [ ] Add source-view creation controls for entirely new drawings; current sheet manager attaches retained existing views or creates blank pages.
+- [x] Unify paper drawing, hit testing, selection, marquee, drag, snapping, numeric placement and navigation through validated inverse placement transforms.
+- [x] Retain blank sheets and Fit without requiring a placed source view.
+- [ ] Add typed cover/content roles and independent definition-editor contexts.
+- [x] Verify transformed pointer edits, paper-only edits, undo/redo and exact save/reopen; preserve per-sheet cameras during the open session.
 
 ### 4. Multi-project host and scoped bridge
 

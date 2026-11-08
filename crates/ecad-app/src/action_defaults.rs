@@ -80,7 +80,7 @@ impl ActionRegistry {
                 "drawing.view.fit",
                 "Fit drawing",
                 "View",
-                "Fit the active drawing geometry to the available viewport",
+                "Fit the active drawing surface to the available viewport",
                 Handler::FitDrawing,
                 Scope::Canvas,
                 ActionRepeat::Ignore,

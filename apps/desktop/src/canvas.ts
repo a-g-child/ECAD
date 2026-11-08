@@ -1,14 +1,35 @@
 /** SVG view state is transient; scene rendering never writes domain coordinates. */
-import type { SceneRow, Target } from './types';
+import type { FrameRow, SceneRow, SheetRow, Target } from './types';
 import { keyOf } from './types';
 import type { Shell } from './shell';
 import { renderText, reserveTextBounds } from './text';
+import { paperBox, renderPaperBackground } from './paper';
+import { sheetTransform } from './sheet-transform';
 import { CanvasInput, type DragPlacement, type PointerPosition } from './canvas-input';
 export class DrawingCanvas {
   private box = [-15, -45, 145, 90];
   private input: CanvasInput;
+  private sheet: SheetRow | null = null;
+  private frame: FrameRow | null = null;
+  setSheet(sheet: SheetRow | null, frame: FrameRow | null) {
+    if (sheet && !frame) throw new Error('The active sheet has no resolved frame');
+    if (sheet) sheetTransform(sheet); // Validate before installing display state.
+    this.sheet = sheet;
+    this.frame = frame;
+    this.shell.svg.style.visibility = sheet ? 'visible' : 'hidden';
+  }
+  camera() {
+    return [...this.box];
+  }
+  restoreCamera(box: number[]) {
+    this.box = [...box];
+    this.paintBox();
+  }
   startMove: (target: Target, point: PointerPosition) => Promise<DragPlacement | null> = async () =>
     null;
+  get gestureActive() {
+    return this.input.active;
+  }
   cancelGesture() {
     return this.input.cancel();
   }
@@ -137,15 +158,15 @@ export class DrawingCanvas {
     pattern.append(make('circle', { cx: 0, cy: 0, r: 0.1, fill: '#dce1e4' }));
     defs.append(pattern);
     this.shell.svg.append(defs);
-    this.shell.svg.append(
-      make('rect', {
-        x: -1000000,
-        y: -1000000,
-        width: 2000000,
-        height: 2000000,
-        fill: 'url(#grid)',
-      }),
-    );
+    if (this.sheet && this.frame) {
+      const transform = sheetTransform(this.sheet);
+      const paper = make('g', { transform: transform.inverse, class: 'sheet-paper' });
+      this.shell.svg.append(paper);
+      renderPaperBackground(paper, this.sheet, this.frame);
+      this.shell.svg.append(
+        make('rect', { ...transform.bounds, fill: 'url(#grid)', 'pointer-events': 'none' }),
+      );
+    }
     for (const row of rows) {
       const group = make('g', { 'data-object': keyOf(row.target), tabindex: -1 });
       const title = make('title', {});
@@ -238,25 +259,10 @@ export class DrawingCanvas {
     else this.paintBox();
   }
   fit() {
-    if (!this.rows.length) return;
-    let minX = Infinity,
-      maxX = -Infinity,
-      minY = Infinity,
-      maxY = -Infinity;
-    for (const node of this.shell.svg.querySelectorAll<SVGGraphicsElement>('[data-object]')) {
-      const b = node.getBBox();
-      minX = Math.min(minX, b.x);
-      maxX = Math.max(maxX, b.x + b.width);
-      minY = Math.min(minY, b.y);
-      maxY = Math.max(maxY, b.y + b.height);
-    }
-    let w = Math.max(30, maxX - minX + 30),
-      h = Math.max(30, maxY - minY + 35);
+    if (!this.sheet) return;
     const bounds = this.shell.svg.getBoundingClientRect();
     const aspect = Math.max(0.1, bounds.width / Math.max(1, bounds.height));
-    if (w / h < aspect) w = h * aspect;
-    else h = w / aspect;
-    this.box = [(minX + maxX - w) / 2, (minY + maxY - h) / 2, w, h];
+    this.box = sheetTransform(this.sheet).box(paperBox(this.sheet, aspect));
     this.paintBox();
   }
   private paintBox() {
