@@ -276,6 +276,7 @@ async function apply(reply: Reply) {
   }
   if (reply.request === 'template_fit') templateEditor.fit();
   if (reply.request === 'template_properties') templateEditor.properties();
+  if (reply.request === 'template_artwork') templateEditor.artwork();
   const tableOperations: Record<string, string> = {
     template_table_insert_row: 'insert_row',
     template_table_insert_column: 'insert_column',

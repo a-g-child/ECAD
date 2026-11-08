@@ -172,6 +172,7 @@ export interface FrameRow {
   sheet: string;
   template: string;
   border: { x: number; y: number; width: number; height: number };
+  graphics: TemplateGraphic[];
   cells: { key: string; caption: string; value: string | null; bounds: FrameRow['border'] }[];
   title_block_too_small: boolean;
   font: string;
@@ -273,12 +274,24 @@ export interface TemplateTable {
   bounds: string[];
   cells: TemplateCell[];
 }
+export interface TemplateGraphic {
+  id: string;
+  kind: 'text' | 'rectangle' | 'ellipse' | 'polyline';
+  bounds: string[];
+  contents: TemplateRun[];
+  points: string[][];
+  font: string;
+  text_height: string;
+  stroke_width: string;
+  colour: string;
+}
 export interface TemplateVariant {
   id: string;
   name: string;
   paper: string[];
   content: string[];
   tables: TemplateTable[];
+  graphics: TemplateGraphic[];
 }
 export interface TemplateView {
   revision: Revision;

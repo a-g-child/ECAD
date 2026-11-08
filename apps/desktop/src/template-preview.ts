@@ -98,6 +98,7 @@ export class TemplatePreview {
     this.svg.append(rect);
     renderFrame(this.svg, {
       template: model.id,
+      graphics: model.graphics,
       border: { x: l, y: t, width: w - l - r, height: h - t - b },
       cells: model.tables.flatMap((table) =>
         table.cells.map((cell) => ({

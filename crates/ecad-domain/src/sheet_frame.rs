@@ -159,6 +159,8 @@ pub struct SheetFrame {
     pub content: FrameRect,
     /// Resolved title-block cells, in stable row-major order.
     pub cells: Vec<FrameCell>,
+    /// Paper artwork with text variables resolved for this sheet; retained layout stays unchanged.
+    pub graphics: Vec<crate::TemplateGraphic>,
     /// True when the interior cannot contain the selected template's fixed information panel.
     /// The border remains visible; no overlapping or zero-sized cells are manufactured.
     pub title_block_too_small: bool,
@@ -180,6 +182,15 @@ impl Project {
             .map(SheetTemplate::Saved)
             .unwrap_or(sheet.template.unwrap_or(document.default_template));
         let layout = self.sheet_template_layout(sheet, document.default_template)?;
+        let resolve_field = |field| match field {
+            FrameField::Metadata(field) => self.metadata().value(field).map(str::to_owned),
+            FrameField::DocumentTitle => Some(document.title.clone()),
+            FrameField::DocumentNumber => Some(document.number.clone()),
+            FrameField::DocumentRevision => Some(document.revision.clone()),
+            FrameField::SheetTitle => Some(sheet.title.clone()),
+            FrameField::SheetNumber => Some(sheet.number.clone()),
+            FrameField::DocumentSheetCount => Some(format!("{} / {count}", ordinal + 1)),
+        };
         let mut cells = Vec::new();
         for table in layout.tables() {
             for cell in table.cells() {
@@ -187,15 +198,7 @@ impl Project {
                     [crate::TemplateTextRun::Field(field)] => Some(*field),
                     _ => None,
                 };
-                let resolved = cell.resolve(|field| match field {
-                    FrameField::Metadata(field) => self.metadata().value(field).map(str::to_owned),
-                    FrameField::DocumentTitle => Some(document.title.clone()),
-                    FrameField::DocumentNumber => Some(document.number.clone()),
-                    FrameField::DocumentRevision => Some(document.revision.clone()),
-                    FrameField::SheetTitle => Some(sheet.title.clone()),
-                    FrameField::SheetNumber => Some(sheet.number.clone()),
-                    FrameField::DocumentSheetCount => Some(format!("{} / {count}", ordinal + 1)),
-                });
+                let resolved = cell.resolve(resolve_field);
                 cells.push(FrameCell {
                     id: cell.id,
                     field,
@@ -216,6 +219,20 @@ impl Project {
             border: layout.border(),
             content: layout.content(),
             cells,
+            graphics: layout
+                .graphics()
+                .iter()
+                .map(|g| {
+                    let mut resolved = g.clone();
+                    if let crate::TemplateGraphicShape::Text(runs) = &g.shape {
+                        let text = crate::resolve_template_text(runs, resolve_field);
+                        resolved.shape = crate::TemplateGraphicShape::Text(vec![
+                            crate::TemplateTextRun::Literal(text.value),
+                        ]);
+                    }
+                    resolved
+                })
+                .collect(),
             title_block_too_small: match self.sheet_template_pin(sheet, document.default_template) {
                 Some(pin) => !self.saved_template(pin)?.allows_new_assignments(),
                 None => layout.tables().is_empty(),

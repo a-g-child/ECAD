@@ -156,6 +156,7 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
         title: 'Properties',
         commands: [
           command('Properties', 'Template properties', 'properties', 'selection.properties'),
+          command('Artwork', 'Template text and graphics', 'properties', 'template.artwork.edit'),
           command('Revert fields', 'Revert property fields', 'undo', 'template.properties.revert'),
           command('Fit', 'Fit template paper', 'fit', 'drawing.view.fit'),
         ],

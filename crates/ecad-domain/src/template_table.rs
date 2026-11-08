@@ -25,26 +25,33 @@ pub struct TemplateCell {
 impl TemplateCell {
     /// Resolve with an explicit sample/real binding context. Missing fields remain
     /// diagnostic identities; literal text and resolved values are never trimmed.
-    pub fn resolve(&self, mut field: impl FnMut(FrameField) -> Option<String>) -> TemplateText {
-        let mut result = TemplateText {
-            value: String::new(),
-            missing: Vec::new(),
-        };
-        for run in &self.contents {
-            match run {
-                TemplateTextRun::Literal(text) => result.value.push_str(text),
-                TemplateTextRun::Field(key) => match field(*key) {
-                    Some(value) => result.value.push_str(&value),
-                    None => {
-                        if !result.missing.contains(key) {
-                            result.missing.push(*key);
-                        }
-                    }
-                },
-            }
-        }
-        result
+    pub fn resolve(&self, field: impl FnMut(FrameField) -> Option<String>) -> TemplateText {
+        resolve_template_text(&self.contents, field)
     }
+}
+/// Resolve literal and variable runs without mutating their retained bindings.
+pub fn resolve_template_text(
+    contents: &[TemplateTextRun],
+    mut field: impl FnMut(FrameField) -> Option<String>,
+) -> TemplateText {
+    let mut result = TemplateText {
+        value: String::new(),
+        missing: Vec::new(),
+    };
+    for run in contents {
+        match run {
+            TemplateTextRun::Literal(text) => result.value.push_str(text),
+            TemplateTextRun::Field(key) => match field(*key) {
+                Some(value) => result.value.push_str(&value),
+                None => {
+                    if !result.missing.contains(key) {
+                        result.missing.push(*key);
+                    }
+                }
+            },
+        }
+    }
+    result
 }
 /// Resolved text with explicit missing-field diagnostics, separate from saved content.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -133,6 +140,8 @@ pub(crate) fn overlaps(a: FrameRect, b: FrameRect) -> bool {
 pub enum TemplateError {
     /// Positive geometry must be representable and contained in its owner.
     Bounds,
+    /// Invalid or repeated artwork identity, geometry, style or resource budget.
+    Graphic,
     /// Table cells intersect with positive area.
     Overlap,
     /// Cells do not cover their complete table extent.
@@ -152,6 +161,7 @@ impl fmt::Display for TemplateError {
             Self::Bounds => {
                 f.write_str("Template geometry is empty, overflowing or outside its owner")
             }
+            Self::Graphic => f.write_str("Invalid template artwork: check identity, paper bounds, geometry and positive style sizes"),
             Self::Overlap => f.write_str("Template cells overlap"),
             Self::Gap => f.write_str("Template cells do not completely cover their table"),
             Self::DuplicateCell(id) => write!(f, "Template cell {id} is repeated"),

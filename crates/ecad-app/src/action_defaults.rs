@@ -27,6 +27,16 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "template.artwork.edit",
+                "Template text and graphics",
+                "Templates",
+                "Create and edit template text, variables and vector artwork",
+                Handler::Template(crate::TemplateOperation::Artwork),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "template.table.insert_row",
                 "Insert title-block row",
                 "Templates",

@@ -294,6 +294,7 @@ impl TableEditRow {
             draft.layout().content(),
             tables,
         )
+        .and_then(|layout| layout.with_graphics(draft.layout().graphics().to_vec()))
         .map_err(error)?;
         Ok((
             ActionParameters::TemplateEdit {

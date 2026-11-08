@@ -1,6 +1,7 @@
 /** Paper-unit frame rendering. Literal values stay intact; overflowing text is clipped and flagged. */
 import type { FrameRow } from './types';
 import { renderText } from './text';
+import { renderTemplateGraphics } from './template-graphic-render';
 const ns = 'http://www.w3.org/2000/svg';
 let serial = 0;
 function node<K extends keyof SVGElementTagNameMap>(
@@ -33,6 +34,7 @@ export function renderFrame(svg: SVGElement, frame: Omit<FrameRow, 'sheet'>) {
     border.append(title);
     group.dataset.diagnostic = 'title-block-too-small';
   }
+  renderTemplateGraphics(group, frame.graphics);
   for (const cell of frame.cells) {
     const { x, y, width, height } = cell.bounds;
     const container = node('g', { class: 'frame-cell', 'data-field': cell.key });

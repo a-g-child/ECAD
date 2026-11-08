@@ -4,6 +4,8 @@ use ecad_domain::{TemplateRevisionId, TemplateVariantRef};
 /// Operations available in the template workspace; property values remain command parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TemplateOperation {
+    /// Focus retained text and vector artwork property controls.
+    Artwork,
     /// Cancel a host-owned transient table gesture.
     CancelDrag,
     /// Structured table geometry/content review.

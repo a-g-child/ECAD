@@ -2,22 +2,8 @@
 import type { TemplateVariant, TemplateCell, TemplateTable, TemplateRun } from './types';
 import { element } from './ui';
 import { textEditor } from './text';
-const fields = [
-  'company.name',
-  'company.address',
-  'engineer.name',
-  'project.title',
-  'project.product',
-  'project.client',
-  'project.contract',
-  'project.issue',
-  'document.title',
-  'document.number',
-  'document.revision',
-  'sheet.title',
-  'sheet.number',
-  'document.sheet_count',
-];
+import { TemplateRuns } from './template-runs';
+import { TemplateArtwork } from './template-artwork';
 export class TemplateProperties {
   readonly root = element('form', 'template-properties inspector');
   private name = textEditor('property-input property-text', 2);
@@ -27,7 +13,7 @@ export class TemplateProperties {
   private fitMargins = element('input');
   private caption = textEditor('property-input property-text', 2);
   private runs: TemplateRun[] = [];
-  private runFields = element('div', 'template-run-fields');
+  private artwork: TemplateArtwork | null = null;
   private selected: { table: TemplateTable; cell: TemplateCell } | null = null;
   private model: TemplateVariant | null = null;
   constructor(
@@ -110,6 +96,8 @@ export class TemplateProperties {
         'Custom paper/layout · border standards and anchoring tools are pending. Preview uses placeholders, never personal or project values.',
       ),
     );
+    this.artwork = new TemplateArtwork(model, this.changed);
+    this.root.append(this.artwork.root);
     this.runs = [];
     if (selection) {
       this.root.append(element('h3', '', 'Cell properties'));
@@ -124,61 +112,8 @@ export class TemplateProperties {
         ),
       );
       this.runs = selection.cell.contents.map((r) => ({ ...r }));
-      this.root.append(this.runFields);
-      this.renderRuns();
+      this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
     }
-  }
-  private renderRuns() {
-    this.runFields.replaceChildren();
-    this.runs.forEach((run, i) => {
-      const type = element('select', 'property-input');
-      for (const v of ['literal', 'field']) {
-        const option = element('option', '', v === 'literal' ? 'Literal text' : 'Variable');
-        option.value = v;
-        type.append(option);
-      }
-      type.value = run.kind;
-      const literal = textEditor('property-input property-text', 3);
-      literal.value = run.kind === 'literal' ? run.value : '';
-      const binding = element('select', 'property-input');
-      for (const key of fields) {
-        const option = element('option', '', key);
-        option.value = key;
-        binding.append(option);
-      }
-      binding.value = run.kind === 'field' ? run.value : fields[0];
-      this.label(`Content ${i + 1} type`, type, this.runFields);
-      const literalLabel = this.label(`Content ${i + 1} text`, literal, this.runFields);
-      const bindingLabel = this.label(`Content ${i + 1} variable`, binding, this.runFields);
-      const show = () => {
-        literalLabel.hidden = type.value !== 'literal';
-        bindingLabel.hidden = type.value !== 'field';
-      };
-      show();
-      type.addEventListener('change', () => {
-        run.kind = type.value as TemplateRun['kind'];
-        run.value = run.kind === 'literal' ? literal.value : binding.value;
-        show();
-      });
-      literal.addEventListener('input', () => (run.value = literal.value));
-      binding.addEventListener('change', () => (run.value = binding.value));
-      const remove = element('button', 'plain', `Remove content ${i + 1}`);
-      remove.type = 'button';
-      remove.addEventListener('click', () => {
-        this.runs.splice(i, 1);
-        this.renderRuns();
-        this.changed();
-      });
-      this.runFields.append(remove);
-    });
-    const add = element('button', 'plain', 'Add text content');
-    add.type = 'button';
-    add.addEventListener('click', () => {
-      this.runs.push({ kind: 'literal', value: '' });
-      this.renderRuns();
-      this.changed();
-    });
-    this.runFields.append(add);
   }
 
   proposal() {
@@ -189,6 +124,7 @@ export class TemplateProperties {
       paper: this.paper.map((v) => v.value),
       fit_margins: this.fitMargins.checked,
       content: this.content.map((v) => v.value),
+      graphics: this.artwork!.graphics,
       cell: this.selected
         ? {
             table: this.selected.table.id,
@@ -198,6 +134,20 @@ export class TemplateProperties {
           }
         : null,
     };
+  }
+  focusArtwork(id?: string) {
+    if (!id) {
+      const section = this.root.querySelector<HTMLElement>('.template-artwork');
+      section?.scrollIntoView({ block: 'nearest' });
+      section?.querySelector('button')?.focus();
+      return;
+    }
+    const detail = this.root.querySelector<HTMLDetailsElement>(`[data-artwork-id="${id}"]`);
+    if (detail) {
+      detail.open = true;
+      detail.scrollIntoView({ block: 'nearest' });
+      detail.querySelector<HTMLInputElement>('input,textarea')?.focus();
+    }
   }
   focus() {
     (this.selected ? this.caption : this.name).focus();

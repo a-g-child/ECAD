@@ -118,6 +118,11 @@ export class TemplateEditor {
       controls,
       status,
     );
+    this.preview.svg.addEventListener('pointerdown', (event) => {
+      const graphic = (event.target as Element).closest<SVGElement>('[data-template-graphic]');
+      if (!graphic || this.fieldsPending || this.working || this.uiBusy) return;
+      this.form.focusArtwork(graphic.dataset.templateGraphic!);
+    });
     this.canvas.append(this.preview.svg);
     this.root.append(left, center, right);
     shell.workspace.append(this.root);
@@ -223,6 +228,14 @@ export class TemplateEditor {
         this.structure.append(b);
       }
     }
+    for (const [i, graphic] of this.variant.graphics.entries()) {
+      const item = element('button', 'tree-item', `Artwork ${i + 1} · ${graphic.kind}`);
+      item.addEventListener('click', () => {
+        if (!this.fieldsPending && !this.working && !this.uiBusy)
+          this.form.focusArtwork(graphic.id);
+      });
+      this.structure.append(item);
+    }
     this.note.textContent = view.catalog_error ?? '';
     this.interaction.update(
       this.variant,
@@ -274,6 +287,9 @@ export class TemplateEditor {
     setTimeout(() => {
       if (this.active) this.form.focus();
     }, 0);
+  }
+  artwork() {
+    this.form.focusArtwork();
   }
   tables(operation: string) {
     if (this.variant)

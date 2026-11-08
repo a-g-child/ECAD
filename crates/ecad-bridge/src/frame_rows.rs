@@ -7,6 +7,7 @@ pub(crate) struct FrameRow {
     template: String,
     border: RectRow,
     cells: Vec<CellRow>,
+    graphics: Vec<crate::template_graphic_rows::GraphicRow>,
     title_block_too_small: bool,
     font: String,
     text_height: f64,
@@ -46,6 +47,7 @@ impl FrameRow {
         Self {
             sheet: id.to_string(),
             template: frame.template.key(),
+            graphics: frame.graphics.iter().map(Into::into).collect(),
             border: frame.border.into(),
             cells: frame
                 .cells

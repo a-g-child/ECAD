@@ -22,6 +22,7 @@ pub(crate) struct VariantRow {
     pub paper: [String; 6],
     pub content: [String; 4],
     pub tables: Vec<TableRow>,
+    pub graphics: Vec<crate::template_graphic_rows::GraphicRow>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct TableRow {
@@ -39,8 +40,8 @@ pub(crate) struct CellRow {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct RunRow {
-    kind: String,
-    value: String,
+    pub(crate) kind: String,
+    pub(crate) value: String,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -52,6 +53,8 @@ pub(crate) struct TemplateEditRow {
     cell: Option<CellEdit>,
     #[serde(default)]
     fit_margins: bool,
+    #[serde(default)]
+    graphics: Option<Vec<crate::template_graphic_rows::GraphicRow>>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -93,6 +96,7 @@ impl TemplateView {
                             .map(|v| v.to_string()),
                         content: strings(v.layout().content()),
                         tables: v.layout().tables().iter().map(TableRow::new).collect(),
+                        graphics: v.layout().graphics().iter().map(Into::into).collect(),
                     }
                 })
                 .collect(),
@@ -183,6 +187,16 @@ impl TemplateEditRow {
             tables,
         )
         .map_err(|e| BridgeError::new("template", e))?;
+        let graphics = match self.graphics {
+            Some(rows) => rows
+                .into_iter()
+                .map(TemplateGraphic::try_from)
+                .collect::<Result<_, _>>()?,
+            None => old.layout().graphics().to_vec(),
+        };
+        let layout = layout
+            .with_graphics(graphics)
+            .map_err(|e| BridgeError::new("template", e))?;
         Ok(ActionParameters::TemplateEdit {
             variant: id,
             name: self.name,

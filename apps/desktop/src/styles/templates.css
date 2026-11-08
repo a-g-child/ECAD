@@ -109,3 +109,18 @@
 .table-edge:hover {
   stroke: #2383bf55;
 }
+
+.template-preview [data-template-graphic] {
+  pointer-events: all;
+  cursor: pointer;
+}
+.template-artwork {
+  display: grid;
+  gap: 9px;
+}
+.template-artwork details {
+  min-width: 0;
+}
+.template-artwork summary {
+  cursor: pointer;
+}

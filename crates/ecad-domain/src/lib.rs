@@ -96,7 +96,10 @@ pub use drawing_document_info::{
 };
 
 mod template_border_snap;
+mod template_graphic;
 mod template_layout;
+pub use identity::TemplateGraphicId;
+pub use template_graphic::{TemplateGraphic, TemplateGraphicShape};
 mod template_margin_layout;
 pub use template_border_snap::{
     MarginEdge, TableBorderDrag, TableBorderPlacement, table_border_placement,
@@ -110,6 +113,7 @@ pub use identity::{
 pub use template_layout::{SavedTemplateVariant, TemplateLayout, TemplateVariantRef};
 pub use template_table::{
     TemplateCell, TemplateError, TemplateTable, TemplateText, TemplateTextRun,
+    resolve_template_text,
 };
 pub use template_table_edit::{MergeContents, TableAxis, TableEditError};
 pub use template_table_insert::TableGrowthAnchor;

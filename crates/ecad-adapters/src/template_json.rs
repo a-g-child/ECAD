@@ -67,6 +67,8 @@ pub(crate) struct VariantData {
     margins_um: [u32; 4],
     content_um: [u32; 4],
     tables: Vec<TableData>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    graphics: Option<Vec<crate::template_graphic_data::GraphicData>>,
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -90,11 +92,11 @@ struct CellData {
     rename_all = "kebab-case",
     deny_unknown_fields
 )]
-enum RunData {
+pub(crate) enum RunData {
     Literal(String),
     Field(String),
 }
-fn rect(value: [u32; 4]) -> FrameRect {
+pub(crate) fn rect(value: [u32; 4]) -> FrameRect {
     FrameRect {
         x: value[0],
         y: value[1],
@@ -102,7 +104,7 @@ fn rect(value: [u32; 4]) -> FrameRect {
         height: value[3],
     }
 }
-fn coords(value: FrameRect) -> [u32; 4] {
+pub(crate) fn coords(value: FrameRect) -> [u32; 4] {
     [value.x, value.y, value.width, value.height]
 }
 
@@ -119,7 +121,15 @@ impl From<&SavedTemplateVariant> for VariantData {
         let paper = value.layout().paper();
         let pin = value.reference();
         Self {
-            schema_version: if value.allows_new_assignments() { 1 } else { 2 },
+            schema_version: if !value.layout().graphics().is_empty() {
+                3
+            } else if value.allows_new_assignments() {
+                1
+            } else {
+                2
+            },
+            graphics: (!value.layout().graphics().is_empty())
+                .then(|| value.layout().graphics().iter().map(Into::into).collect()),
             new_assignments: (!value.allows_new_assignments()).then_some(false),
             definition: pin.definition.to_string(),
             revision: pin.revision.to_string(),
@@ -168,7 +178,7 @@ impl From<&SavedTemplateVariant> for VariantData {
 /// Reading a body has no publication, project migration or filesystem side effects.
 pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, TemplateFileError> {
     let version: crate::schema::VersionEnvelope = serde_json::from_str(text)?;
-    if ![1, 2].contains(&version.schema_version) {
+    if ![1, 2, 3].contains(&version.schema_version) {
         return Err(TemplateFileError::Version(version.schema_version));
     }
     let data: VariantData = serde_json::from_str(text)?;
@@ -177,7 +187,7 @@ pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, Templ
 impl TryFrom<VariantData> for SavedTemplateVariant {
     type Error = TemplateFileError;
     fn try_from(data: VariantData) -> Result<Self, Self::Error> {
-        if ![1, 2].contains(&data.schema_version) {
+        if ![1, 2, 3].contains(&data.schema_version) {
             return Err(TemplateFileError::Version(data.schema_version));
         }
         if (data.schema_version == 1 && data.new_assignments.is_some())
@@ -188,6 +198,11 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                     "Variant v2 requires explicit retained-legacy eligibility",
                 ),
             ));
+        }
+        if (data.schema_version < 3 && data.graphics.is_some())
+            || (data.schema_version == 3 && data.graphics.is_none())
+        {
+            return Err(TemplateFileError::Version(data.schema_version));
         }
         let retained = data.new_assignments == Some(false);
         let paper = SheetPaper {
@@ -231,7 +246,13 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                 )?)
             })
             .collect::<Result<Vec<_>, _>>()?;
-        let layout = TemplateLayout::new(paper, rect(data.content_um), tables)?;
+        let layout = TemplateLayout::new(paper, rect(data.content_um), tables)?.with_graphics(
+            data.graphics
+                .unwrap_or_default()
+                .into_iter()
+                .map(TemplateGraphic::try_from)
+                .collect::<Result<_, _>>()?,
+        )?;
         if retained && !layout.tables().is_empty() {
             return Err(TemplateFileError::Json(
                 <serde_json::Error as serde::de::Error>::custom(
@@ -253,5 +274,25 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
             data.name,
             layout,
         )?)
+    }
+}
+
+impl From<&TemplateTextRun> for RunData {
+    fn from(run: &TemplateTextRun) -> Self {
+        match run {
+            TemplateTextRun::Literal(s) => Self::Literal(s.clone()),
+            TemplateTextRun::Field(f) => Self::Field(f.key().into()),
+        }
+    }
+}
+impl TryFrom<RunData> for TemplateTextRun {
+    type Error = TemplateFileError;
+    fn try_from(run: RunData) -> Result<Self, Self::Error> {
+        match run {
+            RunData::Literal(s) => Ok(Self::Literal(s)),
+            RunData::Field(k) => FrameField::from_key(&k)
+                .map(Self::Field)
+                .ok_or(TemplateFileError::Field(k)),
+        }
     }
 }

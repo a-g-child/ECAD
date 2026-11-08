@@ -101,3 +101,9 @@ For direct title-block editing, drag across cell interiors to select a range; me
 
 
 Template properties now includes General margin (µm), which sets all four sides together and shows Mixed for individual overrides. Editing it checks the visible Fit layout inside margins option: out-of-interior tables move only as needed, their cell sizes stay unchanged, and the content region is intersected with the new border. Impossible fits retain the fields for correction; Undo restores the full layout. Table movement and outer-edge resizing snap within eight screen pixels of the margin border, with green preview guides. Hold Alt to bypass; numeric dialogs remain exact. These are placement snaps, not persistent attachments. See [decision 0044](decisions/0044-template-margin-controls-and-snapping.md).
+
+### Template artwork
+
+In the template editor choose **Artwork** on the Template ribbon (also available in command search). Add text, a line/polyline, rectangle or ellipse, edit paper coordinates and appearance, then **Apply properties**. Expand an artwork item for its fields, or select it in the preview/explorer. Add literal or variable runs using the same controls as table cells. Text is multiline; overflowing text is clipped with a marker and full-value tooltip. Templates show variable placeholders; assigned project sheets resolve their own values.
+
+Artwork changes share template Undo/Redo, Revert fields and Save revision. Artwork may sit in margins and stays fixed when table margin fitting runs. Vector authoring currently uses exact coordinates and local point lists; pointer drawing/dragging and imported logos/images are not implemented yet.

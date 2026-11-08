@@ -198,6 +198,11 @@ impl DesktopBridge {
             )
             .map_err(|e| BridgeError::new("template", e))?;
         let message = match outcome {
+            TemplateActionOutcome::Request(TemplateOperation::Artwork) => {
+                let mut response = self.snapshot();
+                response.request = Some("template_artwork".into());
+                return Ok(response);
+            }
             TemplateActionOutcome::Request(TemplateOperation::CancelDrag) => {
                 self.templates.gesture = None;
                 "Table gesture cancelled"

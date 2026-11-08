@@ -44,6 +44,7 @@ pub use connection_csv::{ConnectionCsvKind, encode_connection_csv, encode_curren
 
 pub use profile_file::{ProfileFile, ProfileFileError, ProfileSnapshot};
 
+mod template_graphic_data;
 mod template_json;
 pub use template_json::{TemplateFileError, decode_template_variant, encode_template_variant};
 

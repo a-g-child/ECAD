@@ -22,6 +22,7 @@ pub struct TemplateLayout {
     paper: SheetPaper,
     content: FrameRect,
     tables: Vec<TemplateTable>,
+    graphics: Vec<crate::TemplateGraphic>,
 }
 impl TemplateLayout {
     /// Construct a layout with explicit generated-content region and structured tables.
@@ -70,7 +71,33 @@ impl TemplateLayout {
             paper,
             content,
             tables,
+            graphics: Vec::new(),
         })
+    }
+    /// Replace artwork atomically, validating unique identities and paper-space bounds.
+    /// Artwork may occupy margins; margins guide tables, not page decorations.
+    /// # Errors
+    /// Rejects invalid geometry/style, repeated identities or more than 4096 objects.
+    pub fn with_graphics(
+        mut self,
+        graphics: Vec<crate::TemplateGraphic>,
+    ) -> Result<Self, TemplateError> {
+        let mut ids = BTreeSet::new();
+        if graphics.len() > 4096 {
+            return Err(TemplateError::Graphic);
+        }
+        for graphic in &graphics {
+            graphic.validate(&self.paper)?;
+            if !ids.insert(graphic.id) {
+                return Err(TemplateError::Graphic);
+            }
+        }
+        self.graphics = graphics;
+        Ok(self)
+    }
+    /// Retained artwork in paint order, behind title-block tables.
+    pub fn graphics(&self) -> &[crate::TemplateGraphic] {
+        &self.graphics
     }
     /// Exact oriented dimensions and guide margins in micrometres.
     pub fn paper(&self) -> &SheetPaper {

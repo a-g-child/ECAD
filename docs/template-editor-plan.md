@@ -201,3 +201,9 @@ Pointer previews are validated in Rust without changing history. Release commits
 ## Implemented margin controls and snaps
 
 General margin sets the existing four side values in one template edit; individually differing sides display Mixed. The visible fitting option minimally translates tables and intersects the content region with the new interior, preserving every local cell. Pointer moves and outer resizes snap corresponding table edges to the captured layout's margin border. The eight-pixel tolerance is converted explicitly to integer paper units; Alt and numeric alternatives bypass snapping. Preview guides report the headless result and release commits the closed proposal. Click-only handle interactions do not alter exact numeric placements. See [decision 0044](decisions/0044-template-margin-controls-and-snapping.md). Persistent border anchors and global margin defaults remain future work.
+
+## Implemented: free template text and vector artwork
+
+The Template ribbon's Artwork action opens draft controls for text, line/polylines, rectangles and ellipses. Apply properties commits creation, exact geometry/style/content edits and removals together; Undo/Redo and saved revisions include the complete artwork. Text shares the existing literal/variable editor with cells, supports multiline content immediately and resolves per sheet. Artwork can occupy margins; changing margins only fits tables/content and never relocates artwork. Canvas and explorer entries open artwork properties. See [decision 0045](decisions/0045-template-artwork-and-variable-text.md).
+
+The current authoring surface is numeric properties/local polyline points. Interactive drawing/dragging, artwork snaps, assets/logos, filled primitives, arcs and reusable artwork styles remain planned.

@@ -1,3 +1,4 @@
+import { registerTemplateArtworkTests } from './template-artwork.mjs';
 /** Local integration tests: real Rust controller + Vite + Chromium, no mocked electrical model. */
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -541,3 +542,5 @@ registerTemplateTableTests({ page, button, until, project: () => project, root }
 registerTemplateTableInteractionTests({ page, button, until, project: () => project, root });
 
 registerTemplateMarginTests({ page, button, until, project: () => project, root });
+
+registerTemplateArtworkTests({ page, button, until });

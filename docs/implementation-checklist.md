@@ -293,3 +293,16 @@ Direct interaction validation (macOS/aarch64): `cargo xtask full`, `cargo xtask 
 Template margins: [decision 0044](decisions/0044-template-margin-controls-and-snapping.md), [domain regressions](../crates/ecad-domain/tests/template_margins.rs), [bridge history/preview checks](../crates/ecad-bridge/tests/template_margin_bridge.rs) and [browser workflows](../apps/desktop/tests/template-margins.mjs). Pointer moves/outer resizes snap to the corresponding margin border with validated feedback and Alt bypass. General margin edits all four sides; the visible fitting option translates tables/intersects content without scaling cells. Numeric placement remains exact and click-only handles preserve it. No schema change, persistent attachment or implicit project adoption is introduced.
 
 Margin validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (51 browser workflows) and `cargo xtask desktop` passed. Four new domain tests cover border/corner/tie/tolerance/extreme geometry and fitting; two bridge workflows cover snap feedback, numeric/bypass semantics, captured-edge protection and complete saved history. Two browser workflows cover shared/mixed margins, fitting, rejected edits, drag feedback, Alt/numeric alternatives and click-only placement preservation. The click-only regression also passed in a final targeted browser run. Native Windows/Linux execution and native interaction automation remain unverified.
+
+### Template text and vector artwork
+
+- [x] Retained stable artwork identities; multiline literal/variable text, rectangles, ellipses and coherent line/polylines in exact paper units.
+- [x] Template ribbon/command-search Artwork action, explorer/canvas property access, property-based creation/edit/removal with one Apply/Undo and pending-field guards.
+- [x] Explicit font, text height, outline width and colour; paper-bounds validation, clipped text with overflow feedback, artwork behind title-block tables.
+- [x] Shared typed variable resolution from each project/document/sheet; independent template bodies never store resolved project values.
+- [x] Strict nested variant v3 artwork persistence, existing v1/v2 encoding preserved for artwork-free bodies; project/library round trips and table-edit preservation.
+- [ ] Direct pointer drawing/dragging and artwork snapping/transform tools; image/logo portable assets, fills and arcs.
+
+Validation: added adapter/domain integration coverage for all shapes, malformed/duplicate/out-of-paper geometry, unknown fields, version rejection, exact canonical round trips and per-sheet variable resolution; bridge regression covers Apply/Undo/Redo, failed edits, table preservation and library saves. Browser workflow covers multiline bindings, all shapes, exact polyline edits, validation, Revert, history and saved-template reopen. See decision 0045 for first-slice limits.
+
+Local verification for this slice: `cargo xtask full`, `cargo xtask ui` (52 browser workflows), and `cargo xtask desktop` passed on macOS/aarch64. Browser tests use the real Rust loopback host; desktop checks are host build/lint checks, not native interaction automation. Windows/Linux runtime validation remains pending.

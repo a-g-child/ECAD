@@ -172,3 +172,8 @@ mod tests {
         }
     }
 }
+
+identity!(
+    TemplateGraphicId,
+    "Identity of a retained template artwork object."
+);
