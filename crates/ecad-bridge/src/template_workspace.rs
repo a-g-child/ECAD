@@ -9,6 +9,7 @@ pub(crate) struct TemplateWorkspace {
     pub editor: Option<TemplateDocument>,
     pub selected: Option<TemplateVariantId>,
     pub pending: bool,
+    pub pending_table: Option<TableOperation>,
     pub path: Option<PathBuf>,
     publisher: Option<TemplatePublisher<TemplateLibraryFile>>,
 }
@@ -144,16 +145,14 @@ impl DesktopBridge {
             .get(&invocation.action)
             .map(|a| a.handler)
             .ok_or_else(|| BridgeError::new("action", "Unknown template action"))?;
-        if self.templates.pending
-            && !matches!(
-                handler,
-                ActionHandler::Template(
-                    TemplateOperation::Apply
-                        | TemplateOperation::Revert
-                        | TemplateOperation::Discard
-                )
-            )
-        {
+        let table_commit = matches!(handler, ActionHandler::Template(TemplateOperation::Table(op))
+            if self.templates.pending_table == Some(op) && matches!(&invocation.parameters, ActionParameters::TemplateEdit { .. }));
+        let pending_control = matches!(
+            handler,
+            ActionHandler::Template(TemplateOperation::Revert | TemplateOperation::Discard)
+        ) || (self.templates.pending_table.is_none()
+            && handler == ActionHandler::Template(TemplateOperation::Apply));
+        if self.templates.pending && !table_commit && !pending_control {
             return Err(BridgeError::new(
                 "template",
                 "Apply or revert the property fields first",
@@ -192,6 +191,7 @@ impl DesktopBridge {
         let message = match outcome {
             TemplateActionOutcome::Changed => {
                 self.templates.pending = false;
+                self.templates.pending_table = None;
                 if handler == ActionHandler::Save {
                     "Template revision saved"
                 } else {
@@ -202,6 +202,19 @@ impl DesktopBridge {
                 self.templates
                     .open(self.document.session().project(), pin)?;
                 "Template opened"
+            }
+            TemplateActionOutcome::Request(TemplateOperation::Table(op)) => {
+                let mut response = self.snapshot();
+                response.request = Some(
+                    match op {
+                        TableOperation::Resize => "template_table_resize",
+                        TableOperation::Split => "template_cell_split",
+                        TableOperation::Merge => "template_cells_merge",
+                        TableOperation::Boundary => "template_table_boundary",
+                    }
+                    .into(),
+                );
+                return Ok(response);
             }
             TemplateActionOutcome::Request(TemplateOperation::Apply) => {
                 let mut response = self.snapshot();
@@ -259,11 +272,13 @@ impl DesktopBridge {
                 self.templates.editor = None;
                 self.templates.selected = None;
                 self.templates.pending = false;
+                self.templates.pending_table = None;
                 self.router.cancel_pending();
                 "Template editor closed"
             }
             TemplateActionOutcome::Request(TemplateOperation::Revert) => {
                 self.templates.pending = false;
+                self.templates.pending_table = None;
                 "Template fields reverted"
             }
             TemplateActionOutcome::Request(TemplateOperation::Import) => {
@@ -326,9 +341,29 @@ impl DesktopBridge {
             return Err(BridgeError::new("template", "Template editor is closed"));
         }
         match request {
-            Request::TemplatePending { context, .. } => {
+            Request::TemplatePending {
+                context,
+                table_action,
+                ..
+            } => {
                 self.context(context)?;
+                let operation = table_action
+                    .map(|id| {
+                        let id = ActionId::new(id).map_err(|e| BridgeError::new("action", e))?;
+                        match self.registry.get(&id).map(|a| a.handler) {
+                            Some(ActionHandler::Template(TemplateOperation::Table(op))) => Ok(op),
+                            _ => Err(BridgeError::new("template", "Unknown table operation")),
+                        }
+                    })
+                    .transpose()?;
+                if self.templates.pending && self.templates.pending_table != operation {
+                    return Err(BridgeError::new(
+                        "template",
+                        "Another set of template fields is pending",
+                    ));
+                }
                 self.templates.pending = true;
+                self.templates.pending_table = operation;
                 Ok(Response::default())
             }
             Request::TemplateOperation {
@@ -340,11 +375,25 @@ impl DesktopBridge {
             } => {
                 let context = self.context(context)?;
                 let params = if let Some(values) = values {
-                    let row: TemplateEditRow = serde_json::from_value(values)
-                        .map_err(|e| BridgeError::new("template", e))?;
-                    row.proposal(self.templates.editor.as_ref().ok_or_else(|| {
-                        BridgeError::new("template", "Template editor is closed")
-                    })?)?
+                    if let Some(ActionHandler::Template(TemplateOperation::Table(op))) = self
+                        .registry
+                        .get(
+                            &ActionId::new(action.clone())
+                                .map_err(|e| BridgeError::new("action", e))?,
+                        )
+                        .map(|a| a.handler)
+                    {
+                        let row: crate::template_table_edit::TableEditRow =
+                            serde_json::from_value(values)
+                                .map_err(|e| BridgeError::new("template", e))?;
+                        row.proposal(self.templates.editor.as_ref().expect("checked editor"), op)?
+                    } else {
+                        let row: TemplateEditRow = serde_json::from_value(values)
+                            .map_err(|e| BridgeError::new("template", e))?;
+                        row.proposal(self.templates.editor.as_ref().ok_or_else(|| {
+                            BridgeError::new("template", "Template editor is closed")
+                        })?)?
+                    }
                 } else if let Some(source) = source {
                     let Some(SheetTemplate::Saved(pin)) = SheetTemplate::from_key(&source) else {
                         return Err(BridgeError::new(

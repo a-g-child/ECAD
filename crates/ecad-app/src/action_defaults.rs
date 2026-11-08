@@ -27,6 +27,54 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "template.table.resize",
+                "Resize title-block table",
+                "Templates",
+                "Move and resize a coherent title-block table",
+                Handler::Template(crate::TemplateOperation::Table(
+                    crate::TableOperation::Resize,
+                )),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "template.cell.split",
+                "Split title-block cell",
+                "Templates",
+                "Divide a title-block cell into rows and columns",
+                Handler::Template(crate::TemplateOperation::Table(
+                    crate::TableOperation::Split,
+                )),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "template.cells.merge",
+                "Merge title-block cells",
+                "Templates",
+                "Review and merge a rectangular cell selection",
+                Handler::Template(crate::TemplateOperation::Table(
+                    crate::TableOperation::Merge,
+                )),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "template.table.boundary",
+                "Move table boundary",
+                "Templates",
+                "Move an aligned interior title-block boundary",
+                Handler::Template(crate::TemplateOperation::Table(
+                    crate::TableOperation::Boundary,
+                )),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "template.library.reload",
                 "Reload template library",
                 "Templates",

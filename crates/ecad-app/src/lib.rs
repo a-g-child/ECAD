@@ -149,4 +149,6 @@ pub use template_document::{
 };
 
 mod template_actions;
-pub use template_actions::{TemplateActionOutcome, TemplateDispatchError, TemplateOperation};
+pub use template_actions::{
+    TableOperation, TemplateActionOutcome, TemplateDispatchError, TemplateOperation,
+};

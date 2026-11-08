@@ -252,7 +252,8 @@ See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [re
 - [x] Add Libraries access, a separate template editor view, independent draft history/publication, contextual ribbon and exact template/cell-content properties.
 - [ ] Extend editor properties to full table geometry, shared styles, anchors and multiple selections.
 - [ ] Add ISO/ANSI paper/profile presets with verified edition-specific layout rules and Custom provenance.
-- [ ] Add structured unequal-row tables, coherent sizing/split/merge and stable field bindings.
+- [x] Add exact numeric table sizing, grid cell splits, rectangular merges with reviewed content policy, aligned-boundary edits, stable identities and editable multiline/variable runs.
+- [ ] Extend table tools with insertion/removal, drag sizing and reviewed custom sheet-entry value mapping.
 - [x] Implement saved-only desktop assignment with deterministic legacy preservation and project bundling.
 - [ ] Complete reviewed bulk revision adoption and custom value mapping.
 
@@ -273,6 +274,11 @@ Saved template assignments: [decision 0040](decisions/0040-saved-template-assign
 Validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (42 workflows) and `cargo xtask desktop` passed. Older v12 fixtures/readers are retained alongside canonical v13 fixtures. Browser migration tests use temporary project files and real Rust state; native Windows/Linux and output/font parity remain unverified.
 
 
-Independent template editor: [decision 0041](decisions/0041-independent-template-editor.md), [headless history/publication checks](../crates/ecad-adapters/tests/template_editor.rs), [bridge lifecycle regressions](../crates/ecad-bridge/tests/template_editor_bridge.rs) and [real browser workflows](../apps/desktop/tests/template-editor.mjs). Library Save and project import have separate histories. Exact custom paper/content bounds and multiline cell captions/literal/variable runs are editable; table geometry, split/merge/resize, standard profiles and bulk adoption remain pending.
+Independent template editor: [decision 0041](decisions/0041-independent-template-editor.md), [headless history/publication checks](../crates/ecad-adapters/tests/template_editor.rs), [bridge lifecycle regressions](../crates/ecad-bridge/tests/template_editor_bridge.rs) and [real browser workflows](../apps/desktop/tests/template-editor.mjs). Library Save and project import have separate histories. Exact custom paper/content bounds and multiline cell captions/literal/variable runs are editable; numeric table geometry and split/merge/resize follow below; standard profiles and bulk adoption remain pending.
 
 Independent editor validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (44 browser workflows) and `cargo xtask desktop` passed. Six new headless/bridge workflows cover draft history, durable failures, stale contexts, pending fields, explicit import and closed-editor guards. Browser checks cover the actual separate editor, multiline properties, fixed minimum-window bounds and independent publication/history. Native checks compile/lint the available host; they are not native interaction automation or Linux/Windows execution.
+
+
+Structured template table tools: [decision 0042](decisions/0042-structured-template-table-edits.md), [domain regressions](../crates/ecad-domain/tests/template_table_edit.rs), [bridge history/publication checks](../crates/ecad-bridge/tests/template_table_bridge.rs) and [browser workflows](../apps/desktop/tests/template-tables.mjs). Exact numeric edits preserve full partitions, typed contents and stable survivor identities. Pending table/inspector proposals have separate ownership. No persistence schema change or automatic project adoption is introduced.
+
+Structured table validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (46 browser workflows) and `cargo xtask desktop` passed. Four new domain regressions and two bridge workflows cover partitions, identities/content policies, extreme geometry, exact history/publication and pending-field ownership. Two browser workflows cover real dialogs, blank-cell content creation, error retention, cancellation/redo, publication and minimum-window bounds. Native Linux/Windows execution and native interaction automation remain unverified.

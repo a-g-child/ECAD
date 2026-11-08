@@ -1,0 +1,166 @@
+/** Real Rust table partitions, exact history and local immutable publication through Chromium. */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+export function registerTemplateTableTests({ page, button, until, project, root }) {
+  const editor = (p) => p.getByRole('region', { name: 'Drawing template editor', exact: true });
+  const ribbon = (p) => p.getByRole('tabpanel', { name: 'Template', exact: true });
+  const cells = (p) => editor(p).locator('.template-structure [data-template-cell]');
+  const dialog = (p, name) => p.getByRole('dialog', { name, exact: true });
+  async function open(p) {
+    await p.getByRole('tab', { name: 'Library', exact: true }).click();
+    await button(p, 'Drawing templates').click();
+    await editor(p).waitFor();
+    await ribbon(p).getByRole('button', { name: 'New template', exact: true }).click();
+    await until(async () => (await cells(p).count()) === 8);
+  }
+  async function tool(p, name) {
+    await ribbon(p).getByRole('button', { name, exact: true }).click();
+    const d = dialog(p, name);
+    await d.waitFor();
+    return d;
+  }
+  async function apply(d) {
+    await d.getByRole('button', { name: 'Apply table edit', exact: true }).click();
+    await d.waitFor({ state: 'hidden' });
+  }
+  async function command(p, name) {
+    await ribbon(p).getByRole('button', { name, exact: true }).click();
+    if (name === 'Close template editor' || name === 'Discard template draft') return;
+    await until(
+      async () =>
+        !(await ribbon(p)
+          .getByRole('button', { name: 'Split title-block cell', exact: true })
+          .isDisabled()),
+    );
+  }
+  test('structured table tools split and merge real cells, resize shared edges and preserve exact undo through publication', async () => {
+    const p = await page({ electrical: false });
+    const original = await readFile(project(), 'utf8');
+    await open(p);
+    const ids = await cells(p).evaluateAll((nodes) => nodes.map((n) => n.dataset.templateCell));
+    let d = await tool(p, 'Split title-block cell');
+    await d.getByRole('textbox', { name: 'Columns', exact: true }).fill('0');
+    await d.getByRole('button', { name: 'Apply table edit', exact: true }).click();
+    await until(async () =>
+      (await d.getByRole('alert').innerText()).includes('between 2 and 4096'),
+    );
+    assert.equal(await d.getByRole('textbox', { name: 'Columns', exact: true }).inputValue(), '0');
+    await d.getByRole('textbox', { name: 'Columns', exact: true }).fill('3');
+    await d.getByRole('textbox', { name: 'Rows', exact: true }).fill('2');
+    await apply(d);
+    assert.equal(await cells(p).count(), 13);
+    const splitIds = await cells(p).evaluateAll((nodes) =>
+      nodes.map((n) => n.dataset.templateCell),
+    );
+    assert.equal(splitIds[0], ids[0]);
+    await command(p, 'Undo');
+    assert.deepEqual(
+      await cells(p).evaluateAll((nodes) => nodes.map((n) => n.dataset.templateCell)),
+      ids,
+    );
+    await command(p, 'Redo');
+    assert.deepEqual(
+      await cells(p).evaluateAll((nodes) => nodes.map((n) => n.dataset.templateCell)),
+      splitIds,
+    );
+    await cells(p).nth(1).click();
+    await editor(p)
+      .getByRole('textbox', { name: 'Cell caption', exact: true })
+      .fill('Custom field');
+    await editor(p).getByRole('button', { name: 'Add text content', exact: true }).click();
+    await editor(p)
+      .getByRole('textbox', { name: 'Content 1 text', exact: true })
+      .fill('New cell\nMultiline text');
+    await editor(p).getByRole('button', { name: 'Add text content', exact: true }).click();
+    await editor(p)
+      .getByRole('combobox', { name: 'Content 2 type', exact: true })
+      .selectOption('field');
+    await editor(p)
+      .getByRole('combobox', { name: 'Content 2 variable', exact: true })
+      .selectOption('sheet.title');
+    await editor(p).getByRole('button', { name: 'Apply properties', exact: true }).click();
+    await until(
+      async () =>
+        !(await ribbon(p)
+          .getByRole('button', { name: 'Merge title-block cells', exact: true })
+          .isDisabled()),
+    );
+    // Keep the first cell as survivor while reviewing newly populated split cells.
+    await cells(p).first().click();
+    d = await tool(p, 'Merge title-block cells');
+    for (let i = 0; i < 6; i++) await d.getByRole('checkbox').nth(i).check();
+    assert.equal(
+      await d.getByRole('combobox', { name: 'Merged contents', exact: true }).inputValue(),
+      'combine',
+    );
+    await apply(d);
+    assert.deepEqual(
+      await cells(p).evaluateAll((nodes) => nodes.map((n) => n.dataset.templateCell)),
+      ids,
+    );
+    assert.match(
+      await editor(p).locator('.frame-value').first().getAttribute('aria-label'),
+      /New cell\nMultiline text/,
+    );
+    await command(p, 'Undo');
+    assert.equal(await cells(p).count(), 13);
+    await command(p, 'Redo');
+    d = await tool(p, 'Resize title-block table');
+    for (const [name, value] of [
+      ['Table X (µm)', '100000'],
+      ['Table Y (µm)', '150000'],
+      ['Table width (µm)', '180001'],
+      ['Table height (µm)', '40001'],
+    ])
+      await d.getByRole('textbox', { name, exact: true }).fill(value);
+    await apply(d);
+    const resized = await editor(p).locator('.frame-cell').first().getAttribute('data-field');
+    d = await tool(p, 'Move table boundary');
+    await d.getByRole('textbox', { name: 'Boundary to (µm)', exact: true }).fill('80000');
+    await apply(d);
+    assert.equal(
+      await editor(p).locator('.frame-cell').first().getAttribute('data-field'),
+      resized,
+    );
+    await p.setViewportSize({ width: 960, height: 640 });
+    assert.equal((await p.locator('.ribbon').boundingBox()).height, 96);
+    await p.screenshot({ path: resolve(root, 'target/ui/template-table-tools.png') });
+    await command(p, 'Save template revision');
+    await until(async () => !/^●/.test(await p.title()));
+    await command(p, 'Close template editor');
+    await editor(p).waitFor({ state: 'hidden' });
+    assert.equal(await readFile(project(), 'utf8'), original);
+    assert.deepEqual(p.errors, []);
+    await p.close();
+  });
+  test('table review cancellation preserves redo and rectangular merge errors retain selected cells', async () => {
+    const p = await page({ electrical: false });
+    await open(p);
+    let d = await tool(p, 'Merge title-block cells');
+    await d.getByRole('checkbox').nth(0).check();
+    await d.getByRole('checkbox').nth(3).check();
+    await d.getByRole('button', { name: 'Apply table edit', exact: true }).click();
+    await until(async () => (await d.getByRole('alert').innerText()).includes('rectangle'));
+    assert.equal(await d.getByRole('checkbox').nth(0).isChecked(), true);
+    assert.equal(await d.getByRole('checkbox').nth(3).isChecked(), true);
+    await d.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await d.waitFor({ state: 'hidden' });
+    assert.equal(await cells(p).count(), 8);
+    d = await tool(p, 'Split title-block cell');
+    await apply(d);
+    assert.equal(await cells(p).count(), 9);
+    await command(p, 'Undo');
+    d = await tool(p, 'Resize title-block table');
+    await d.getByRole('textbox', { name: 'Table width (µm)', exact: true }).fill('1');
+    await d.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await d.waitFor({ state: 'hidden' });
+    await command(p, 'Redo');
+    assert.equal(await cells(p).count(), 9);
+    await command(p, 'Discard template draft');
+    await editor(p).waitFor({ state: 'hidden' });
+    assert.deepEqual(p.errors, []);
+    await p.close();
+  });
+}

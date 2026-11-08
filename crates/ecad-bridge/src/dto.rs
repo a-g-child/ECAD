@@ -123,6 +123,9 @@ pub enum Request {
     },
     /// Protect uncommitted template property fields during native close/quit.
     TemplatePending {
+        /// Registered table operation owning these transient fields; absent for inspector fields.
+        #[serde(default)]
+        table_action: Option<String>,
         /// Captured independent editor context.
         context: serde_json::Value,
         /// Shared monotonic host input identity.

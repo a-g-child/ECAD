@@ -25,6 +25,7 @@ export class TemplateProperties {
   private content: HTMLInputElement[] = [];
   private caption = textEditor('property-input property-text', 2);
   private runs: TemplateRun[] = [];
+  private runFields = element('div', 'template-run-fields');
   private selected: { table: TemplateTable; cell: TemplateCell } | null = null;
   private model: TemplateVariant | null = null;
   constructor(
@@ -40,13 +41,14 @@ export class TemplateProperties {
       }
     });
   }
-  private label(name: string, input: HTMLElement) {
+  private label(name: string, input: HTMLElement, parent: HTMLElement = this.root) {
     const label = element('label', 'settings-field');
     label.append(element('span', '', name), input);
-    this.root.append(label);
+    parent.append(label);
     input.setAttribute('aria-label', name);
     input.addEventListener('input', this.changed);
     input.addEventListener('change', this.changed);
+    return label;
   }
   private numbers(names: string[], values: string[]) {
     return names.map((label, i) => {
@@ -100,45 +102,63 @@ export class TemplateProperties {
         ),
       );
       this.runs = selection.cell.contents.map((r) => ({ ...r }));
-      this.runs.forEach((run, i) => {
-        const type = element('select', 'property-input');
-        for (const v of ['literal', 'field']) {
-          const option = element('option', '', v === 'literal' ? 'Literal text' : 'Variable');
-          option.value = v;
-          type.append(option);
-        }
-        type.value = run.kind;
-        const literal = textEditor('property-input property-text', 3);
-        literal.value = run.value;
-        const binding = element('select', 'property-input');
-        for (const key of fields) {
-          const option = element('option', '', key);
-          option.value = key;
-          binding.append(option);
-        }
-        binding.value = run.kind === 'field' ? run.value : fields[0];
-        const show = () => {
-          literal.hidden = type.value !== 'literal';
-          binding.hidden = type.value !== 'field';
-        };
-        show();
-        type.addEventListener('change', () => {
-          run.kind = type.value as TemplateRun['kind'];
-          run.value = run.kind === 'literal' ? literal.value : binding.value;
-          show();
-        });
-        literal.addEventListener('input', () => (run.value = literal.value));
-        binding.addEventListener('change', () => (run.value = binding.value));
-        this.label(`Content ${i + 1} type`, type);
-        this.label(`Content ${i + 1} text`, literal);
-        this.label(`Content ${i + 1} variable`, binding);
-      });
-      if (!this.runs.length)
-        this.root.append(
-          element('p', 'inspector-note', 'Blank cell. Adding/splitting cell content is planned.'),
-        );
+      this.root.append(this.runFields);
+      this.renderRuns();
     }
   }
+  private renderRuns() {
+    this.runFields.replaceChildren();
+    this.runs.forEach((run, i) => {
+      const type = element('select', 'property-input');
+      for (const v of ['literal', 'field']) {
+        const option = element('option', '', v === 'literal' ? 'Literal text' : 'Variable');
+        option.value = v;
+        type.append(option);
+      }
+      type.value = run.kind;
+      const literal = textEditor('property-input property-text', 3);
+      literal.value = run.kind === 'literal' ? run.value : '';
+      const binding = element('select', 'property-input');
+      for (const key of fields) {
+        const option = element('option', '', key);
+        option.value = key;
+        binding.append(option);
+      }
+      binding.value = run.kind === 'field' ? run.value : fields[0];
+      this.label(`Content ${i + 1} type`, type, this.runFields);
+      const literalLabel = this.label(`Content ${i + 1} text`, literal, this.runFields);
+      const bindingLabel = this.label(`Content ${i + 1} variable`, binding, this.runFields);
+      const show = () => {
+        literalLabel.hidden = type.value !== 'literal';
+        bindingLabel.hidden = type.value !== 'field';
+      };
+      show();
+      type.addEventListener('change', () => {
+        run.kind = type.value as TemplateRun['kind'];
+        run.value = run.kind === 'literal' ? literal.value : binding.value;
+        show();
+      });
+      literal.addEventListener('input', () => (run.value = literal.value));
+      binding.addEventListener('change', () => (run.value = binding.value));
+      const remove = element('button', 'plain', `Remove content ${i + 1}`);
+      remove.type = 'button';
+      remove.addEventListener('click', () => {
+        this.runs.splice(i, 1);
+        this.renderRuns();
+        this.changed();
+      });
+      this.runFields.append(remove);
+    });
+    const add = element('button', 'plain', 'Add text content');
+    add.type = 'button';
+    add.addEventListener('click', () => {
+      this.runs.push({ kind: 'literal', value: '' });
+      this.renderRuns();
+      this.changed();
+    });
+    this.runFields.append(add);
+  }
+
   proposal() {
     if (!this.model) throw new Error('Template is closed');
     return {

@@ -12,6 +12,7 @@ import { element } from './ui';
 import { send, inputId, errorText } from './transport';
 import { TemplatePreview } from './template-preview';
 import { TemplateProperties } from './template-properties';
+import { TemplateTableTools } from './template-table-tools';
 export class TemplateEditor {
   private root = element('section', 'template-workspace');
   private catalog = element('select', 'property-input');
@@ -21,6 +22,10 @@ export class TemplateEditor {
   private canvas = element('div', 'template-canvas');
   private form: TemplateProperties;
   private preview: TemplatePreview;
+  private tableTools: TemplateTableTools;
+  get tableActive() {
+    return this.tableTools?.active ?? false;
+  }
   private model: TemplateView | null = null;
   private variant: TemplateVariant | null = null;
   private selection: { table: TemplateTable; cell: TemplateCell } | null = null;
@@ -32,7 +37,7 @@ export class TemplateEditor {
     return this.model !== null;
   }
   get working() {
-    return this.operating;
+    return this.operating || this.tableActive;
   }
   get pending() {
     return this.fieldsPending;
@@ -45,6 +50,7 @@ export class TemplateEditor {
     private action: (id: string) => void,
     private controls: () => void,
   ) {
+    this.tableTools = new TemplateTableTools(shell.app, apply, controls);
     this.root.hidden = true;
     this.root.setAttribute('aria-label', 'Drawing template editor');
     const left = element('aside', 'pane project-pane');
@@ -236,6 +242,9 @@ export class TemplateEditor {
     setTimeout(() => {
       if (this.active) this.form.focus();
     }, 0);
+  }
+  tables(operation: string) {
+    if (this.variant) this.tableTools.open(this.context(), this.variant, this.selection, operation);
   }
   fit() {
     this.preview.fit();

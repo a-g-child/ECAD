@@ -76,3 +76,23 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.template-merge-cells {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow: auto;
+}
+.template-merge-cells label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  white-space: pre-wrap;
+}
+.template-run-fields {
+  display: grid;
+  gap: 8px;
+}
+.template-properties [hidden] {
+  display: none;
+}

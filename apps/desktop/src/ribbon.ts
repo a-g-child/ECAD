@@ -161,6 +161,15 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
         ],
       },
       {
+        title: 'Tables',
+        commands: [
+          command('Resize', 'Resize title-block table', 'properties', 'template.table.resize'),
+          command('Split', 'Split title-block cell', 'blocks', 'template.cell.split'),
+          command('Merge', 'Merge title-block cells', 'blocks', 'template.cells.merge'),
+          command('Boundary', 'Move table boundary', 'move', 'template.table.boundary'),
+        ],
+      },
+      {
         title: 'Project',
         commands: [
           command('Reload library', 'Reload template library', 'open', 'template.library.reload'),

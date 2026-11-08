@@ -97,6 +97,7 @@ pub use drawing_document_info::{
 
 mod template_layout;
 mod template_table;
+mod template_table_edit;
 pub use identity::{
     TemplateCellId, TemplateDefinitionId, TemplateRevisionId, TemplateTableId, TemplateVariantId,
 };
@@ -104,6 +105,7 @@ pub use template_layout::{SavedTemplateVariant, TemplateLayout, TemplateVariantR
 pub use template_table::{
     TemplateCell, TemplateError, TemplateTable, TemplateText, TemplateTextRun,
 };
+pub use template_table_edit::{MergeContents, TableAxis, TableEditError};
 
 mod legacy_template_layout;
 

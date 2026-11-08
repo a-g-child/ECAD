@@ -276,6 +276,14 @@ async function apply(reply: Reply) {
   }
   if (reply.request === 'template_fit') templateEditor.fit();
   if (reply.request === 'template_properties') templateEditor.properties();
+  const tableOperations: Record<string, string> = {
+    template_table_resize: 'resize',
+    template_cell_split: 'split',
+    template_cells_merge: 'merge',
+    template_table_boundary: 'boundary',
+  };
+  if (reply.request && tableOperations[reply.request])
+    templateEditor.tables(tableOperations[reply.request]);
   if (reply.request === 'template_apply_properties') await templateEditor.commitProperties();
   if (reply.request === 'template_library_focus')
     shell.workspace
@@ -466,7 +474,8 @@ document.addEventListener('keydown', (event) => {
     metadata.active ||
     profiles.active ||
     sheets.active ||
-    projectMenu.active
+    projectMenu.active ||
+    templateEditor.tableActive
   )
     return;
   if (event.key === 'Escape' && drawing.cancelGesture()) {

@@ -12,6 +12,13 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a stable title-block cell identity from OS entropy.
+    /// # Errors
+    /// Returns the original OS entropy failure without a weak fallback.
+    pub fn template_cell() -> Result<ecad_domain::TemplateCellId, getrandom::Error> {
+        Ok(ecad_domain::TemplateCellId::new(random_value()?).expect("nonzero UUID"))
+    }
+
     /// Generate a reusable template lineage from OS entropy.
     /// # Errors
     /// Returns the original OS entropy failure without a weak fallback.

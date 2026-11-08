@@ -4,6 +4,8 @@ use ecad_domain::{TemplateRevisionId, TemplateVariantRef};
 /// Operations available in the template workspace; property values remain command parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TemplateOperation {
+    /// Structured table geometry/content review.
+    Table(TableOperation),
     /// Explicitly refresh the observed library catalogue without replacing the draft.
     Reload,
     /// Create an unsaved definition.
@@ -20,6 +22,18 @@ pub enum TemplateOperation {
     Apply,
     /// Revert uncommitted property controls.
     Revert,
+}
+/// Registered structured table operations; numeric values remain closed command parameters.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TableOperation {
+    /// Move/resize a complete coherent table.
+    Resize,
+    /// Split one cell into a row-major grid.
+    Split,
+    /// Merge a rectangular cell selection with explicit content handling.
+    Merge,
+    /// Move an aligned interior boundary.
+    Boundary,
 }
 /// Result of a template action; host requests retain their explicit source when present.
 pub enum TemplateActionOutcome {
@@ -129,7 +143,7 @@ impl ActionDispatcher {
                 Ok(O::Changed)
             }
             (
-                H::Template(TemplateOperation::Apply),
+                H::Template(TemplateOperation::Apply | TemplateOperation::Table(_)),
                 ActionParameters::TemplateEdit {
                     variant,
                     name,

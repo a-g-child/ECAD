@@ -22,6 +22,7 @@ import { registerSheetEditingTests } from './sheet-editing.mjs';
 import { registerProjectPageTests } from './project-pages.mjs';
 import { registerExplorerTests } from './explorer.mjs';
 import { registerTemplateEditorTests } from './template-editor.mjs';
+import { registerTemplateTableTests } from './template-tables.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -532,3 +533,5 @@ registerProjectPageTests({
 });
 
 registerTemplateEditorTests({ page, button, until, project: () => project, root, pressAction });
+
+registerTemplateTableTests({ page, button, until, project: () => project, root });
