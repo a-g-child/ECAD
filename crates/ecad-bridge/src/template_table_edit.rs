@@ -17,6 +17,12 @@ pub(crate) struct TableEditRow {
 #[derive(Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Edit {
+    Insert {
+        axis: String,
+        at: String,
+        size: String,
+        anchor: String,
+    },
     Resize {
         bounds: [String; 4],
     },
@@ -47,6 +53,26 @@ fn cell(s: &str) -> Result<TemplateCellId, BridgeError> {
     s.parse().map_err(error)
 }
 impl TableEditRow {
+    pub(crate) fn target(&self) -> Vec<String> {
+        let mut target = vec![self.variant.clone(), self.table.clone()];
+        match &self.edit {
+            Edit::Resize { .. } => target.push("resize".into()),
+            Edit::Boundary { axis, from, .. } => {
+                target.extend(["boundary".into(), axis.clone(), from.clone()])
+            }
+            Edit::Insert {
+                axis, at, anchor, ..
+            } => target.extend(["insert".into(), axis.clone(), at.clone(), anchor.clone()]),
+            Edit::Split { cell, .. } => target.extend(["split".into(), cell.clone()]),
+            Edit::Merge { cells, primary, .. } => {
+                target.extend(["merge".into(), primary.clone()]);
+                let mut cells = cells.clone();
+                cells.sort();
+                target.extend(cells);
+            }
+        }
+        target
+    }
     pub(crate) fn proposal(
         self,
         doc: &TemplateDocument,
@@ -64,6 +90,46 @@ impl TableEditRow {
             .find(|t| t.id() == table_id)
             .ok_or_else(|| error("Selected table is unavailable"))?;
         let changed = match (operation, self.edit) {
+            (
+                op @ (TableOperation::InsertRow | TableOperation::InsertColumn),
+                Edit::Insert {
+                    axis,
+                    at,
+                    size,
+                    anchor,
+                },
+            ) => {
+                let axis = match (op, axis.as_str()) {
+                    (TableOperation::InsertRow, "y") => TableAxis::Y,
+                    (TableOperation::InsertColumn, "x") => TableAxis::X,
+                    _ => return Err(error("Insertion axis does not match the registered action")),
+                };
+                let at = number(&at)?;
+                let count = old.insertion_cell_count(axis, at).map_err(error)?;
+                if count > 4096 {
+                    return Err(error("Insert at most 4096 blank cells in one operation"));
+                }
+                let mut used: std::collections::BTreeSet<_> = draft
+                    .layout()
+                    .tables()
+                    .iter()
+                    .flat_map(|t| t.cells().iter().map(|c| c.id))
+                    .collect();
+                let mut fresh = vec![];
+                for _ in 0..count {
+                    let id = RandomIds::template_cell().map_err(error)?;
+                    if !used.insert(id) {
+                        return Err(error("Generated cell identity already exists; retry"));
+                    }
+                    fresh.push(id);
+                }
+                let anchor = match anchor.as_str() {
+                    "start" => TableGrowthAnchor::Start,
+                    "end" => TableGrowthAnchor::End,
+                    _ => return Err(error("Choose a start or end growth anchor")),
+                };
+                old.insert_band(axis, at, number(&size)?, anchor, &fresh)
+            }
             (TableOperation::Resize, Edit::Resize { bounds }) => {
                 let b = bounds
                     .iter()

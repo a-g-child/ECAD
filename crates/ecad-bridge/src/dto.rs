@@ -121,6 +121,26 @@ pub enum Request {
         /// Shared monotonic host input identity.
         input: String,
     },
+    /// Validate a transient table proposal at its captured editor revision.
+    TemplateTablePreview {
+        /// Original editor context, retained throughout the gesture.
+        context: serde_json::Value,
+        /// Registered table operation.
+        action: String,
+        /// Exact typed table proposal.
+        values: serde_json::Value,
+        /// Shared monotonic host input identity; also identifies this preview.
+        input: String,
+    },
+    /// Commit exactly the retained successful table preview, without rebuilding it.
+    TemplateTableCommit {
+        /// Original editor context.
+        context: serde_json::Value,
+        /// Exact successful preview input identity.
+        preview: String,
+        /// New shared monotonic input identity.
+        input: String,
+    },
     /// Protect uncommitted template property fields during native close/quit.
     TemplatePending {
         /// Registered table operation owning these transient fields; absent for inspector fields.
@@ -382,6 +402,7 @@ pub enum Request {
 /// One bridge-v1 response. Fields are transport data, never mutable authoritative model access.
 #[derive(Clone, Debug, Serialize, Default)]
 pub struct Response {
+    pub(crate) table_preview: Option<crate::template_table_preview::TablePreviewRow>,
     pub(crate) snapshot: Option<Snapshot>,
     pub(crate) properties: Option<Vec<PropertyRow>>,
     pub(crate) report: Option<Vec<Vec<String>>>,

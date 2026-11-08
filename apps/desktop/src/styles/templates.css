@@ -96,3 +96,16 @@
 .template-properties [hidden] {
   display: none;
 }
+.table-control {
+  cursor: pointer;
+}
+.table-control[data-control='move'] {
+  cursor: move;
+}
+.table-control:focus rect {
+  stroke: var(--accent);
+  stroke-width: 2px;
+}
+.table-edge:hover {
+  stroke: #2383bf55;
+}

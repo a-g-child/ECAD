@@ -4,6 +4,8 @@ use ecad_domain::{TemplateRevisionId, TemplateVariantRef};
 /// Operations available in the template workspace; property values remain command parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TemplateOperation {
+    /// Cancel a host-owned transient table gesture.
+    CancelDrag,
     /// Structured table geometry/content review.
     Table(TableOperation),
     /// Explicitly refresh the observed library catalogue without replacing the draft.
@@ -26,6 +28,10 @@ pub enum TemplateOperation {
 /// Registered structured table operations; numeric values remain closed command parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TableOperation {
+    /// Insert a row across a retained table partition.
+    InsertRow,
+    /// Insert a column across a retained table partition.
+    InsertColumn,
     /// Move/resize a complete coherent table.
     Resize,
     /// Split one cell into a row-major grid.
@@ -68,6 +74,9 @@ impl ActionRegistry {
         }
         let handler = self.get(id).expect("registered action").handler;
         state.disabled = match handler {
+            ActionHandler::CancelPlacement if !context.tool_active => {
+                Some(ActionDisabled::NoActiveTool)
+            }
             ActionHandler::OpenProject => Some(ActionDisabled::NoDocument),
             ActionHandler::Undo if document.undo_len() == 0 => Some(ActionDisabled::NothingToUndo),
             ActionHandler::Redo if document.redo_len() == 0 => Some(ActionDisabled::NothingToRedo),
@@ -168,6 +177,9 @@ impl ActionDispatcher {
                 if !matches!(op, TemplateOperation::Open | TemplateOperation::Apply) =>
             {
                 Ok(O::Request(op))
+            }
+            (H::CancelPlacement, ActionParameters::None) => {
+                Ok(O::Request(TemplateOperation::CancelDrag))
             }
             (H::FitDrawing, ActionParameters::None) => Ok(O::Fit),
             (H::Properties, ActionParameters::None) => Ok(O::Properties),

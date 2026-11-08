@@ -11,7 +11,7 @@ use support::*;
 #[test]
 fn builtin_metadata_is_complete_and_disabled_actions_stay_searchable() {
     let registry = ActionRegistry::builtins();
-    assert_eq!(registry.definitions().len(), 40);
+    assert_eq!(registry.definitions().len(), 42);
     let session = session();
     let context = context(&session);
     assert_eq!(
@@ -42,7 +42,7 @@ fn builtin_metadata_is_complete_and_disabled_actions_stay_searchable() {
             .id,
         id("drawing.route.create")
     );
-    assert_eq!(registry.search("", &context, Some(&session)).len(), 40);
+    assert_eq!(registry.search("", &context, Some(&session)).len(), 42);
     for action in registry.definitions() {
         assert!(!action.label.is_empty());
         assert!(!action.description.is_empty());

@@ -90,38 +90,7 @@ impl TemplateView {
                         paper: [p.width, p.height, p.left, p.right, p.top, p.bottom]
                             .map(|v| v.to_string()),
                         content: strings(v.layout().content()),
-                        tables: v
-                            .layout()
-                            .tables()
-                            .iter()
-                            .map(|t| TableRow {
-                                id: t.id().to_string(),
-                                bounds: strings(t.bounds()),
-                                cells: t
-                                    .cells()
-                                    .iter()
-                                    .map(|c| CellRow {
-                                        id: c.id.to_string(),
-                                        caption: c.caption.clone(),
-                                        bounds: strings(c.bounds),
-                                        contents: c
-                                            .contents
-                                            .iter()
-                                            .map(|r| match r {
-                                                TemplateTextRun::Literal(s) => RunRow {
-                                                    kind: "literal".into(),
-                                                    value: s.clone(),
-                                                },
-                                                TemplateTextRun::Field(f) => RunRow {
-                                                    kind: "field".into(),
-                                                    value: f.key().into(),
-                                                },
-                                            })
-                                            .collect(),
-                                    })
-                                    .collect(),
-                            })
-                            .collect(),
+                        tables: v.layout().tables().iter().map(TableRow::new).collect(),
                     }
                 })
                 .collect(),
@@ -212,5 +181,37 @@ impl TemplateEditRow {
             name: self.name,
             layout: Box::new(layout),
         })
+    }
+}
+
+impl TableRow {
+    pub(crate) fn new(t: &TemplateTable) -> Self {
+        Self {
+            id: t.id().to_string(),
+            bounds: strings(t.bounds()),
+            cells: t
+                .cells()
+                .iter()
+                .map(|c| CellRow {
+                    id: c.id.to_string(),
+                    caption: c.caption.clone(),
+                    bounds: strings(c.bounds),
+                    contents: c
+                        .contents
+                        .iter()
+                        .map(|r| match r {
+                            TemplateTextRun::Literal(s) => RunRow {
+                                kind: "literal".into(),
+                                value: s.clone(),
+                            },
+                            TemplateTextRun::Field(f) => RunRow {
+                                kind: "field".into(),
+                                value: f.key().into(),
+                            },
+                        })
+                        .collect(),
+                })
+                .collect(),
+        }
     }
 }

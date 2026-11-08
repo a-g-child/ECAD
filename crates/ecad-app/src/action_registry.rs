@@ -236,6 +236,7 @@ impl ActionRegistry {
             return if matches!(
                 handler,
                 ActionHandler::Template(_)
+                    | ActionHandler::CancelPlacement
                     | ActionHandler::Save
                     | ActionHandler::Undo
                     | ActionHandler::Redo

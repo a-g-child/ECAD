@@ -3,6 +3,8 @@ import type { Context, Reply, TemplateVariant, TemplateTable, TemplateCell } fro
 import { element } from './ui';
 import { send, inputId, errorText } from './transport';
 const actions: Record<string, [string, string]> = {
+  insert_row: ['Insert title-block row', 'template.table.insert_row'],
+  insert_column: ['Insert title-block column', 'template.table.insert_column'],
   resize: ['Resize title-block table', 'template.table.resize'],
   split: ['Split title-block cell', 'template.cell.split'],
   merge: ['Merge title-block cells', 'template.cells.merge'],
@@ -59,6 +61,7 @@ export class TemplateTableTools {
     variant: TemplateVariant,
     selection: { table: TemplateTable; cell: TemplateCell } | null,
     operation: string,
+    selectedCells: string[] = [],
   ) {
     if (this.active || !actions[operation]) return;
     this.context = structuredClone(context);
@@ -77,6 +80,9 @@ export class TemplateTableTools {
     );
     if (selection) this.tableSelect.value = selection.table.id;
     this.populate(selection?.cell.id);
+    if (operation === 'merge' && selectedCells.length)
+      for (const checkbox of this.choices)
+        checkbox.checked = selectedCells.includes(checkbox.value);
     this.dialog.showModal();
     this.changed();
   }
@@ -119,7 +125,22 @@ export class TemplateTableTools {
       this.body.append(element('p', '', 'This variant has no title-block table.'));
       return;
     }
-    if (this.operation === 'resize') {
+    if (this.operation.startsWith('insert_')) {
+      const axis = this.operation === 'insert_row' ? 1 : 0;
+      this.number('Insert at (µm)', table.bounds[axis + 2]);
+      this.number('Band size (µm)', table.cells[0].bounds[axis + 2]);
+      this.select('Growth anchor', [
+        ['end', 'Keep bottom/right edge'],
+        ['start', 'Keep top/left edge'],
+      ]);
+      this.body.append(
+        element(
+          'p',
+          'settings-note',
+          'Blank cells follow adjacent divisions. Cells spanning the insertion boundary extend across it. The complete table must fit within the paper margins.',
+        ),
+      );
+    } else if (this.operation === 'resize') {
       ['Table X (µm)', 'Table Y (µm)', 'Table width (µm)', 'Table height (µm)'].forEach((name, i) =>
         this.number(name, table.bounds[i]),
       );
@@ -221,6 +242,16 @@ export class TemplateTableTools {
     const value = (name: string) => this.value(name);
     let edit: object;
     switch (this.operation) {
+      case 'insert_row':
+      case 'insert_column':
+        edit = {
+          operation: 'insert',
+          axis: this.operation === 'insert_row' ? 'y' : 'x',
+          at: value('Insert at (µm)'),
+          size: value('Band size (µm)'),
+          anchor: value('Growth anchor'),
+        };
+        break;
       case 'resize':
         edit = {
           operation: 'resize',

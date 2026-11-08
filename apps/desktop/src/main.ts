@@ -277,6 +277,8 @@ async function apply(reply: Reply) {
   if (reply.request === 'template_fit') templateEditor.fit();
   if (reply.request === 'template_properties') templateEditor.properties();
   const tableOperations: Record<string, string> = {
+    template_table_insert_row: 'insert_row',
+    template_table_insert_column: 'insert_column',
     template_table_resize: 'resize',
     template_cell_split: 'split',
     template_cells_merge: 'merge',
@@ -478,6 +480,11 @@ document.addEventListener('keydown', (event) => {
     templateEditor.tableActive
   )
     return;
+  if (templateEditor.gestureActive) {
+    event.preventDefault();
+    if (event.key === 'Escape') void templateEditor.cancelGesture();
+    return;
+  }
   if (event.key === 'Escape' && drawing.cancelGesture()) {
     event.preventDefault();
     return;

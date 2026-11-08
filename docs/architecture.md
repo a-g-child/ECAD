@@ -213,3 +213,6 @@ Saved-reference assignment is implemented in [decision 0040](decisions/0040-save
 
 
 Structured template edits are pure immutable `TemplateTable` transformations: grid splits, rectangular merges with explicit content policy, exact whole-table scaling and aligned-boundary movement. Strict bridge proposals capture variant/table/cell identities and become one complete validated template-history replacement. Pending table fields are distinguished from inspector fields so another operation cannot silently commit them. See [decision 0042](decisions/0042-structured-template-table-edits.md) for survivor/rounding/boundary rules and the interactive request bound. The persistence schema and project adoption behavior are unchanged.
+
+
+Direct table interaction adds a pure domain band-insertion operation and a bridge-owned transient gesture. Proposals are revision/target-bound, invalidate older tokens on every attempt and retain complete validated command parameters for exact commit without ID reallocation. The frontend coalesces pointer input and waits for the release coordinate; selection/handles/camera never become document data. Existing placement cancellation is available in template tool context, and native dirty guards include active gestures. See [decision 0043](decisions/0043-direct-template-table-interaction.md).

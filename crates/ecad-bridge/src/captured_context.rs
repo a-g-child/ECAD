@@ -41,6 +41,7 @@ impl DesktopBridge {
             };
             return Ok(ActionContext {
                 editor: Some(editor.revision()),
+                tool_active: self.templates.gesture.is_some(),
                 focus,
                 ..ActionContext::default()
             });

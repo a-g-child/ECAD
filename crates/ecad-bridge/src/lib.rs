@@ -24,6 +24,7 @@ pub use dto::{BridgeError, Request, Response};
 
 mod template_rows;
 mod template_table_edit;
+mod template_table_preview;
 mod template_workspace;
 
 mod captured_context;

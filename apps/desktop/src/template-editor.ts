@@ -13,6 +13,7 @@ import { send, inputId, errorText } from './transport';
 import { TemplatePreview } from './template-preview';
 import { TemplateProperties } from './template-properties';
 import { TemplateTableTools } from './template-table-tools';
+import { TemplateTableInteraction } from './template-table-interaction';
 export class TemplateEditor {
   private root = element('section', 'template-workspace');
   private catalog = element('select', 'property-input');
@@ -22,6 +23,14 @@ export class TemplateEditor {
   private canvas = element('div', 'template-canvas');
   private form: TemplateProperties;
   private preview: TemplatePreview;
+  private interaction: TemplateTableInteraction;
+  private selectedCells: TemplateCell[] = [];
+  get gestureActive() {
+    return this.interaction?.active ?? false;
+  }
+  cancelGesture() {
+    return this.interaction.cancel();
+  }
   private tableTools: TemplateTableTools;
   get tableActive() {
     return this.tableTools?.active ?? false;
@@ -37,7 +46,7 @@ export class TemplateEditor {
     return this.model !== null;
   }
   get working() {
-    return this.operating || this.tableActive;
+    return this.operating || this.tableActive || this.gestureActive;
   }
   get pending() {
     return this.fieldsPending;
@@ -99,9 +108,15 @@ export class TemplateEditor {
     }
     this.note.setAttribute('role', 'alert');
     right.append(this.form.root, this.note, buttons);
-    this.preview = new TemplatePreview(
-      (table, cell) => this.select(table, cell),
-      () => this.action('selection.properties'),
+    this.preview = new TemplatePreview(() => this.action('selection.properties'));
+    this.interaction = new TemplateTableInteraction(
+      this.preview,
+      context,
+      apply,
+      (table, cells) => this.selectGroup(table, cells),
+      () => !this.uiBusy && !this.operating && !this.fieldsPending && !this.tableActive,
+      controls,
+      status,
     );
     this.canvas.append(this.preview.svg);
     this.root.append(left, center, right);
@@ -118,14 +133,19 @@ export class TemplateEditor {
     document.title = `● ${this.variant?.name ?? 'Template'} — Template — ECAD`;
     this.controls();
   }
-  private select(table: TemplateTable, cell: TemplateCell) {
-    if (this.uiBusy || this.operating) return;
-    if (this.fieldsPending) {
-      this.status('Apply or revert the property fields before changing selection', true);
-      return;
-    }
-    this.selection = { table, cell };
+  private selectGroup(table: TemplateTable, cells: TemplateCell[]) {
+    if (this.uiBusy || this.operating || this.fieldsPending || !cells.length) return false;
+    this.selection = { table, cell: cells[0] };
+    this.selectedCells = cells;
     this.form.render(this.variant!, this.selection);
+    if (cells.length > 1)
+      this.note.textContent = `${cells.length} cells selected. Properties show the first cell; Merge reviews the complete selection.`;
+    else this.note.textContent = '';
+    return true;
+  }
+  private select(table: TemplateTable, cell: TemplateCell) {
+    if (!this.selectGroup(table, [cell])) return;
+    this.interaction.selection(table, [cell]);
     this.form.focus();
   }
   update(view: TemplateView | null) {
@@ -136,6 +156,7 @@ export class TemplateEditor {
       this.fieldsPending = false;
       this.captured = null;
       this.selection = null;
+      this.selectedCells = [];
       delete this.shell.workspace.dataset.editor;
       this.shell.ribbon.setTemplateContext(false);
       return;
@@ -158,7 +179,10 @@ export class TemplateEditor {
       }),
     );
     if (view.catalog.some(([key]) => key === selected)) this.catalog.value = selected;
-    if (reset) this.selection = null;
+    if (reset) {
+      this.selection = null;
+      this.selectedCells = [];
+    }
     if (changed || !this.fieldsPending) {
       this.fieldsPending = false;
       this.captured = null;
@@ -166,6 +190,8 @@ export class TemplateEditor {
         const table = this.variant.tables.find((t) => t.id === this.selection?.table.id);
         const cell = table?.cells.find((c) => c.id === this.selection?.cell.id);
         this.selection = table && cell ? { table, cell } : null;
+        const ids = new Set(this.selectedCells.map((c) => c.id));
+        this.selectedCells = table?.cells.filter((c) => ids.has(c.id)) ?? [];
       }
       this.form.render(this.variant, this.selection);
     }
@@ -174,6 +200,8 @@ export class TemplateEditor {
     props.addEventListener('click', () => {
       if (!this.fieldsPending) {
         this.selection = null;
+        this.selectedCells = [];
+        this.interaction.update(this.variant!, null);
         this.form.render(this.variant!, null);
         this.form.focus();
       }
@@ -196,6 +224,10 @@ export class TemplateEditor {
       }
     }
     this.note.textContent = view.catalog_error ?? '';
+    this.interaction.update(
+      this.variant,
+      this.selection ? { table: this.selection.table, cells: this.selectedCells } : null,
+    );
     this.preview.render(this.variant, reset);
     document.title = `${view.dirty || view.pending || this.fieldsPending ? '● ' : ''}${this.variant.name} — Template — ECAD`;
   }
@@ -233,7 +265,7 @@ export class TemplateEditor {
     for (const input of this.root.querySelectorAll<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement
     >('input,textarea,select,button'))
-      input.disabled = busy || this.operating;
+      input.disabled = busy || this.operating || this.gestureActive;
   }
   focus() {
     this.preview.svg.focus();
@@ -244,7 +276,14 @@ export class TemplateEditor {
     }, 0);
   }
   tables(operation: string) {
-    if (this.variant) this.tableTools.open(this.context(), this.variant, this.selection, operation);
+    if (this.variant)
+      this.tableTools.open(
+        this.context(),
+        this.variant,
+        this.selection,
+        operation,
+        this.selectedCells.map((c) => c.id),
+      );
   }
   fit() {
     this.preview.fit();

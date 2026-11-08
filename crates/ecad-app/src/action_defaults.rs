@@ -27,6 +27,30 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "template.table.insert_row",
+                "Insert title-block row",
+                "Templates",
+                "Insert a blank row while preserving cell spans",
+                Handler::Template(crate::TemplateOperation::Table(
+                    crate::TableOperation::InsertRow,
+                )),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "template.table.insert_column",
+                "Insert title-block column",
+                "Templates",
+                "Insert a blank column while preserving cell spans",
+                Handler::Template(crate::TemplateOperation::Table(
+                    crate::TableOperation::InsertColumn,
+                )),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "template.table.resize",
                 "Resize title-block table",
                 "Templates",

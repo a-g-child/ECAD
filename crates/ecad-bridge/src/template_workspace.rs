@@ -8,6 +8,7 @@ use std::{collections::BTreeMap, path::PathBuf};
 pub(crate) struct TemplateWorkspace {
     pub editor: Option<TemplateDocument>,
     pub selected: Option<TemplateVariantId>,
+    pub gesture: Option<crate::template_table_preview::TableGesture>,
     pub pending: bool,
     pub pending_table: Option<TableOperation>,
     pub path: Option<PathBuf>,
@@ -15,7 +16,9 @@ pub(crate) struct TemplateWorkspace {
 }
 impl TemplateWorkspace {
     pub(crate) fn dirty(&self) -> bool {
-        self.pending || self.editor.as_ref().is_some_and(TemplateDocument::is_dirty)
+        self.gesture.is_some()
+            || self.pending
+            || self.editor.as_ref().is_some_and(TemplateDocument::is_dirty)
     }
     fn load(&mut self) -> Result<(), BridgeError> {
         if self.publisher.is_some() {
@@ -77,7 +80,7 @@ impl TemplateWorkspace {
         let mut view = TemplateView::new(
             doc,
             self.selected.expect("active variant"),
-            self.pending,
+            self.pending || self.gesture.is_some(),
             catalog,
         );
         view.catalog_error = error;
@@ -145,6 +148,12 @@ impl DesktopBridge {
             .get(&invocation.action)
             .map(|a| a.handler)
             .ok_or_else(|| BridgeError::new("action", "Unknown template action"))?;
+        if self.templates.gesture.is_some() && handler != ActionHandler::CancelPlacement {
+            return Err(BridgeError::new(
+                "template",
+                "Finish or cancel the table gesture first",
+            ));
+        }
         let table_commit = matches!(handler, ActionHandler::Template(TemplateOperation::Table(op))
             if self.templates.pending_table == Some(op) && matches!(&invocation.parameters, ActionParameters::TemplateEdit { .. }));
         let pending_control = matches!(
@@ -189,6 +198,10 @@ impl DesktopBridge {
             )
             .map_err(|e| BridgeError::new("template", e))?;
         let message = match outcome {
+            TemplateActionOutcome::Request(TemplateOperation::CancelDrag) => {
+                self.templates.gesture = None;
+                "Table gesture cancelled"
+            }
             TemplateActionOutcome::Changed => {
                 self.templates.pending = false;
                 self.templates.pending_table = None;
@@ -207,6 +220,8 @@ impl DesktopBridge {
                 let mut response = self.snapshot();
                 response.request = Some(
                     match op {
+                        TableOperation::InsertRow => "template_table_insert_row",
+                        TableOperation::InsertColumn => "template_table_insert_column",
                         TableOperation::Resize => "template_table_resize",
                         TableOperation::Split => "template_cell_split",
                         TableOperation::Merge => "template_cells_merge",
@@ -347,6 +362,12 @@ impl DesktopBridge {
                 ..
             } => {
                 self.context(context)?;
+                if self.templates.gesture.is_some() {
+                    return Err(BridgeError::new(
+                        "template",
+                        "Finish or cancel the table gesture first",
+                    ));
+                }
                 let operation = table_action
                     .map(|id| {
                         let id = ActionId::new(id).map_err(|e| BridgeError::new("action", e))?;

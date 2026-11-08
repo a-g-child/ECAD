@@ -182,6 +182,7 @@ impl DesktopBridge {
             let context = ActionContext {
                 editor: Some(editor.revision()),
                 focus: ActionFocus::Canvas,
+                tool_active: self.templates.gesture.is_some(),
                 ..ActionContext::default()
             };
             for row in &mut snapshot.actions {
@@ -227,7 +228,9 @@ impl DesktopBridge {
     /// Invalid/stale input, model validation, replay/protected input, and IO errors preserve
     /// the document/history. Invalid move updates deliberately invalidate older proposals.
     pub fn handle(&mut self, request: Request) -> Result<Response, BridgeError> {
-        if let Request::TemplateOperation { input, .. }
+        if let Request::TemplateTablePreview { input, .. }
+        | Request::TemplateTableCommit { input, .. }
+        | Request::TemplateOperation { input, .. }
         | Request::TemplatePending { input, .. }
         | Request::Action { input, .. }
         | Request::Key { input, .. }
@@ -256,6 +259,8 @@ impl DesktopBridge {
                     | Request::Snapshot {}
                     | Request::TemplateOperation { .. }
                     | Request::TemplatePending { .. }
+                    | Request::TemplateTablePreview { .. }
+                    | Request::TemplateTableCommit { .. }
             )
         {
             return Err(BridgeError::new(
@@ -264,6 +269,8 @@ impl DesktopBridge {
             ));
         }
         match request {
+            request @ (Request::TemplateTablePreview { .. }
+            | Request::TemplateTableCommit { .. }) => self.template_table_request(request),
             request @ (Request::TemplateOperation { .. } | Request::TemplatePending { .. }) => {
                 self.template_request(request)
             }

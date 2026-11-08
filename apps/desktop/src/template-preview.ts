@@ -5,34 +5,20 @@ const ns = 'http://www.w3.org/2000/svg';
 export class TemplatePreview {
   readonly svg = document.createElementNS(ns, 'svg');
   private model: TemplateVariant | null = null;
+  locked = false;
+  onRender: () => void = () => {};
   private box = [-10, -10, 317, 230];
-  constructor(select: (table: TemplateTable, cell: TemplateCell) => void, properties: () => void) {
+  constructor(readonly properties: () => void) {
     this.svg.classList.add('template-preview');
     this.svg.setAttribute('role', 'img');
     this.svg.setAttribute('aria-label', 'Template paper preview');
     this.svg.tabIndex = 0;
     this.svg.dataset.focus = 'canvas';
-    this.svg.addEventListener('click', (e) => {
-      const node = (e.target as Element).closest<SVGGElement>('.frame-cell');
-      if (node && this.model) {
-        for (const table of this.model.tables) {
-          const cell = table.cells.find((c) => c.id === node.dataset.field);
-          if (cell) {
-            select(table, cell);
-            break;
-          }
-        }
-      }
-    });
-    this.svg.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      (e.target as Element).dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      properties();
-    });
     this.svg.addEventListener(
       'wheel',
       (e) => {
         e.preventDefault();
+        if (this.locked) return;
         const scale = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? this.svg.clientHeight : 1;
         if (e.shiftKey || e.ctrlKey) {
           const amount = (e.deltaY * scale * this.box[2]) / Math.max(1, this.svg.clientWidth);
@@ -58,7 +44,7 @@ export class TemplatePreview {
     );
     let pan: { x: number; y: number; box: number[] } | null = null;
     this.svg.addEventListener('pointerdown', (e) => {
-      if (e.button === 1) {
+      if (e.button === 1 && !this.locked) {
         e.preventDefault();
         pan = { x: e.clientX, y: e.clientY, box: [...this.box] };
         this.svg.setPointerCapture(e.pointerId);
@@ -92,6 +78,7 @@ export class TemplatePreview {
   }
   private camera() {
     this.svg.setAttribute('viewBox', this.box.join(' '));
+    this.onRender();
   }
   render(model: TemplateVariant, reset: boolean) {
     this.model = model;

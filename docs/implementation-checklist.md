@@ -253,7 +253,8 @@ See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [re
 - [ ] Extend editor properties to full table geometry, shared styles, anchors and multiple selections.
 - [ ] Add ISO/ANSI paper/profile presets with verified edition-specific layout rules and Custom provenance.
 - [x] Add exact numeric table sizing, grid cell splits, rectangular merges with reviewed content policy, aligned-boundary edits, stable identities and editable multiline/variable runs.
-- [ ] Extend table tools with insertion/removal, drag sizing and reviewed custom sheet-entry value mapping.
+- [x] Add direct rectangular cell selection, move/size grips, aligned-boundary drags and contextual row/column insertion with closed preview commits.
+- [ ] Add/remove whole tables, localized span-aware resizing and reviewed custom sheet-entry value mapping.
 - [x] Implement saved-only desktop assignment with deterministic legacy preservation and project bundling.
 - [ ] Complete reviewed bulk revision adoption and custom value mapping.
 
@@ -282,3 +283,8 @@ Independent editor validation (macOS/aarch64): `cargo xtask full`, `cargo xtask 
 Structured template table tools: [decision 0042](decisions/0042-structured-template-table-edits.md), [domain regressions](../crates/ecad-domain/tests/template_table_edit.rs), [bridge history/publication checks](../crates/ecad-bridge/tests/template_table_bridge.rs) and [browser workflows](../apps/desktop/tests/template-tables.mjs). Exact numeric edits preserve full partitions, typed contents and stable survivor identities. Pending table/inspector proposals have separate ownership. No persistence schema change or automatic project adoption is introduced.
 
 Structured table validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (46 browser workflows) and `cargo xtask desktop` passed. Four new domain regressions and two bridge workflows cover partitions, identities/content policies, extreme geometry, exact history/publication and pending-field ownership. Two browser workflows cover real dialogs, blank-cell content creation, error retention, cancellation/redo, publication and minimum-window bounds. Native Linux/Windows execution and native interaction automation remain unverified.
+
+
+Direct template interaction: [decision 0043](decisions/0043-direct-template-table-interaction.md), [band insertion regressions](../crates/ecad-domain/tests/template_table_insert.rs), [closed-gesture bridge checks](../crates/ecad-bridge/tests/template_table_gestures.rs) and [pointer browser workflows](../apps/desktop/tests/template-table-interactions.mjs). Range selection closes over merged spans and feeds merge review. Drag previews retain original targets and commit exact validated bodies; contextual plus buttons grow rows/columns while preserving bottom/right placement. Scene/camera/selection remain transient and project/sheet pins do not change.
+
+Direct interaction validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (49 browser workflows) and `cargo xtask desktop` passed. Three new domain tests cover span-aware band insertion and anchor/overflow/identity failures; three bridge workflows cover retained preview bodies and token/target/cancellation boundaries. Three browser workflows cover rectangular/merged-cell selection, resize/move/outer edges, zoom-stable controls, keyboard-accessible plus buttons, stable inserted identities and delayed/invalid/cancelled releases. Native Windows/Linux execution and native interaction automation remain unverified.
