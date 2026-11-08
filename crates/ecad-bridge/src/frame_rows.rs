@@ -4,7 +4,7 @@ use serde::Serialize;
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct FrameRow {
     sheet: String,
-    template: &'static str,
+    template: String,
     border: RectRow,
     cells: Vec<CellRow>,
     title_block_too_small: bool,
@@ -32,8 +32,8 @@ impl From<FrameRect> for RectRow {
 }
 #[derive(Clone, Debug, Serialize)]
 struct CellRow {
-    key: &'static str,
-    caption: &'static str,
+    key: String,
+    caption: String,
     value: Option<String>,
     bounds: RectRow,
 }
@@ -51,8 +51,11 @@ impl FrameRow {
                 .cells
                 .iter()
                 .map(|c| CellRow {
-                    key: c.field.key(),
-                    caption: c.caption,
+                    key: c
+                        .field
+                        .map(|f| f.key().to_owned())
+                        .unwrap_or_else(|| c.id.to_string()),
+                    caption: c.caption.clone(),
                     value: c.value.clone(),
                     bounds: c.bounds.into(),
                 })

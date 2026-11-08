@@ -76,6 +76,7 @@ impl TryFrom<SheetData> for DrawingSheet {
             })
             .transpose()?;
         let sheet = Self {
+            inherited_variant: None,
             kind: SheetKind::Schematic,
             template: None,
             id: s.id.parse()?,

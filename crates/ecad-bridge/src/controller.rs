@@ -55,8 +55,10 @@ impl DesktopBridge {
             ActionInputRouter::new(keymap.clone(), NonZeroU64::new(1200).expect("constant"));
         Ok(Self {
             document: Document::new(
-                projection::demo()?,
-                JsonFile::new(std::env::temp_dir().join("ecad-unsaved-never-written.json")),
+                ecad_adapters::migrate_template_assignments(&projection::demo()?)
+                    .map_err(|e| BridgeError::new("templates", e))?,
+                JsonFile::new(std::env::temp_dir().join("ecad-unsaved-never-written.json"))
+                    .with_saved_templates(),
             ),
             path: None,
             registry,
@@ -105,8 +107,8 @@ impl DesktopBridge {
                 "Save the current document before opening another project",
             ));
         }
-        let document =
-            Document::open(JsonFile::new(path)).map_err(|e| BridgeError::new("open", e))?;
+        let document = Document::open(JsonFile::new(path).with_saved_templates())
+            .map_err(|e| BridgeError::new("open", e))?;
         self.document = document;
         self.profiles.invalidate();
         self.sheet_tool.preview = None;
@@ -125,8 +127,8 @@ impl DesktopBridge {
     /// Returns a validation/IO error without replacing a live user document.
     pub fn from_path(path: &Path) -> Result<Self, BridgeError> {
         let mut bridge = Self::demo()?;
-        bridge.document =
-            Document::open(JsonFile::new(path)).map_err(|e| BridgeError::new("open", e))?;
+        bridge.document = Document::open(JsonFile::new(path).with_saved_templates())
+            .map_err(|e| BridgeError::new("open", e))?;
         bridge.path = Some(path.into());
         bridge.demo = false;
         Ok(bridge)
@@ -136,7 +138,7 @@ impl DesktopBridge {
     /// Existing unobserved destinations and IO failures preserve the document checkpoint/path.
     pub fn save_as(&mut self, path: &Path) -> Result<Response, BridgeError> {
         self.document
-            .save_as(JsonFile::new(path))
+            .save_as(JsonFile::new(path).with_saved_templates())
             .map_err(|e| BridgeError::new("save", e))?;
         self.path = Some(path.into());
         self.demo = false;

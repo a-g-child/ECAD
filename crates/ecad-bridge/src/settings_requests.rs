@@ -15,7 +15,10 @@ impl DesktopBridge {
                 let parameters = if let Some(defaults) = template_defaults {
                     ActionParameters::ProjectProperties {
                         metadata: values,
-                        templates: crate::project_templates::parse(defaults)?,
+                        templates: crate::project_templates::parse(
+                            self.document.session().project(),
+                            defaults,
+                        )?,
                     }
                 } else {
                     ActionParameters::ProjectMetadata(values)

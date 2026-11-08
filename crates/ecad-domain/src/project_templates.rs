@@ -27,15 +27,30 @@ impl Project {
         self.template_revisions.insert(pin, revision);
         Ok(true)
     }
-    /// Remove one bundled body and return its exact state for undo. Current enum-based
-    /// sheets do not reference these bodies; assignment-reference guards must land with
-    /// saved-template assignment before any such references can be created.
+    /// Remove an unused bundled body and return its exact state for undo.
     /// # Errors
-    /// Rejects a missing pin without mutation.
+    /// Rejects missing revisions or any reference from creation defaults, document defaults
+    /// (including inherited sheets), or explicit sheet overrides, without mutation.
     pub fn remove_template_revision(
         &mut self,
         pin: TemplateRevisionRef,
     ) -> Result<Arc<TemplateRevision>, TemplateLibraryError> {
+        let used = |choice: crate::SheetTemplate| matches!(choice,crate::SheetTemplate::Saved(p) if p.revision_ref()==pin);
+        if [
+            self.template_defaults.schematic,
+            self.template_defaults.cover,
+            self.template_defaults.drawing_list,
+        ]
+        .into_iter()
+        .any(used)
+            || self
+                .drawing_documents
+                .iter()
+                .any(|d| used(d.default_template))
+            || self.sheets.iter().filter_map(|s| s.template).any(used)
+        {
+            return Err(TemplateLibraryError::InUse(pin));
+        }
         self.template_revisions
             .remove(&pin)
             .ok_or(TemplateLibraryError::MissingRevision(pin))

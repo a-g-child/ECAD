@@ -144,6 +144,7 @@ impl DocumentRecord for DocumentData {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum TemplateData {
+    Saved(crate::template_pin_data::PinData),
     StandardV1,
     CoverV1,
     DrawingListV1,
@@ -151,16 +152,19 @@ pub(crate) enum TemplateData {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct TemplatedDocumentData {
-    id: String,
-    number: String,
-    title: String,
-    revision: String,
-    default_template: TemplateData,
-    sheets: Vec<String>,
+    pub(crate) id: String,
+    pub(crate) number: String,
+    pub(crate) title: String,
+    pub(crate) revision: String,
+    pub(crate) default_template: TemplateData,
+    pub(crate) sheets: Vec<String>,
 }
 impl From<DrawingDocumentLayout> for TemplatedDocumentData {
     fn from(layout: DrawingDocumentLayout) -> Self {
         let default_template = match layout.document.default_template {
+            SheetTemplate::Saved(pin) => {
+                TemplateData::Saved(crate::template_pin_data::PinData(pin))
+            }
             SheetTemplate::StandardV1 => TemplateData::StandardV1,
             SheetTemplate::CoverV1 => TemplateData::CoverV1,
             SheetTemplate::DrawingListV1 => TemplateData::DrawingListV1,
@@ -179,7 +183,11 @@ impl From<DrawingDocumentLayout> for TemplatedDocumentData {
 impl DocumentRecord for TemplatedDocumentData {
     const VERSION: u32 = 10;
     fn layout(self) -> Result<DrawingDocumentLayout, ProjectFileError> {
+        if matches!(self.default_template, TemplateData::Saved(_)) {
+            return Err(ProjectFileError::TemplateVersion(10));
+        }
         let template = match self.default_template {
+            TemplateData::Saved(pin) => SheetTemplate::Saved(pin.0),
             TemplateData::StandardV1 => SheetTemplate::StandardV1,
             TemplateData::CoverV1 => SheetTemplate::CoverV1,
             TemplateData::DrawingListV1 => SheetTemplate::DrawingListV1,
@@ -199,6 +207,7 @@ impl DocumentRecord for TemplatedDocumentData {
 impl From<SheetTemplate> for TemplateData {
     fn from(t: SheetTemplate) -> Self {
         match t {
+            SheetTemplate::Saved(pin) => Self::Saved(crate::template_pin_data::PinData(pin)),
             SheetTemplate::StandardV1 => Self::StandardV1,
             SheetTemplate::CoverV1 => Self::CoverV1,
             SheetTemplate::DrawingListV1 => Self::DrawingListV1,
@@ -208,9 +217,16 @@ impl From<SheetTemplate> for TemplateData {
 impl From<TemplateData> for SheetTemplate {
     fn from(t: TemplateData) -> Self {
         match t {
+            TemplateData::Saved(pin) => Self::Saved(pin.0),
             TemplateData::StandardV1 => Self::StandardV1,
             TemplateData::CoverV1 => Self::CoverV1,
             TemplateData::DrawingListV1 => Self::DrawingListV1,
         }
+    }
+}
+
+impl TemplateData {
+    pub(crate) fn is_saved(&self) -> bool {
+        matches!(self, Self::Saved(_))
     }
 }

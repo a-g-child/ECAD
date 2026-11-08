@@ -251,6 +251,16 @@ impl Project {
         }
         self.validate_instances()?;
         self.drawing.validate()?;
+        for choice in [
+            self.template_defaults.schematic,
+            self.template_defaults.cover,
+            self.template_defaults.drawing_list,
+        ] {
+            self.check_template_default(choice)?;
+        }
+        for d in &self.drawing_documents {
+            self.check_template_default(d.default_template)?;
+        }
         self.validate_sheets()?;
         self.validate_drawing_documents()?;
         self.check_drawing_references(&self.drawing)?;

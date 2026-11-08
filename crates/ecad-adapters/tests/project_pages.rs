@@ -5,6 +5,7 @@ use ecad_domain::*;
 use serde_json::{Value, json};
 fn sheet(n: u128, number: &str, kind: SheetKind) -> DrawingSheet {
     DrawingSheet {
+        inherited_variant: None,
         id: SheetId::new(n).unwrap(),
         kind,
         template: Some(DrawingTemplateDefaults::default().for_kind(kind)),
@@ -292,7 +293,8 @@ fn reusable_electrical_bodies_cannot_silently_discard_custom_project_template_de
     body.replace_template_defaults(DrawingTemplateDefaults {
         cover: SheetTemplate::StandardV1,
         ..DrawingTemplateDefaults::default()
-    });
+    })
+    .unwrap();
     assert!(matches!(
         SubsystemRevision::new(source, root, body),
         Err(ModelError::Drawing(

@@ -68,13 +68,16 @@ pub struct DrawingSheet {
     pub id: SheetId,
     /// Content role; generated and cover pages cannot carry source-view placements.
     pub kind: crate::SheetKind,
-    /// Pinned frame override; None retains the owning document's template.
+    /// Explicit saved frame override; None inherits the document revision and chosen variant.
+    /// Frozen enum choices remain available for legacy compatibility/migration.
     pub template: Option<crate::SheetTemplate>,
+    /// Paper variant inherited from the document's exact saved revision; None uses its default.
+    pub inherited_variant: Option<crate::TemplateVariantId>,
     /// Nonblank unique drawing number, separate from its ordinal position.
     pub number: String,
     /// Literal multiline sheet title.
     pub title: String,
-    /// Paper dimensions and guides.
+    /// Exact paper/margin projection of the saved layout; legacy construction retains raw paper.
     pub paper: SheetPaper,
     /// Optional single schematic view; cover and generated-list roles stay unplaced.
     pub placement: Option<SheetViewPlacement>,
@@ -104,6 +107,8 @@ impl DrawingSheet {
 /// Sheet validation failed without changing existing content.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SheetError {
+    /// Saved template references, paper ownership or inheritance is invalid.
+    Template(Box<crate::TemplateAssignmentError>),
     /// Cover/generated-list content cannot also place an editable schematic source.
     RolePlacement,
     /// A proposed new view must belong to a new schematic sheet and match its placement.
@@ -134,6 +139,7 @@ pub enum SheetError {
 impl fmt::Display for SheetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Template(error) => error.fmt(f),
             Self::CreationViewMismatch => {
                 f.write_str("The new view must match the new schematic sheet placement")
             }

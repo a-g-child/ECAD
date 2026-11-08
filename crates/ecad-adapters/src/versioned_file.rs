@@ -1,6 +1,6 @@
 //! Content-based change detection and optimistic single-file replacement.
 
-use crate::{JsonFile, ProjectFileError, decode_project, encode_project};
+use crate::{JsonFile, ProjectFileError, encode_project};
 use ecad_app::{ProjectSnapshot, VersionedProjectStore};
 use ecad_domain::Project;
 use sha2::{Digest, Sha256};
@@ -58,7 +58,7 @@ impl VersionedProjectStore for JsonFile {
         let bytes = fs::read(self.path())?;
         let text = std::str::from_utf8(&bytes)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-        let project = decode_project(text)?;
+        let project = self.decode(text)?;
         let version = self.version_for(&bytes)?;
         Ok(ProjectSnapshot { project, version })
     }

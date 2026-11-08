@@ -1,0 +1,111 @@
+{
+  "schema_version": 13,
+  "project_id": "00000000000000000000000000000001",
+  "metadata": {},
+  "template_defaults": {
+    "schematic": "standard-v1",
+    "cover": "cover-v1",
+    "drawing_list": "drawing-list-v1"
+  },
+  "drawing_documents": [
+    {
+      "id": "00000000000000000000000000000001",
+      "number": "1",
+      "title": "Drawings",
+      "revision": "",
+      "default_template": "standard-v1",
+      "sheets": []
+    }
+  ],
+  "sheets": [],
+  "subsystems": [],
+  "devices": [
+    {
+      "id": "00000000000000000000000000000001",
+      "designation": "-X1",
+      "terminals": [
+        {
+          "id": "00000000000000000000000000000065",
+          "number": "1"
+        }
+      ],
+      "subsystem": null
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "designation": "-X2",
+      "terminals": [
+        {
+          "id": "000000000000000000000000000000c9",
+          "number": "A"
+        }
+      ],
+      "subsystem": null
+    }
+  ],
+  "ports": [],
+  "conductors": [
+    {
+      "id": "000000000000000000000000000003e9",
+      "a": "00000000000000000000000000000065",
+      "b": "000000000000000000000000000000c9"
+    },
+    {
+      "id": "000000000000000000000000000003ea",
+      "a": null,
+      "b": null
+    }
+  ],
+  "cables": [],
+  "definitions": [],
+  "instances": [],
+  "local_origins": [],
+  "drawing": {
+    "settings": {
+      "base": {
+        "font": "sans-serif",
+        "text_height_um": 2500,
+        "stroke_width_um": 250,
+        "colour": [
+          0,
+          0,
+          0
+        ]
+      },
+      "text_creation": {
+        "style": null,
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      },
+      "stroke_creation": {
+        "style": null,
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      }
+    },
+    "route_creation": {
+      "style": null,
+      "overrides": {
+        "font": null,
+        "text_height_um": null,
+        "stroke_width_um": null,
+        "colour": null
+      }
+    },
+    "styles": [],
+    "views": [],
+    "labels": [],
+    "polylines": [],
+    "anchors": [],
+    "routes": []
+  },
+  "template_revisions": []
+}

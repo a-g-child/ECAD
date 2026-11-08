@@ -81,7 +81,7 @@ impl SheetCommand {
 pub struct SheetPreview {
     revision: Revision,
     sheet: DrawingSheet,
-    frame: SheetFrame,
+    frame: Box<SheetFrame>,
     document: DrawingDocumentId,
     list: Option<DrawingListPage>,
     creation: bool,
@@ -145,6 +145,23 @@ pub fn preview_sheet_in_document(
     document: DrawingDocumentId,
     new_view: Option<DrawingView>,
 ) -> Result<SheetPreview, ModelError> {
+    if let Some(owner) = session.project().drawing_document(document)
+        && let Some(pin) = session
+            .project()
+            .sheet_template_pin(&sheet, owner.default_template)
+    {
+        let body = session.project().saved_template(pin)?;
+        let unchanged = !create
+            && session.project().sheet(sheet.id).is_some_and(|old| {
+                session
+                    .project()
+                    .sheet_template_pin(old, owner.default_template)
+                    == Some(pin)
+            });
+        if !body.allows_new_assignments() && !unchanged {
+            return Err(TemplateAssignmentError::Retained.into());
+        }
+    }
     let mut commands = Vec::new();
     if let Some(view) = new_view {
         if !create
@@ -175,7 +192,7 @@ pub fn preview_sheet_in_document(
     candidate.validate()?;
     Ok(SheetPreview {
         revision: session.revision(),
-        frame: candidate.sheet_frame(sheet.id)?,
+        frame: Box::new(candidate.sheet_frame(sheet.id)?),
         list: candidate.drawing_list(sheet.id)?,
         document,
         creation: create,

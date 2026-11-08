@@ -4,6 +4,20 @@ use serde_json::{Value, json};
 fn snap(b: &DesktopBridge) -> Value {
     serde_json::to_value(b.snapshot()).unwrap()["snapshot"].clone()
 }
+fn key(b: &DesktopBridge, label: &str) -> Value {
+    snap(b)["template_choices"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|v| {
+            v["label"]
+                .as_str()
+                .unwrap()
+                .starts_with(&format!("Legacy {label} /"))
+        })
+        .unwrap()["key"]
+        .clone()
+}
 fn ctx(b: &DesktopBridge) -> Value {
     json!({"revision":snap(b)["revision"],"view":null,"sheet":null,"selection":[],"focus":"tree"})
 }
@@ -37,7 +51,7 @@ fn typed_creation_is_reviewed_and_source_view_is_created_only_with_the_schematic
     );
     let row = seed(&mut b, "schematic");
     let view = row["view"].clone();
-    assert_eq!(row["template"], "standard-v1");
+    assert_eq!(row["template"], key(&b, "Standard drawing"));
     assert!(!view.is_null());
     assert_eq!(snap(&b)["views"], before["views"]);
     let p = preview(&mut b, &row, true);
@@ -70,7 +84,7 @@ fn typed_creation_is_reviewed_and_source_view_is_created_only_with_the_schematic
     );
     let mut cover = seed(&mut b, "cover");
     assert!(cover["view"].is_null());
-    assert_eq!(cover["template"], "cover-v1");
+    assert_eq!(cover["template"], key(&b, "Cover page"));
     cover["view"] = view;
     let v = json!({"type":"preview_sheet","context":ctx(&b),"sheet":cover,"create":true});
     assert!(call(&mut b, v).is_err());
@@ -99,8 +113,11 @@ fn project_template_defaults_and_metadata_apply_atomically_and_invalid_values_le
     let mut b = DesktopBridge::demo().unwrap();
     let before = snap(&b);
     let props = action(&mut b, "document.metadata.edit");
-    assert_eq!(props["project_templates"]["defaults"]["cover"], "cover-v1");
-    let v = json!({"type":"update_metadata","context":ctx(&b),"values":{"company.name":"Company\nName"},"template_defaults":{"schematic":"cover-v1","cover":"standard-v1","drawing_list":"drawing-list-v1"},"input":snap(&b)["next_input"]});
+    assert_eq!(
+        props["project_templates"]["defaults"]["cover"],
+        key(&b, "Cover page")
+    );
+    let v = json!({"type":"update_metadata","context":ctx(&b),"values":{"company.name":"Company\nName"},"template_defaults":{"schematic":key(&b,"Cover page"),"cover":key(&b,"Standard drawing"),"drawing_list":key(&b,"Drawing list")},"input":snap(&b)["next_input"]});
     assert!(
         call(&mut b, v).unwrap()["message"]
             .as_str()
@@ -113,11 +130,11 @@ fn project_template_defaults_and_metadata_apply_atomically_and_invalid_values_le
     let legacy = json!({"type":"new_sheet","context":ctx(&b)});
     assert_eq!(
         call(&mut b, legacy).unwrap()["sheet_draft"]["template"],
-        "cover-v1"
+        key(&b, "Cover page")
     );
     let row = seed(&mut b, "cover");
-    assert_eq!(row["template"], "standard-v1");
-    let v = json!({"type":"update_metadata","context":ctx(&b),"values":{"company.name":"Must not apply"},"template_defaults":{"schematic":"unknown","cover":"cover-v1","drawing_list":"drawing-list-v1"},"input":snap(&b)["next_input"]});
+    assert_eq!(row["template"], key(&b, "Standard drawing"));
+    let v = json!({"type":"update_metadata","context":ctx(&b),"values":{"company.name":"Must not apply"},"template_defaults":{"schematic":"unknown","cover":key(&b,"Cover page"),"drawing_list":key(&b,"Drawing list")},"input":snap(&b)["next_input"]});
     assert!(call(&mut b, v).is_err());
     assert_eq!(snap(&b)["revision"], current["revision"]);
     action(&mut b, "document.undo");

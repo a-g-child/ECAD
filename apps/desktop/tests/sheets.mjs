@@ -3,7 +3,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-export function registerSheetTests({ page, button, until, bounds, root, project, pressAction }) {
+export function registerSheetTests({
+  page,
+  button,
+  until,
+  bounds,
+  root,
+  project,
+  pressAction,
+  replaceProject,
+}) {
   const dialog = (p) => p.getByRole('dialog', { name: 'Sheets and paper', exact: true });
   const field = (p, name) => dialog(p).getByRole('textbox', { name, exact: true });
   const control = (p, name) => dialog(p).getByRole('button', { name, exact: true });
@@ -40,17 +49,20 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await until(async () => !(await field(p, 'Sheet title').isDisabled()));
     await field(p, 'Drawing number').fill('DWG-001');
     await field(p, 'Sheet title').fill('Harness\nDetail');
-    await field(p, 'Paper width (µm)').fill('0');
+    assert.equal(await field(p, 'Paper width (µm)').getAttribute('readonly'), '');
+    assert.equal(await field(p, 'Left margin (µm)').getAttribute('readonly'), '');
+    assert.equal(await dialog(p).getByRole('combobox', { name: 'Paper preset' }).count(), 0);
+    await field(p, 'Scale denominator').fill('0');
     await control(p, 'Preview sheet').click();
     await until(async () => (await dialog(p).getByRole('alert').innerText()).includes('positive'));
     assert.equal(await control(p, 'Apply sheet').isDisabled(), true);
     assert.doesNotMatch(await p.title(), /^●/);
-    await dialog(p).getByRole('combobox', { name: 'Paper orientation' }).selectOption('portrait');
-    await dialog(p).getByRole('combobox', { name: 'Paper preset' }).selectOption('a3');
+    const templates = dialog(p).getByRole('combobox', { name: 'Sheet template', exact: true });
+    await templates.selectOption({ label: 'A3 portrait saved layout' });
+    const selectedTemplate = await templates.inputValue();
     assert.equal(await field(p, 'Paper width (µm)').inputValue(), '297000');
     assert.equal(await field(p, 'Paper height (µm)').inputValue(), '420000');
     for (const [name, value] of [
-      ['Left margin (µm)', '15000'],
       ['Scale denominator', '2'],
       ['Paper origin X (µm)', '30000'],
       ['Paper origin Y (µm)', '70000'],
@@ -66,7 +78,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.equal(await dialog(p).locator('.sheet-draft-preview polyline').count(), 2);
     assert.equal(
       await dialog(p).locator('.sheet-frame').getAttribute('data-template'),
-      'standard-v1',
+      selectedTemplate,
     );
     assert.equal(await dialog(p).locator('.frame-cell').count(), 8);
     assert.equal(
@@ -95,7 +107,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await save(p);
     const saved = JSON.parse(await readFile(project(), 'utf8')),
       sheet = saved.sheets.find((s) => s.number === 'DWG-001');
-    assert.equal(saved.schema_version, 12);
+    assert.equal(saved.schema_version, 13);
     assert.deepEqual(sheet.paper, {
       width_um: 297000,
       height_um: 420000,
@@ -114,7 +126,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.equal(await p.locator('.sheet-surface').count(), 0);
     assert.equal(await p.locator('svg.drawing .frame-border').getAttribute('width'), frameBorder);
     assert.equal(await p.locator('svg.drawing .frame-cell').count(), 8);
-    assert.equal(saved.drawing_documents[0].default_template, 'standard-v1');
+    assert.ok(saved.drawing_documents[0].default_template.saved);
     assert.match(await p.locator('.paper-badge').textContent(), /Shared drawing on 2 sheets/);
     assert.equal(await button(p, 'Create annotation · T').isDisabled(), false);
     await p.locator('.canvas').focus();
@@ -242,7 +254,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.deepEqual(p.errors, []);
     await p.close();
   });
-  test('frame fields refresh from project metadata with literal multiline overflow and undo; small sheets diagnose missing table', async () => {
+  test('frame fields refresh from project metadata with literal multiline overflow, undo and locked paper properties', async () => {
     const p = await page(),
       before = await bounds(p);
     await open(p);
@@ -282,10 +294,9 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.equal(await company.locator('.overflow-marker').count(), 1);
     await pressAction(p, 'Undo', 'Undo complete');
     await open(p);
-    await field(p, 'Paper width (µm)').fill('100000');
+    assert.equal(await field(p, 'Paper width (µm)').getAttribute('readonly'), '');
     await preview(p);
-    assert.match(await dialog(p).getByRole('alert').innerText(), /cannot fit/);
-    assert.equal(await dialog(p).locator('.frame-cell').count(), 0);
+    assert.equal(await dialog(p).locator('.frame-cell').count(), 8);
     assert.equal(await dialog(p).locator('.frame-border').count(), 1);
     await control(p, 'Close').click();
     await dialog(p).waitFor({ state: 'hidden' });
@@ -293,5 +304,53 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.equal(await display(p).locator('option').count(), 1);
     assert.deepEqual(p.errors, []);
     await p.close();
+  });
+  test('legacy tiny sheets migrate cleanly, retain their frame and are excluded from new saved-template choices', async () => {
+    const original = JSON.parse(await readFile(project(), 'utf8'));
+    const legacy = structuredClone(original);
+    legacy.schema_version = 12;
+    legacy.template_defaults = {
+      schematic: 'standard-v1',
+      cover: 'cover-v1',
+      drawing_list: 'drawing-list-v1',
+    };
+    for (const doc of legacy.drawing_documents) doc.default_template = 'standard-v1';
+    for (const row of legacy.sheets) {
+      delete row.inherited_variant;
+      row.template = 'cover-v1';
+      row.kind = 'cover';
+      row.placement = null;
+      row.paper = { width_um: 1, height_um: 1, margins_um: [0, 0, 0, 0] };
+    }
+    await replaceProject(legacy);
+    const p = await page({ electrical: false });
+    assert.doesNotMatch(await p.title(), /^●/);
+    assert.equal(JSON.parse(await readFile(project(), 'utf8')).schema_version, 12);
+    await open(p);
+    const choice = dialog(p).getByRole('combobox', { name: 'Sheet template', exact: true });
+    const retained = await choice.inputValue();
+    assert.match(retained, /^saved:/);
+    assert.equal(await field(p, 'Paper width (µm)').inputValue(), '1');
+    await preview(p);
+    assert.match(await dialog(p).getByRole('alert').innerText(), /cannot fit/);
+    assert.equal(await dialog(p).locator('.frame-cell').count(), 0);
+    await control(p, 'Close').click();
+    await dialog(p).waitFor({ state: 'hidden' });
+    await open(p);
+    await control(p, 'New sheet').click();
+    await until(async () => !(await field(p, 'Sheet title').isDisabled()));
+    assert.equal(await choice.locator(`option[value="${retained}"]`).count(), 0);
+    assert.equal(await field(p, 'Paper width (µm)').inputValue(), '297000');
+    await control(p, 'Close').click();
+    await dialog(p).waitFor({ state: 'hidden' });
+    await save(p);
+    const saved = JSON.parse(await readFile(project(), 'utf8'));
+    assert.equal(saved.schema_version, 13);
+    assert.ok(saved.sheets[0].template.saved);
+    assert.deepEqual(saved.sheets[0].paper, legacy.sheets[0].paper);
+    assert.deepEqual(saved.drawing, legacy.drawing);
+    assert.deepEqual(p.errors, []);
+    await p.close();
+    await replaceProject(original);
   });
 }

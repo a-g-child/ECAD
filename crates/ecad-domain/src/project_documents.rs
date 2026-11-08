@@ -64,6 +64,18 @@ impl Project {
         value: &ProjectDrawingDocument,
     ) -> Result<(), DrawingDocumentError> {
         value.validate()?;
+        self.check_template_default(value.default_template)?;
+        for sheet in self
+            .sheets
+            .iter()
+            .filter(|s| self.sheet_document(s.id) == Some(value.id))
+        {
+            self.sheet_template_layout(sheet, value.default_template)
+                .map_err(|e| match e {
+                    SheetError::Template(e) => *e,
+                    _ => TemplateAssignmentError::PaperMismatch,
+                })?;
+        }
         if self
             .drawing_documents
             .iter()
@@ -189,6 +201,15 @@ impl Project {
         if index > length || (old.0 == target && index == length) {
             return Err(DrawingDocumentError::Order);
         }
+        let target_default = self
+            .drawing_document(target)
+            .expect("checked target")
+            .default_template;
+        self.sheet_template_layout(self.sheet(id).expect("checked sheet"), target_default)
+            .map_err(|e| match e {
+                SheetError::Template(e) => *e,
+                _ => TemplateAssignmentError::PaperMismatch,
+            })?;
         let global = self
             .sheets
             .iter()
@@ -213,6 +234,7 @@ impl Project {
         let mut sheets = BTreeSet::new();
         for d in layout {
             d.document.validate()?;
+            self.check_template_default(d.document.default_template)?;
             if !ids.insert(d.document.id) {
                 return Err(DrawingDocumentError::Duplicate(d.document.id));
             }
@@ -223,6 +245,14 @@ impl Project {
                 if self.sheet(*id).is_none() {
                     return Err(DrawingDocumentError::MissingSheet(*id));
                 }
+                self.sheet_template_layout(
+                    self.sheet(*id).expect("checked sheet"),
+                    d.document.default_template,
+                )
+                .map_err(|e| match e {
+                    SheetError::Template(e) => *e,
+                    _ => TemplateAssignmentError::PaperMismatch,
+                })?;
                 if !sheets.insert(*id) {
                     return Err(DrawingDocumentError::Membership(*id));
                 }

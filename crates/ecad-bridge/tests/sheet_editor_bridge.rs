@@ -22,7 +22,12 @@ fn demonstration_starts_on_a_clean_template_backed_sheet_without_a_history_edit(
     assert_eq!(sheet["view"], s["views"][0]["id"]);
     assert_eq!(sheet["paper_x"], "20000");
     assert_eq!(sheet["paper_y"], "60000");
-    assert_eq!(s["sheet_frames"][0]["template"], "standard-v1");
+    assert!(
+        s["sheet_frames"][0]["template"]
+            .as_str()
+            .unwrap()
+            .starts_with("saved:")
+    );
     assert!(
         s["actions"]
             .as_array()

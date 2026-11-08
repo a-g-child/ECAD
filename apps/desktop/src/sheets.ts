@@ -14,8 +14,7 @@ export class SheetsDialog {
   private message = element('div', 'settings-error');
   private fields = new Map<keyof SheetRow, HTMLInputElement | HTMLTextAreaElement>();
   private view = element('select', 'property-input');
-  private preset = element('select', 'property-input');
-  private orientation = element('select', 'property-input');
+  private inheritedVariant: string | null = null;
   private controlsMap = new Map<string, HTMLButtonElement>();
   private context: Context | null = null;
   private snapshot: Snapshot | null = null;
@@ -40,18 +39,6 @@ export class SheetsDialog {
     this.dialog.setAttribute('aria-labelledby', title.id);
     this.select.setAttribute('aria-label', 'Edit sheet');
     this.view.setAttribute('aria-label', 'Placed drawing view');
-    this.preset.setAttribute('aria-label', 'Paper preset');
-    this.orientation.setAttribute('aria-label', 'Paper orientation');
-    this.options(this.preset, [
-      ['custom', 'Custom'],
-      ['a4', 'A4'],
-      ['a3', 'A3'],
-      ['letter', 'Letter'],
-    ]);
-    this.options(this.orientation, [
-      ['landscape', 'Landscape'],
-      ['portrait', 'Portrait'],
-    ]);
     for (const [key, label] of [
       ['number', 'Drawing number'],
       ['title', 'Sheet title'],
@@ -63,11 +50,7 @@ export class SheetsDialog {
       ['bottom', 'Bottom margin (µm)'],
     ] as [keyof SheetRow, string][])
       this.field(key, label);
-    this.body.append(
-      this.label('Paper preset', this.preset),
-      this.label('Orientation', this.orientation),
-      this.label('Drawing view', this.view),
-    );
+    this.body.append(this.label('Drawing view', this.view));
     for (const [key, label] of [
       ['numerator', 'Scale numerator'],
       ['denominator', 'Scale denominator'],
@@ -100,7 +83,11 @@ export class SheetsDialog {
     this.owner.setAttribute('aria-label', 'Drawing document');
     this.template.setAttribute('aria-label', 'Sheet template');
     for (const input of [this.owner, this.template])
-      input.addEventListener('change', () => this.edited());
+      input.addEventListener('change', () => {
+        this.inheritedVariant = null;
+        this.templatePaper();
+        this.edited();
+      });
     this.body.prepend(
       this.kindLabel,
       this.label('Drawing document', this.owner),
@@ -111,7 +98,7 @@ export class SheetsDialog {
       element(
         'p',
         'settings-note',
-        'Paper and margins use integer µm. Scale is paper/model (1/2 is half size). One optional view per sheet; guides do not resize it. Preview is clipped to paper. The document supplies its standard frame. Custom templates and output are planned.',
+        'Select a saved template. Paper and margins come from that layout. Scale is paper/model (1/2 is half size); placement changes do not resize source geometry.',
       ),
       this.select,
       layout,
@@ -127,27 +114,6 @@ export class SheetsDialog {
       if (row) this.populate(row, false);
     });
     this.view.addEventListener('change', () => this.edited());
-    this.preset.addEventListener('change', () => {
-      const sizes: Record<string, [number, number]> = {
-        a4: [210000, 297000],
-        a3: [297000, 420000],
-        letter: [215900, 279400],
-      };
-      const size = sizes[this.preset.value];
-      if (size) {
-        const [w, h] = this.orientation.value === 'portrait' ? size : [size[1], size[0]];
-        this.fields.get('width')!.value = String(w);
-        this.fields.get('height')!.value = String(h);
-      }
-      this.edited();
-    });
-    this.orientation.addEventListener('change', () => {
-      const w = this.fields.get('width')!,
-        h = this.fields.get('height')!;
-      if (Number(w.value) > Number(h.value) === (this.orientation.value === 'portrait'))
-        [w.value, h.value] = [h.value, w.value];
-      this.edited();
-    });
     this.button('New sheet', () => this.newSheet());
     this.button('Preview sheet', () => this.preview());
     this.button('Apply sheet', () => this.commit());
@@ -181,8 +147,8 @@ export class SheetsDialog {
       : element('input', 'property-input');
     input.setAttribute('aria-label', caption);
     if (!text) input.inputMode = 'numeric';
+    if (['width', 'height', 'left', 'right', 'top', 'bottom'].includes(key)) input.readOnly = true;
     input.addEventListener('input', () => {
-      if (key === 'width' || key === 'height') this.preset.value = 'custom';
       this.edited();
     });
     this.fields.set(key, input);
@@ -206,12 +172,6 @@ export class SheetsDialog {
       this.owner,
       snapshot.drawing_documents.map((d) => [d.id, `${d.number} · ${d.title}`]),
     );
-    this.options(this.template, [
-      ['', 'Inherit document template'],
-      ['standard-v1', 'Standard drawing'],
-      ['cover-v1', 'Cover page'],
-      ['drawing-list-v1', 'Drawing list'],
-    ]);
     this.dialog.showModal();
     if (kind) {
       await this.work(() => this.newSheet(kind));
@@ -231,6 +191,7 @@ export class SheetsDialog {
   }
   private populate(row: SheetRow, create: boolean) {
     this.row = row;
+    this.inheritedVariant = row.inherited_variant;
     this.view.querySelector('option[data-new-view]')?.remove();
     if (row.view && !this.snapshot?.views.some((v) => v.id === row.view)) {
       const option = element('option', '', 'New independent drawing view');
@@ -239,6 +200,16 @@ export class SheetsDialog {
       this.view.append(option);
     }
     this.owner.value = row.document ?? this.snapshot?.drawing_documents[0]?.id ?? '';
+    const choices = this.snapshot!.template_choices.filter(
+      (v) => v.new_assignments || v.key === row.template,
+    );
+    this.options(this.template, [
+      ['', 'Inherit document template'],
+      ...choices.map((v) => [v.key, v.label] as [string, string]),
+    ]);
+    for (const v of choices)
+      if (!v.new_assignments)
+        this.template.querySelector<HTMLOptionElement>(`option[value="${v.key}"]`)!.disabled = true;
     this.template.value = row.template ?? '';
     this.kindLabel.textContent =
       row.kind === 'cover'
@@ -258,11 +229,18 @@ export class SheetsDialog {
     for (const [key, input] of this.fields) input.value = String(row[key] ?? '');
     this.view.value = row.view ?? '';
     this.select.value = create ? '' : row.id;
-    this.orientation.value = Number(row.width) > Number(row.height) ? 'landscape' : 'portrait';
-    this.preset.value = 'custom';
     this.invalidate();
     this.message.textContent = '';
     this.controls();
+  }
+  private templatePaper() {
+    const key =
+      this.template.value ||
+      this.snapshot?.drawing_documents.find((d) => d.id === this.owner.value)?.default_template;
+    const variant = this.snapshot?.template_choices.find((v) => v.key === key);
+    if (variant)
+      for (const key of ['width', 'height', 'left', 'right', 'top', 'bottom'] as const)
+        this.fields.get(key)!.value = variant[key];
   }
   private draft(): SheetRow {
     return {
@@ -271,6 +249,7 @@ export class SheetsDialog {
       view: this.view.value || null,
       document: this.owner.value,
       template: this.template.value || null,
+      inherited_variant: this.template.value ? null : this.inheritedVariant,
     };
   }
   private invalidate() {
@@ -285,8 +264,7 @@ export class SheetsDialog {
     this.controls();
   }
   private controls() {
-    for (const input of [...this.fields.values(), this.preset, this.orientation, this.view])
-      input.disabled = this.pending;
+    for (const input of [...this.fields.values(), this.view]) input.disabled = this.pending;
     this.owner.disabled = this.pending || !this.create;
     this.template.disabled = this.pending;
     this.view.disabled = this.pending || this.row?.kind !== 'schematic';

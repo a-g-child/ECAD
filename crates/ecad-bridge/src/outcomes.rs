@@ -33,7 +33,7 @@ impl DesktopBridge {
                             ));
                             response.project_templates =
                                 Some(crate::project_templates::TemplateCatalog::new(
-                                    self.document.session().project().template_defaults(),
+                                    self.document.session().project(),
                                 ));
                             "metadata"
                         }

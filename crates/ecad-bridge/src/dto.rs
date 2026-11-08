@@ -377,6 +377,7 @@ pub struct Response {
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
+    pub template_choices: Vec<crate::project_templates::SavedTemplateRow>,
     pub drawing_documents: Vec<crate::document_rows::DrawingDocumentRow>,
     pub sheets: Vec<crate::sheets::SheetRow>,
     pub drawing_lists: Vec<crate::drawing_list_rows::DrawingListRow>,

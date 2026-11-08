@@ -6,6 +6,10 @@ use std::{error::Error, fmt, io, path::PathBuf};
 /// A project could not be loaded or saved.
 #[derive(Debug)]
 pub enum ProjectFileError {
+    /// A validated assignment migration could not commit atomically.
+    TemplateMigration(ecad_app::EditError),
+    /// Saved template assignments require the v13 assignment schema.
+    TemplateVersion(u32),
     /// A bundled template body is malformed or violates complete-revision invariants.
     TemplateBundle(Box<crate::TemplateLibraryFileError>),
     /// Filesystem operation failed.
@@ -27,6 +31,11 @@ pub enum ProjectFileError {
 impl fmt::Display for ProjectFileError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::TemplateMigration(e) => e.fmt(f),
+            Self::TemplateVersion(v) => write!(
+                f,
+                "Saved template references require project schema v13, not v{v}"
+            ),
             Self::TemplateBundle(error) => error.fmt(f),
             Self::Io(error) => write!(f, "project IO failed: {error}"),
             Self::Json(error) => write!(f, "invalid project JSON: {error}"),
@@ -50,14 +59,16 @@ impl fmt::Display for ProjectFileError {
 impl Error for ProjectFileError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            Self::TemplateMigration(e) => Some(e),
             Self::TemplateBundle(error) => Some(error.as_ref()),
             Self::Io(error) => Some(error),
             Self::Json(error) => Some(error),
             Self::Identity(error) => Some(error),
             Self::Model(error) => Some(error),
-            Self::UnsupportedVersion(_) | Self::MigrationRequired(_) | Self::ExternalChange(_) => {
-                None
-            }
+            Self::TemplateVersion(_)
+            | Self::UnsupportedVersion(_)
+            | Self::MigrationRequired(_)
+            | Self::ExternalChange(_) => None,
         }
     }
 }

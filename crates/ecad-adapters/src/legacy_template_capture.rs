@@ -83,7 +83,10 @@ pub fn capture_legacy_templates(
         {
             let pin = capture.add(
                 project,
-                sheet.template.unwrap_or(document.default_template),
+                project
+                    .sheet_template_pin(sheet, document.default_template)
+                    .map(SheetTemplate::Saved)
+                    .unwrap_or(sheet.template.unwrap_or(document.default_template)),
                 &sheet.paper,
             )?;
             capture.sheets.push(LegacySheetTemplate {
@@ -114,6 +117,14 @@ impl LegacyTemplateCapture {
         template: SheetTemplate,
         paper: &SheetPaper,
     ) -> Result<TemplateVariantRef, TemplateLibraryFileError> {
+        if let SheetTemplate::Saved(pin) = template {
+            let revision = project
+                .template_revision(pin.revision_ref())
+                .ok_or(TemplateLibraryError::MissingRevision(pin.revision_ref()))?;
+            self.bodies
+                .insert(pin.revision_ref(), Arc::new(revision.clone()));
+            return Ok(pin);
+        }
         let layout = template
             .layout(paper)
             .map_err(|error| TemplateFileError::Layout(TemplateError::Paper(error)))?;
@@ -140,7 +151,7 @@ impl LegacyTemplateCapture {
             paper.height
         );
         // Hash a canonical body with a fixed placeholder revision, then store the real pin.
-        let placeholder = SavedTemplateVariant::new(
+        let placeholder = SavedTemplateVariant::preserve_legacy(
             TemplateVariantRef {
                 definition,
                 revision: TemplateRevisionId::new(1).expect("fixed nonzero ID"),
@@ -158,8 +169,8 @@ impl LegacyTemplateCapture {
             revision,
             variant,
         };
-        let body =
-            SavedTemplateVariant::new(pin, name, layout).map_err(TemplateFileError::Layout)?;
+        let body = SavedTemplateVariant::preserve_legacy(pin, name, layout)
+            .map_err(TemplateFileError::Layout)?;
         let revision = Arc::new(TemplateRevision::new(pin.revision_ref(), vec![body])?);
         let existing = project
             .template_revision(pin.revision_ref())
@@ -171,7 +182,7 @@ impl LegacyTemplateCapture {
         Ok(pin)
     }
 }
-fn identity(kind: &str, bytes: &[u8]) -> u128 {
+pub(crate) fn identity(kind: &str, bytes: &[u8]) -> u128 {
     let mut hash = Sha256::new();
     hash.update(b"ecad-legacy-template-capture-v1\0");
     hash.update(kind.as_bytes());

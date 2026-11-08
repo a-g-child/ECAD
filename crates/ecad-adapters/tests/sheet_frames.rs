@@ -8,6 +8,7 @@ fn setup() -> (Project, SheetId) {
     let id = SheetId::new(1).unwrap();
     p.insert_sheet(
         DrawingSheet {
+            inherited_variant: None,
             kind: ecad_domain::SheetKind::Schematic,
             template: None,
             id,
@@ -25,7 +26,7 @@ fn value(frame: &SheetFrame, field: FrameField) -> Option<&str> {
     frame
         .cells
         .iter()
-        .find(|c| c.field == field)
+        .find(|c| c.field == Some(field))
         .unwrap()
         .value
         .as_deref()
@@ -156,7 +157,7 @@ fn v9_upgrade_and_current_template_validation_are_strict_and_deterministic() {
     let b = decode_project(old).unwrap();
     assert_eq!(a, b);
     let current = encode_project(&a).unwrap();
-    assert_eq!(current, include_str!("fixtures/routed-conveyor-v12.json"));
+    assert_eq!(current, include_str!("fixtures/routed-conveyor-v13.json"));
     assert_eq!(decode_project(&current).unwrap(), a);
     let data: Value = serde_json::from_str(&current).unwrap();
     for bad in [

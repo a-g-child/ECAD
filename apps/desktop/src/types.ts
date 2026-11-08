@@ -48,6 +48,7 @@ export interface DrawingDocumentRow {
   sheets: string[];
 }
 export interface Snapshot {
+  template_choices: SavedTemplateRow[];
   drawing_documents: DrawingDocumentRow[];
   sheets: SheetRow[];
   drawing_lists: DrawingListRow[];
@@ -132,7 +133,19 @@ export interface ProfileImport {
   token: string;
   changes: { key: string; label: string; before: string | null; after: string | null }[];
 }
+export interface SavedTemplateRow {
+  new_assignments: boolean;
+  key: string;
+  label: string;
+  width: string;
+  height: string;
+  left: string;
+  right: string;
+  top: string;
+  bottom: string;
+}
 export interface SheetRow {
+  inherited_variant: string | null;
   id: string;
   kind: string;
   template: string | null;

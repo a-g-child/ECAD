@@ -10,6 +10,8 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Replace complete template/default assignments with exact localized undo.
+    TemplateAssignments(ecad_domain::TemplateAssignments),
     /// Bundle an explicitly selected complete template revision; does not assign sheets.
     InsertTemplateRevision(Arc<ecad_domain::TemplateRevision>),
     /// Remove a bundled template body, with its exact body retained by undo.
@@ -117,6 +119,12 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::TemplateAssignments(value) => {
+                if &project.template_assignments() == value {
+                    return Ok(None);
+                }
+                Self::TemplateAssignments(project.replace_template_assignments(value.clone())?)
+            }
             Self::InsertTemplateRevision(revision) => {
                 if !project.insert_template_revision(Arc::clone(revision))? {
                     return Ok(None);
@@ -134,7 +142,7 @@ impl Command {
                 if project.template_defaults() == value {
                     return Ok(None);
                 }
-                let previous = project.replace_template_defaults(value.clone());
+                let previous = project.replace_template_defaults(value.clone())?;
                 Self::TemplateDefaults(previous)
             }
             Self::ProjectMetadata(value) => {

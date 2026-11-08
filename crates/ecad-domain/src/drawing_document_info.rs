@@ -51,6 +51,8 @@ pub struct DrawingDocumentLayout {
 /// Invalid document metadata, ownership or ordering; rejected changes are atomic.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DrawingDocumentError {
+    /// Saved template references, paper ownership or inheritance is invalid.
+    Template(Box<crate::TemplateAssignmentError>),
     /// Document number/title cannot be blank.
     Blank,
     /// An identity already exists.
@@ -75,6 +77,7 @@ pub enum DrawingDocumentError {
 impl fmt::Display for DrawingDocumentError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Template(error) => error.fmt(f),
             Self::Blank => f.write_str("Drawing document number and title must not be blank"),
             Self::Duplicate(id) => write!(f, "Drawing document {id} already exists"),
             Self::NumberInUse(n) => write!(f, "Drawing document number {n} is already used"),

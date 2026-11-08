@@ -117,6 +117,7 @@ fn varied_project() -> Project {
         .unwrap();
     p.replace_drawing(drawing).unwrap();
     let original = DrawingSheet {
+        inherited_variant: None,
         id: SheetId::new(1).unwrap(),
         kind: SheetKind::Schematic,
         template: None,

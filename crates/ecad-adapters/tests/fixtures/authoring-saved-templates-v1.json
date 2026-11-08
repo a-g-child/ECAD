@@ -1,0 +1,347 @@
+{
+  "kind": "ecad-template-library",
+  "schema_version": 1,
+  "revisions": [
+    {
+      "definition": "00000000000000000000000000000901",
+      "revision": "00000000000000000000000000000901",
+      "variants": [
+        {
+          "schema_version": 1,
+          "definition": "00000000000000000000000000000901",
+          "revision": "00000000000000000000000000000901",
+          "variant": "00000000000000000000000000000901",
+          "name": "A3 portrait saved layout",
+          "paper_um": [
+            297000,
+            420000
+          ],
+          "margins_um": [
+            15000,
+            10000,
+            10000,
+            10000
+          ],
+          "content_um": [
+            20000,
+            15000,
+            262000,
+            350000
+          ],
+          "tables": [
+            {
+              "id": "00000000000000000000000000000001",
+              "bounds_um": [
+                107000,
+                370000,
+                180000,
+                40000
+              ],
+              "cells": [
+                {
+                  "id": "00000000000000000000000000000001",
+                  "bounds_um": [
+                    0,
+                    0,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Company name",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "company.name"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000002",
+                  "bounds_um": [
+                    90000,
+                    0,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Project title",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "project.title"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000003",
+                  "bounds_um": [
+                    0,
+                    10000,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Document",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.title"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000004",
+                  "bounds_um": [
+                    90000,
+                    10000,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Drawing title",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "sheet.title"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000005",
+                  "bounds_um": [
+                    0,
+                    20000,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Document number",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.number"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000006",
+                  "bounds_um": [
+                    90000,
+                    20000,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Drawing number",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "sheet.number"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000007",
+                  "bounds_um": [
+                    0,
+                    30000,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Revision",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.revision"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000008",
+                  "bounds_um": [
+                    90000,
+                    30000,
+                    90000,
+                    10000
+                  ],
+                  "caption": "Sheet in document",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.sheet_count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "definition": "00000000000000000000000000000902",
+      "revision": "00000000000000000000000000000902",
+      "variants": [
+        {
+          "schema_version": 1,
+          "definition": "00000000000000000000000000000902",
+          "revision": "00000000000000000000000000000902",
+          "variant": "00000000000000000000000000000902",
+          "name": "Small drawing list saved layout",
+          "paper_um": [
+            297000,
+            80000
+          ],
+          "margins_um": [
+            10000,
+            10000,
+            10000,
+            10000
+          ],
+          "content_um": [
+            15000,
+            15000,
+            267000,
+            30000
+          ],
+          "tables": [
+            {
+              "id": "00000000000000000000000000000001",
+              "bounds_um": [
+                107000,
+                50000,
+                180000,
+                20000
+              ],
+              "cells": [
+                {
+                  "id": "00000000000000000000000000000001",
+                  "bounds_um": [
+                    0,
+                    0,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Company name",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "company.name"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000002",
+                  "bounds_um": [
+                    45000,
+                    0,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Project title",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "project.title"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000003",
+                  "bounds_um": [
+                    90000,
+                    0,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Document",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.title"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000004",
+                  "bounds_um": [
+                    135000,
+                    0,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Drawing title",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "sheet.title"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000005",
+                  "bounds_um": [
+                    0,
+                    10000,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Document number",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.number"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000006",
+                  "bounds_um": [
+                    45000,
+                    10000,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Drawing number",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "sheet.number"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000007",
+                  "bounds_um": [
+                    90000,
+                    10000,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Revision",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.revision"
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000000000000000000000000008",
+                  "bounds_um": [
+                    135000,
+                    10000,
+                    45000,
+                    10000
+                  ],
+                  "caption": "Sheet in document",
+                  "contents": [
+                    {
+                      "kind": "field",
+                      "value": "document.sheet_count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "recommended": []
+}

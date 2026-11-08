@@ -61,6 +61,12 @@ impl Project {
             return Err(SheetError::Order);
         }
         self.check_sheet(&value)?;
+        self.sheet_template_layout(
+            &value,
+            self.drawing_document(document)
+                .expect("checked owner")
+                .default_template,
+        )?;
         self.sheet_owners.insert(value.id, document);
         self.sheets.insert(range.start + index, value);
         Ok(())
@@ -70,6 +76,15 @@ impl Project {
     /// Missing/invalid sheets leave prior content unchanged.
     pub fn replace_sheet(&mut self, value: DrawingSheet) -> Result<DrawingSheet, SheetError> {
         self.check_sheet(&value)?;
+        let owner = self
+            .sheet_document(value.id)
+            .ok_or(SheetError::Missing(value.id))?;
+        self.sheet_template_layout(
+            &value,
+            self.drawing_document(owner)
+                .expect("validated owner")
+                .default_template,
+        )?;
         let sheet = self
             .sheets
             .iter_mut()
@@ -120,6 +135,15 @@ impl Project {
     pub(crate) fn validate_sheets(&self) -> Result<(), SheetError> {
         for sheet in &self.sheets {
             self.check_sheet(sheet)?;
+            let owner = self
+                .sheet_document(sheet.id)
+                .ok_or(SheetError::Missing(sheet.id))?;
+            self.sheet_template_layout(
+                sheet,
+                self.drawing_document(owner)
+                    .expect("validated owner")
+                    .default_template,
+            )?;
         }
         Ok(())
     }

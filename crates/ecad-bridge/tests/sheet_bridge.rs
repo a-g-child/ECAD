@@ -144,7 +144,7 @@ fn frame_projection_matches_review_then_refreshes_live_values_and_undo() {
     let mut row = seed(&mut b);
     row["title"] = json!("Harness\nSheet");
     let p = preview(&mut b, row.clone(), true).unwrap();
-    assert_eq!(p["frame"]["template"], "standard-v1");
+    assert_eq!(p["frame"]["template"], row["template"]);
     assert_eq!(p["frame"]["sheet"], row["id"]);
     assert_eq!(p["frame"]["cells"][3]["value"], "Harness\nSheet");
     assert_eq!(p["frame"]["cells"][7]["value"], "2 / 2");

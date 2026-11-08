@@ -57,6 +57,8 @@ impl From<TemplateError> for TemplateFileError {
 #[serde(deny_unknown_fields)]
 pub(crate) struct VariantData {
     schema_version: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    new_assignments: Option<bool>,
     definition: String,
     revision: String,
     variant: String,
@@ -117,7 +119,8 @@ impl From<&SavedTemplateVariant> for VariantData {
         let paper = value.layout().paper();
         let pin = value.reference();
         Self {
-            schema_version: 1,
+            schema_version: if value.allows_new_assignments() { 1 } else { 2 },
+            new_assignments: (!value.allows_new_assignments()).then_some(false),
             definition: pin.definition.to_string(),
             revision: pin.revision.to_string(),
             variant: pin.variant.to_string(),
@@ -165,7 +168,7 @@ impl From<&SavedTemplateVariant> for VariantData {
 /// Reading a body has no publication, project migration or filesystem side effects.
 pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, TemplateFileError> {
     let version: crate::schema::VersionEnvelope = serde_json::from_str(text)?;
-    if version.schema_version != 1 {
+    if ![1, 2].contains(&version.schema_version) {
         return Err(TemplateFileError::Version(version.schema_version));
     }
     let data: VariantData = serde_json::from_str(text)?;
@@ -174,9 +177,19 @@ pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, Templ
 impl TryFrom<VariantData> for SavedTemplateVariant {
     type Error = TemplateFileError;
     fn try_from(data: VariantData) -> Result<Self, Self::Error> {
-        if data.schema_version != 1 {
+        if ![1, 2].contains(&data.schema_version) {
             return Err(TemplateFileError::Version(data.schema_version));
         }
+        if (data.schema_version == 1 && data.new_assignments.is_some())
+            || (data.schema_version == 2 && data.new_assignments != Some(false))
+        {
+            return Err(TemplateFileError::Json(
+                <serde_json::Error as serde::de::Error>::custom(
+                    "Variant v2 requires explicit retained-legacy eligibility",
+                ),
+            ));
+        }
+        let retained = data.new_assignments == Some(false);
         let paper = SheetPaper {
             width: data.paper_um[0],
             height: data.paper_um[1],
@@ -218,14 +231,27 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                 )?)
             })
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(SavedTemplateVariant::new(
+        let layout = TemplateLayout::new(paper, rect(data.content_um), tables)?;
+        if retained && !layout.tables().is_empty() {
+            return Err(TemplateFileError::Json(
+                <serde_json::Error as serde::de::Error>::custom(
+                    "Retained legacy eligibility requires an omitted title block",
+                ),
+            ));
+        }
+        let build = if retained {
+            SavedTemplateVariant::preserve_legacy
+        } else {
+            SavedTemplateVariant::new
+        };
+        Ok(build(
             TemplateVariantRef {
                 definition: data.definition.parse()?,
                 revision: data.revision.parse()?,
                 variant: data.variant.parse()?,
             },
             data.name,
-            TemplateLayout::new(paper, rect(data.content_um), tables)?,
+            layout,
         )?)
     }
 }

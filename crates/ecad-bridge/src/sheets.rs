@@ -15,6 +15,8 @@ pub(crate) struct SheetRow {
     #[serde(default)]
     pub template: Option<String>,
     #[serde(default)]
+    pub inherited_variant: Option<String>,
+    #[serde(default)]
     pub document: Option<String>,
     pub number: String,
     pub title: String,
@@ -38,7 +40,8 @@ impl From<&DrawingSheet> for SheetRow {
         Self {
             id: s.id.to_string(),
             kind: s.kind.key().into(),
-            template: s.template.map(|t| t.key().into()),
+            template: s.template.map(|t| t.key()),
+            inherited_variant: s.inherited_variant.map(|id| id.to_string()),
             document: None,
             number: s.number.clone(),
             title: s.title.clone(),
@@ -90,6 +93,11 @@ impl SheetRow {
             })
             .transpose()?;
         Ok(DrawingSheet {
+            inherited_variant: self
+                .inherited_variant
+                .map(|s| s.parse())
+                .transpose()
+                .map_err(|e| BridgeError::new("sheet", e))?,
             kind: SheetKind::from_key(&self.kind)
                 .ok_or_else(|| BridgeError::new("sheet", "Unknown sheet type"))?,
             template: self
@@ -147,6 +155,12 @@ impl DesktopBridge {
                     .transpose()
                     .map_err(|e| BridgeError::new("sheet", e))?;
                 let sheet = row.sheet()?;
+                if sheet
+                    .template
+                    .is_some_and(|t| !matches!(t, SheetTemplate::Saved(_)))
+                {
+                    return Err(BridgeError::new("sheet", "Select a saved template variant"));
+                }
                 let new_view = self
                     .sheet_tool
                     .new_view

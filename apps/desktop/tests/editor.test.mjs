@@ -73,6 +73,16 @@ before(async () => {
   );
   backendLog = start(hostBinary, [], root, { ECAD_UI_PROJECT: project });
   await until(() => backendLog().includes('Browser harness listening'));
+  const initial = JSON.parse(await readFile(project, 'utf8'));
+  const templates = JSON.parse(
+    await readFile(
+      resolve(root, 'crates/ecad-adapters/tests/fixtures/authoring-saved-templates-v1.json'),
+      'utf8',
+    ),
+  );
+  initial.template_revisions.push(...templates.revisions);
+  await replaceProject(initial);
+
   const frontendLog = start(
     'npm',
     ['exec', '--', 'vite', '--host', '127.0.0.1', '--port', '1421', '--strictPort'],
@@ -478,7 +488,16 @@ registerMetadataTests({ page, button, until, bounds, root, project: () => projec
 
 registerProfileTests({ page, button, until, bounds, root, project: () => project, pressAction });
 
-registerSheetTests({ page, button, until, bounds, root, project: () => project, pressAction });
+registerSheetTests({
+  page,
+  button,
+  until,
+  bounds,
+  root,
+  project: () => project,
+  pressAction,
+  replaceProject,
+});
 
 registerSheetEditingTests({ page, button, until, bounds, project: () => project, pressAction });
 

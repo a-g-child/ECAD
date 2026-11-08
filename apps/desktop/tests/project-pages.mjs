@@ -19,6 +19,7 @@ export function registerProjectPageTests({
   const control = (p, name) => sheetDialog(p).getByRole('button', { name, exact: true });
   const display = (p) => p.getByRole('combobox', { name: 'Sheet display', exact: true });
   const stored = async () => JSON.parse(await readFile(project(), 'utf8'));
+  const key = (ref) => `saved:${ref.saved.definition}:${ref.saved.revision}:${ref.saved.variant}`;
   async function rootMenu(p) {
     await p.locator('.tree .project-root > summary').click({ button: 'right' });
     const menu = p.getByRole('dialog', { name: 'Project menu', exact: true });
@@ -69,14 +70,14 @@ export function registerProjectPageTests({
       await properties(p)
         .getByRole('combobox', { name: 'Cover template', exact: true })
         .inputValue(),
-      'cover-v1',
+      key(original.template_defaults.cover),
     );
     await properties(p)
       .getByRole('textbox', { name: 'Company name', exact: true })
       .fill('Project <company>\nContact');
     await properties(p)
       .getByRole('combobox', { name: 'Cover template', exact: true })
-      .selectOption('standard-v1');
+      .selectOption(key(original.template_defaults.schematic));
     await p.setViewportSize({ width: 960, height: 640 });
     const dialog = await properties(p).boundingBox(),
       apply = await properties(p)
@@ -91,13 +92,16 @@ export function registerProjectPageTests({
     await applyProperties(p);
     await p.setViewportSize({ width: 1360, height: 880 });
     await save(p);
-    assert.equal((await stored()).template_defaults.cover, 'standard-v1');
+    assert.deepEqual(
+      (await stored()).template_defaults.cover,
+      original.template_defaults.schematic,
+    );
     await openNew(p, 'Cover sheet…');
     assert.equal(
       await sheetDialog(p)
         .getByRole('combobox', { name: 'Sheet template', exact: true })
         .inputValue(),
-      'standard-v1',
+      key(original.template_defaults.schematic),
     );
     assert.equal(
       await sheetDialog(p)
@@ -113,21 +117,24 @@ export function registerProjectPageTests({
       cover = data.sheets.find((s) => s.id === id);
     assert.equal(await p.locator('[aria-label="Sheet type"]').textContent(), 'COVER');
     assert.equal(cover.kind, 'cover');
-    assert.equal(cover.template, 'standard-v1');
+    assert.deepEqual(cover.template, original.template_defaults.schematic);
     assert.equal(cover.placement, null);
     assert.deepEqual(data.drawing, original.drawing);
     await openProperties(p);
     await properties(p)
       .getByRole('combobox', { name: 'Cover template', exact: true })
-      .selectOption('cover-v1');
+      .selectOption(key(original.template_defaults.cover));
     await applyProperties(p);
     await save(p);
     data = await stored();
-    assert.equal(data.template_defaults.cover, 'cover-v1');
-    assert.equal(data.sheets.find((s) => s.id === id).template, 'standard-v1');
+    assert.deepEqual(data.template_defaults.cover, original.template_defaults.cover);
+    assert.deepEqual(
+      data.sheets.find((s) => s.id === id).template,
+      original.template_defaults.schematic,
+    );
     assert.equal(
       await p.locator('svg.drawing .sheet-frame').getAttribute('data-template'),
-      'standard-v1',
+      key(original.template_defaults.schematic),
     );
     await pressAction(p, 'Undo', 'Undo complete');
     await pressAction(p, 'Undo', 'Undo complete');
@@ -199,13 +206,32 @@ export function registerProjectPageTests({
     await p.close();
   });
   test('drawing-list sheets paginate live number/title links, navigate by stable identity and update after rename/undo', async () => {
+    const seed = await stored();
+    const templates = JSON.parse(
+      await readFile(
+        resolve(root, 'crates/ecad-adapters/tests/fixtures/authoring-saved-templates-v1.json'),
+        'utf8',
+      ),
+    );
+    for (const revision of templates.revisions)
+      if (
+        !seed.template_revisions.some(
+          (r) => r.definition === revision.definition && r.revision === revision.revision,
+        )
+      )
+        seed.template_revisions.push(revision);
+    await replaceProject(seed);
+
     const p = await page({ electrical: false }),
       original = await stored();
     const make = async (label, number, title, small = false) => {
       await openNew(p, label);
       await field(p, 'Drawing number').fill(number);
       await field(p, 'Sheet title').fill(title);
-      if (small) await field(p, 'Paper height (µm)').fill('80000');
+      if (small)
+        await sheetDialog(p)
+          .getByRole('combobox', { name: 'Sheet template', exact: true })
+          .selectOption({ label: 'Small drawing list saved layout' });
       return applySheet(p);
     };
     const two = await make('Cover sheet…', '2', 'Two\nLines'),
@@ -224,7 +250,7 @@ export function registerProjectPageTests({
     await save(p);
     let data = await stored();
     assert.equal(data.sheets.find((s) => s.id === first).kind, 'drawing-list');
-    assert.equal(data.sheets.find((s) => s.id === first).template, 'drawing-list-v1');
+    assert.ok(data.sheets.find((s) => s.id === first).template.saved);
     assert.deepEqual(data.drawing, original.drawing);
     assert.equal(
       Object.hasOwn(

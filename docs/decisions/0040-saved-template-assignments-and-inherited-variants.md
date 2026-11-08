@@ -1,0 +1,31 @@
+# 0040: Saved template assignments and inherited paper variants
+
+Status: accepted and implemented for domain, persistence and the bounded desktop. Completes the assignment stage following [0039](0039-project-template-bundles-and-legacy-capture.md); the independent template editor remains planned in [0037](0037-library-template-editor-workspace.md).
+
+## Ownership and resolution
+
+`SheetTemplate::Saved` holds an exact typed definition/revision/variant pin. Project creation defaults and logical-document defaults use this choice. An explicit sheet override pins the selected body; an inherited sheet keeps `template = None` and a stable `inherited_variant` ID within its document's exact revision. This preserves legacy sheets which inherit a frame but use different paper sizes. Missing variants reject visibly, rather than falling back to another size or template.
+
+Paper and margins belong to the saved layout. `DrawingSheet.paper` remains an exact validated projection for sheet-coordinate mapping and portable compatibility. It is not a second layout authority: every saved sheet resolves its body and rejects differing dimensions/margins. New/edit sheet controls select project-bundled saved variants and show read-only paper values; inline size/orientation/preset/margin authoring is removed. Number/title, ownership on creation, source-view placement and scale remain editable through the existing reviewed workflow. Project Properties selects saved creation defaults; changing them does not restyle existing sheets.
+
+Normal sheet/document/default mutations validate references before mutation. Document changes and sheet transfers validate inherited variant availability and paper compatibility. Removing a bundled revision fails while any creation default, document default or explicit sheet override references it; inherited sheets are protected through their owner. An atomic `TemplateAssignments` snapshot supports migration/adoption and exact undo, retaining assignment/paper state rather than an electrical history snapshot. Editor operations use the reviewed authoring path for new-assignment eligibility.
+
+## Preservation migration
+
+`preview_template_assignment_migration` captures all required legacy sizes, assembles complete immutable families per legacy frame definition and derives revision IDs from canonical variant bodies. Definition/variant identities retain the capture-v1 recipe; family revision hashing uses its own versioned discriminator. Explicit equal-valued overrides remain explicit. Inherited sheets retain their stable paper variant rather than being converted into explicit overrides or resized to default paper. Reserved legacy lineage IDs have a documented domain accessor, so explorer initial-package identity checks do not depend on translated names or visual similarity alone.
+
+A closed proposal retains its original session revision and exact imports/assignments. One transaction imports bodies and installs assignments; Undo restores legacy choices and removes newly imported bodies exactly. Candidate validation rejects immutable-key collisions or dangling references without partial state. Source electrical objects, shared/unplaced views, sheet/document identities/order/numbers, placements, metadata and style/override intent remain unchanged. Arbitrary saved tables resolve literal and composed multiline runs using explicit project/document/sheet values, without assuming the old eight-cell format.
+
+The desktop opts into `JsonFile::with_saved_templates`: old or compatible legacy assignments migrate in memory before the clean checkpoint, while the observed version remains the source file's exact location/bytes. Loading does not write the source or publish a library revision. Explicit Save writes schema v13; external-change failures retain the migrated session/checkpoint/history. Raw headless `decode_project` and the default file adapter retain legacy-construction compatibility; desktop authoring accepts saved references only.
+
+## Persistence and retained legacy layouts
+
+Strict project schema v13 adds saved-pin DTOs and the inherited variant selector. Model, persistence DTO and bridge strings remain distinct; identities and exact editor units cross the bridge as strings. V2–v12 readers and historical fixtures remain available; v1 still requires explicit lineage migration. Earlier schemas reject saved references rather than accepting an unknown feature. V13 also supports compatible legacy constructions for headless fixtures/imports, with the desktop migration policy normalizing them before use.
+
+Standalone normal variant bodies keep canonical v1 output. A retained legacy frame whose title block could not fit uses variant schema v2 with explicit `new_assignments: false`; complete library schema v1 can contain these independently versioned bodies. V2 validation requires that retained/omitted-table representation. Such bodies render and survive save/reopen/removal undo, but normal new-sheet/default selection requires a repaired saved revision. Intentional blank custom v1 templates remain valid. Existing published v1 bodies are not rewritten or inferred to have different authoring intent.
+
+## Verification and remaining work
+
+Seven headless regressions cover exact frames/styles/placement and undo, inherited custom paper, source-byte loading/checkpoints, in-use guards, invalid references/paper/transfer rejection, tiny legacy retention and authoring eligibility, strict v13 pins and generic literal/composed cells. Real browser coverage now includes saved fixture selection, locked paper fields, saved defaults, drawing-list capacity from saved regions, and clean tiny-sheet migration with saved-only creation choices. Full Rust, 42 browser workflows and macOS desktop checks pass; native Windows/Linux and output/font parity remain separate validation gates.
+
+Libraries manager/editor view, independent draft history, contextual Template ribbon/properties, standard-profile verification, interactive structured-table editing, richer cell styles/custom fields, reusable blocks/assets and reviewed bulk revision adoption/value mapping remain pending. Revisit compatibility/variant mapping explicitly when document revision adoption or reusable block dependencies are added; never silently resize or relink a sheet to satisfy a missing variant.

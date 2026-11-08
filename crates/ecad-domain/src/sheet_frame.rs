@@ -4,6 +4,8 @@ use crate::{DrawingValues, MetadataField, Project, SheetError, SheetId};
 /// Pinned bundled template identity. New layouts require a new variant, never a silent revision.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SheetTemplate {
+    /// Exact project-bundled immutable template variant.
+    Saved(crate::TemplateVariantRef),
     /// Margin border and a bottom-right, two-column drawing-information table.
     StandardV1,
     /// Centred information panel for a cover page.
@@ -12,26 +14,52 @@ pub enum SheetTemplate {
     DrawingListV1,
 }
 impl SheetTemplate {
-    /// Complete bundled immutable catalogue.
+    /// Frozen legacy catalogue for migration; actual saved variants live in project bundles.
     pub const ALL: [Self; 3] = [Self::StandardV1, Self::CoverV1, Self::DrawingListV1];
     /// Resolve known identities without guessing missing/future templates.
     pub fn from_key(key: &str) -> Option<Self> {
+        if let Some(rest) = key.strip_prefix("saved:") {
+            let parts: Vec<_> = rest.split(':').collect();
+            if parts.len() != 3 {
+                return None;
+            }
+            return Some(Self::Saved(crate::TemplateVariantRef {
+                definition: parts[0].parse().ok()?,
+                revision: parts[1].parse().ok()?,
+                variant: parts[2].parse().ok()?,
+            }));
+        }
         Self::ALL.into_iter().find(|t| t.key() == key)
+    }
+    /// Reserved capture-v1 lineage for the frozen built-in frame. These constants match
+    /// the versioned migration recipe and keep UI identity checks independent of names.
+    pub fn preserved_definition(self) -> Option<crate::TemplateDefinitionId> {
+        let id = match self {
+            Self::StandardV1 => 0xefe8c6f7729ac337099733ea2598c674,
+            Self::CoverV1 => 0x10dac139e1dcdbaf38ab96d808be7006,
+            Self::DrawingListV1 => 0x8e294cb9711674ec016914a50e010e52,
+            Self::Saved(_) => return None,
+        };
+        Some(crate::TemplateDefinitionId::new(id).expect("nonzero reserved identity"))
     }
     /// Display name independent of its pinned identity.
     pub fn label(self) -> &'static str {
         match self {
+            Self::Saved(_) => "Saved drawing template",
             Self::StandardV1 => "Standard drawing",
             Self::CoverV1 => "Cover page",
             Self::DrawingListV1 => "Drawing list",
         }
     }
     /// Stable portable identity, independent of a translated display name.
-    pub fn key(self) -> &'static str {
+    pub fn key(self) -> String {
         match self {
-            Self::StandardV1 => "standard-v1",
-            Self::CoverV1 => "cover-v1",
-            Self::DrawingListV1 => "drawing-list-v1",
+            Self::Saved(pin) => {
+                format!("saved:{}:{}:{}", pin.definition, pin.revision, pin.variant)
+            }
+            Self::StandardV1 => "standard-v1".into(),
+            Self::CoverV1 => "cover-v1".into(),
+            Self::DrawingListV1 => "drawing-list-v1".into(),
         }
     }
 }
@@ -109,10 +137,12 @@ impl FrameField {
 /// One resolved cell; an absent optional value stays absent rather than becoming fake metadata.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FrameCell {
-    /// Stable typed binding, distinct from its caption.
-    pub field: FrameField,
+    /// Stable template-cell identity, independent of its value/binding.
+    pub id: crate::TemplateCellId,
+    /// Single typed binding, or None for literal/composed text; distinct from cell identity.
+    pub field: Option<FrameField>,
     /// Literal caption.
-    pub caption: &'static str,
+    pub caption: String,
     /// Exact literal multiline value; missing optional project metadata is None.
     pub value: Option<String>,
     /// Physical cell bounds.
@@ -145,13 +175,17 @@ impl Project {
         let (owner, ordinal) = self.document_sheet_position(id)?;
         let document = self.drawing_document(owner).expect("validated owner");
         let count = self.sheets_in_document(owner)?.len();
-        let template = sheet.template.unwrap_or(document.default_template);
-        let layout = template.layout(&sheet.paper)?;
+        let template = self
+            .sheet_template_pin(sheet, document.default_template)
+            .map(SheetTemplate::Saved)
+            .unwrap_or(sheet.template.unwrap_or(document.default_template));
+        let layout = self.sheet_template_layout(sheet, document.default_template)?;
         let mut cells = Vec::new();
         for table in layout.tables() {
             for cell in table.cells() {
-                let crate::TemplateTextRun::Field(field) = cell.contents[0] else {
-                    unreachable!("legacy layout contains one typed field per cell");
+                let field = match cell.contents.as_slice() {
+                    [crate::TemplateTextRun::Field(field)] => Some(*field),
+                    _ => None,
                 };
                 let resolved = cell.resolve(|field| match field {
                     FrameField::Metadata(field) => self.metadata().value(field).map(str::to_owned),
@@ -163,9 +197,11 @@ impl Project {
                     FrameField::DocumentSheetCount => Some(format!("{} / {count}", ordinal + 1)),
                 });
                 cells.push(FrameCell {
+                    id: cell.id,
                     field,
-                    caption: field.caption(),
-                    value: resolved.missing.is_empty().then_some(resolved.value),
+                    caption: cell.caption.clone(),
+                    value: (resolved.missing.is_empty() || field.is_none())
+                        .then_some(resolved.value),
                     bounds: FrameRect {
                         x: table.bounds().x + cell.bounds.x,
                         y: table.bounds().y + cell.bounds.y,
@@ -180,7 +216,10 @@ impl Project {
             border: layout.border(),
             content: layout.content(),
             cells,
-            title_block_too_small: layout.tables().is_empty(),
+            title_block_too_small: match self.sheet_template_pin(sheet, document.default_template) {
+                Some(pin) => !self.saved_template(pin)?.allows_new_assignments(),
+                None => layout.tables().is_empty(),
+            },
             appearance: self.drawing().settings().base.clone(),
         })
     }

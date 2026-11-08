@@ -18,6 +18,9 @@ impl SheetTemplate {
         };
         let template = self;
         let (columns, row_height) = match template {
+            SheetTemplate::Saved(pin) => {
+                return Err(crate::TemplateAssignmentError::Missing(pin).into());
+            }
             SheetTemplate::StandardV1 => (2, 10_000),
             SheetTemplate::CoverV1 => (2, 20_000),
             SheetTemplate::DrawingListV1 => (4, 10_000),

@@ -62,3 +62,13 @@ mod legacy_template_capture;
 pub use legacy_template_capture::{
     LegacySheetTemplate, LegacyTemplateCapture, capture_legacy_templates,
 };
+
+mod template_pin_data;
+
+mod template_assignment_migration;
+pub use template_assignment_migration::{
+    TemplateAssignmentMigration, migrate_template_assignments,
+    preview_template_assignment_migration,
+};
+
+mod schema_template_assignments;

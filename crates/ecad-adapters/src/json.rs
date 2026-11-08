@@ -18,18 +18,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Encode v12 JSON in identity order, with two-space indentation and a final LF.
+/// Encode v13 JSON in identity order, with two-space indentation and a final LF.
 ///
 /// No timestamps, session history, or platform line endings are embedded.
 /// # Errors
 /// Returns a structured model or JSON encoding error without changing the project.
 pub fn encode_project(project: &Project) -> Result<String, ProjectFileError> {
     project.validate()?;
-    Ok(
-        serde_json::to_string_pretty(&crate::schema_template_bundles::BundledProjectData::from(
-            project,
-        ))? + "\n",
-    )
+    Ok(serde_json::to_string_pretty(
+        &crate::schema_template_assignments::AssignedProjectData::from(project),
+    )? + "\n")
 }
 
 /// Decode and validate a complete project without exposing intermediate objects.
@@ -49,6 +47,11 @@ pub fn decode_project(text: &str) -> Result<Project, ProjectFileError> {
     }
     if envelope.schema_version == 3 {
         return Project::try_from(serde_json::from_str::<ProjectData>(text)?);
+    }
+    if envelope.schema_version == 13 {
+        return Project::try_from(serde_json::from_str::<
+            crate::schema_template_assignments::AssignedProjectData,
+        >(text)?);
     }
     if envelope.schema_version == 12 {
         return Project::try_from(serde_json::from_str::<
@@ -115,14 +118,32 @@ pub fn migrate_v1(text: &str, project_id: ProjectId) -> Result<Project, ProjectF
 #[derive(Clone, Debug)]
 pub struct JsonFile {
     path: PathBuf,
+    saved_template_loading: bool,
 }
 
 impl JsonFile {
     /// Target an explicit path; the parent directory must already exist.
     pub fn new(path: impl Into<PathBuf>) -> Self {
-        Self { path: path.into() }
+        Self {
+            path: path.into(),
+            saved_template_loading: false,
+        }
     }
 
+    /// Convert legacy frame assignments in memory on load before a desktop clean checkpoint.
+    /// The source bytes/version remain observed exactly; only an explicit save writes v13.
+    pub fn with_saved_templates(mut self) -> Self {
+        self.saved_template_loading = true;
+        self
+    }
+    pub(crate) fn decode(&self, text: &str) -> Result<Project, ProjectFileError> {
+        let project = decode_project(text)?;
+        if self.saved_template_loading {
+            crate::migrate_template_assignments(&project)
+        } else {
+            Ok(project)
+        }
+    }
     /// Return the configured project path.
     pub fn path(&self) -> &Path {
         &self.path
@@ -145,7 +166,7 @@ impl ProjectStore for JsonFile {
     type Error = ProjectFileError;
 
     fn load(&self) -> Result<Project, Self::Error> {
-        decode_project(&fs::read_to_string(&self.path)?)
+        self.decode(&fs::read_to_string(&self.path)?)
     }
 
     fn save(&self, project: &Project) -> Result<(), Self::Error> {

@@ -113,3 +113,8 @@ pub use template_library::{
 };
 
 mod project_templates;
+
+mod template_assignment;
+pub use template_assignment::{
+    SheetTemplateAssignment, TemplateAssignmentError, TemplateAssignments,
+};

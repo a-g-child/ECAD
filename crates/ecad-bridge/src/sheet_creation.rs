@@ -68,13 +68,28 @@ impl DesktopBridge {
         } else {
             None
         };
+        let paper = match template {
+            Some(SheetTemplate::Saved(pin)) => project
+                .saved_template(pin)
+                .map_err(|e| BridgeError::new("template", e))?
+                .layout()
+                .paper()
+                .clone(),
+            _ => {
+                return Err(BridgeError::new(
+                    "template",
+                    "Project defaults require a saved template",
+                ));
+            }
+        };
         let sheet = DrawingSheet {
+            inherited_variant: None,
             id,
             kind,
             template,
             number,
             title: title.into(),
-            paper: SheetPaper::default(),
+            paper,
             placement: view.map(|view| SheetViewPlacement {
                 view,
                 paper_origin: DrawingPoint {

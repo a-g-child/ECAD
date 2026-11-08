@@ -148,6 +148,8 @@ impl TemplateLibrary {
 /// Template revision/catalog validation failed without mutating published state.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TemplateLibraryError {
+    /// A project default or sheet assignment still references this complete revision.
+    InUse(TemplateRevisionRef),
     /// A complete revision must contain at least one variant.
     EmptyRevision(TemplateRevisionRef),
     /// A variant belongs to another definition/revision.
@@ -168,6 +170,7 @@ pub enum TemplateLibraryError {
 impl fmt::Display for TemplateLibraryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::InUse(pin) => write!(f, "Template revision {pin:?} is still in use"),
             Self::EmptyRevision(pin) => write!(f, "Template revision {pin:?} has no variants"),
             Self::ForeignVariant(pin) => {
                 write!(f, "Template variant {pin:?} belongs to another revision")

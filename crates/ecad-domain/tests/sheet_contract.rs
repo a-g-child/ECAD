@@ -2,6 +2,7 @@
 use ecad_domain::*;
 fn sheet(id: u128, number: &str) -> DrawingSheet {
     DrawingSheet {
+        inherited_variant: None,
         kind: ecad_domain::SheetKind::Schematic,
         template: None,
         id: SheetId::new(id).unwrap(),

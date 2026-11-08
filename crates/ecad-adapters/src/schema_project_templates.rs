@@ -9,9 +9,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct DefaultsData {
-    schematic: TemplateData,
-    cover: TemplateData,
-    drawing_list: TemplateData,
+    pub(crate) schematic: TemplateData,
+    pub(crate) cover: TemplateData,
+    pub(crate) drawing_list: TemplateData,
 }
 impl From<&DrawingTemplateDefaults> for DefaultsData {
     fn from(t: &DrawingTemplateDefaults) -> Self {
@@ -24,7 +24,7 @@ impl From<&DrawingTemplateDefaults> for DefaultsData {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum KindData {
+pub(crate) enum KindData {
     Schematic,
     Cover,
     DrawingList,
@@ -50,13 +50,13 @@ impl From<KindData> for SheetKind {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct RoleSheetData {
-    id: String,
-    number: String,
-    title: String,
-    kind: KindData,
-    template: Option<TemplateData>,
-    paper: PaperData,
-    placement: Option<PlacementData>,
+    pub(crate) id: String,
+    pub(crate) number: String,
+    pub(crate) title: String,
+    pub(crate) kind: KindData,
+    pub(crate) template: Option<TemplateData>,
+    pub(crate) paper: PaperData,
+    pub(crate) placement: Option<PlacementData>,
 }
 impl From<&DrawingSheet> for RoleSheetData {
     fn from(s: &DrawingSheet) -> Self {
@@ -121,6 +121,15 @@ impl TryFrom<CurrentProjectData> for Project {
         if b.schema_version != 11 {
             return Err(ProjectFileError::UnsupportedVersion(b.schema_version));
         }
+        if b.template_defaults.schematic.is_saved()
+            || b.template_defaults.cover.is_saved()
+            || b.template_defaults.drawing_list.is_saved()
+            || b.sheets
+                .iter()
+                .any(|s| s.template.as_ref().is_some_and(TemplateData::is_saved))
+        {
+            return Err(ProjectFileError::TemplateVersion(11));
+        }
         let mut roles = Vec::new();
         let sheets = b
             .sheets
@@ -158,11 +167,13 @@ impl TryFrom<CurrentProjectData> for Project {
             sheet.template = template.map(Into::into);
             project.replace_sheet(sheet).map_err(ModelError::from)?;
         }
-        project.replace_template_defaults(DrawingTemplateDefaults {
-            schematic: b.template_defaults.schematic.into(),
-            cover: b.template_defaults.cover.into(),
-            drawing_list: b.template_defaults.drawing_list.into(),
-        });
+        project
+            .replace_template_defaults(DrawingTemplateDefaults {
+                schematic: b.template_defaults.schematic.into(),
+                cover: b.template_defaults.cover.into(),
+                drawing_list: b.template_defaults.drawing_list.into(),
+            })
+            .map_err(ModelError::from)?;
         project.validate()?;
         Ok(project)
     }

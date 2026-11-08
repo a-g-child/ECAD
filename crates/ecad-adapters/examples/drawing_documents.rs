@@ -10,6 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for id in 1..=2 {
         p.insert_sheet_in_document(
             DrawingSheet {
+                inherited_variant: None,
                 kind: ecad_domain::SheetKind::Schematic,
                 template: None,
                 id: SheetId::new(id)?,

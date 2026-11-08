@@ -47,6 +47,7 @@ fn blank_sheet_fit_uses_captured_identity_and_rejects_missing_or_mismatched_shee
     let id = SheetId::new(1).unwrap();
     p.insert_sheet(
         DrawingSheet {
+            inherited_variant: None,
             kind: ecad_domain::SheetKind::Schematic,
             template: None,
             id,

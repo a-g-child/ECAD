@@ -39,7 +39,7 @@ Copy profile values into a project explicitly; never resolve issued drawings aga
 
 ## Table and template editing
 
-The [consolidated library editor plan](template-editor-plan.md) and [decision 0037](decisions/0037-library-template-editor-workspace.md) define the next ownership/workflow change: templates are authored in a separate editor view through the Libraries ribbon, with contextual tools and template properties. New sheets select saved variants only. Paper/margins and title-block structure move out of sheet creation/settings after a preservation migration. This is planned; the current v11 controls remain implemented until that migration lands.
+The [consolidated library editor plan](template-editor-plan.md) and [decision 0037](decisions/0037-library-template-editor-workspace.md) define the next ownership/workflow change: templates are authored in a separate editor view through the Libraries ribbon, with contextual tools and template properties. New sheets select saved variants only. Paper/margins and title-block structure move out of sheet creation/settings after a preservation migration. Saved-reference migration and read-only sheet layout controls are implemented; the independent library editor remains planned.
 
 Use structured tables with stable cell and field identities. Support row insertion/removal, different cell counts per row, cell split/merge, exact/drag sizing, captions and values within a cell, padding, alignment, borders and shared formatting. Users should not need to construct tables from loose lines or calculate a fine underlying grid. All text supports multiple lines. Bulk cell properties use the common inspector and shared action system.
 
@@ -139,3 +139,9 @@ Schema v11 stores project template defaults plus sheet role/nullable frame overr
 ## Project-owned template bodies and legacy capture
 
 Schema v12 adds portable complete template revisions independently of electrical subsystem bodies. Explicit template imports use normal project commands and exact history; shared publication/recommendation changes remain separate. The headless preservation proposal captures every existing enum/paper layout and unused document/creation choices with deterministic pins, preserving tiny sheets and explicit/inherited intent. Capture/import does not yet change which template renders a sheet. Current enum/paper controls remain implemented pending saved-reference assignment migration and the library editor. See [decision 0039](decisions/0039-project-template-bundles-and-legacy-capture.md).
+
+## Saved references and inherited paper variants
+
+Normal desktop sheets and project/document defaults now resolve saved project-bundled references. A sheet can inherit the owning document's revision while retaining its stable paper variant; explicit equal-valued choices remain overrides. Exact paper/margins are validated projections of that saved body and shown read-only during sheet editing. Selecting a different saved variant is reviewed through the existing proposal/Apply path; source geometry never resizes implicitly. In-use revision removal, missing bodies and incompatible inherited transfers fail coherently.
+
+Desktop loading opts into an in-memory preservation migration before establishing a clean checkpoint. Explicit saves write v13, observing the original file version. Retained tiny layouts reopen with their omitted-table diagnostic and exact undo; normal authoring excludes them until a repaired saved revision exists. Template editor/ribbon/property panels, standard profiles and interactive table authoring remain pending. See [decision 0040](decisions/0040-saved-template-assignments-and-inherited-variants.md).

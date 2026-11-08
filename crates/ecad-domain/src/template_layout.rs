@@ -101,6 +101,7 @@ pub struct SavedTemplateVariant {
     reference: TemplateVariantRef,
     name: String,
     layout: TemplateLayout,
+    new_assignments: bool,
 }
 impl SavedTemplateVariant {
     /// Validate the name and retain an already validated layout. Identity allocation and
@@ -119,7 +120,26 @@ impl SavedTemplateVariant {
             reference,
             name,
             layout,
+            new_assignments: true,
         })
+    }
+    /// Preserve a legacy frame exactly. Omitted legacy title blocks remain renderable,
+    /// but require repair in a new revision before new assignment is allowed.
+    /// # Errors
+    /// Rejects blank names, as with normal variant construction.
+    pub fn preserve_legacy(
+        reference: TemplateVariantRef,
+        name: String,
+        layout: TemplateLayout,
+    ) -> Result<Self, TemplateError> {
+        let allowed = !layout.tables().is_empty();
+        let mut value = Self::new(reference, name, layout)?;
+        value.new_assignments = allowed;
+        Ok(value)
+    }
+    /// Whether this revision is eligible for new sheet/default assignments.
+    pub fn allows_new_assignments(&self) -> bool {
+        self.new_assignments
     }
     /// Exact definition/revision/variant pin.
     pub fn reference(&self) -> TemplateVariantRef {

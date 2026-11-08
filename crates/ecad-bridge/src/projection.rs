@@ -221,6 +221,7 @@ pub(crate) fn snapshot(
         })
         .collect();
     Snapshot {
+        template_choices: crate::project_templates::choices(project),
         drawing_documents: crate::document_rows::project(project),
         sheets: project
             .sheets()
@@ -348,6 +349,7 @@ pub(crate) fn demo() -> Result<Project, BridgeError> {
         })?;
         project.insert_sheet(
             DrawingSheet {
+                inherited_variant: None,
                 kind: ecad_domain::SheetKind::Schematic,
                 template: None,
                 id: SheetId::new(1).expect("constant"),

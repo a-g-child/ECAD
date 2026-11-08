@@ -62,10 +62,15 @@ impl Project {
         &self.template_defaults
     }
     /// Replace creation defaults, returning exact prior choices for undo. Does not restyle sheets.
+    /// # Errors
+    /// Saved choices must resolve in the project and be eligible for new assignments.
     pub fn replace_template_defaults(
         &mut self,
         value: DrawingTemplateDefaults,
-    ) -> DrawingTemplateDefaults {
-        std::mem::replace(&mut self.template_defaults, value)
+    ) -> Result<DrawingTemplateDefaults, crate::TemplateAssignmentError> {
+        for choice in [value.schematic, value.cover, value.drawing_list] {
+            self.check_template_default(choice)?;
+        }
+        Ok(std::mem::replace(&mut self.template_defaults, value))
     }
 }
