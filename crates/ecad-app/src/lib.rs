@@ -140,4 +140,5 @@ pub use drawing_document_command::DrawingDocumentCommand;
 mod template_library;
 pub use template_library::{
     TemplateLibrarySnapshot, TemplatePublisher, VersionedTemplateLibraryStore,
+    template_library_import,
 };

@@ -95,7 +95,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await save(p);
     const saved = JSON.parse(await readFile(project(), 'utf8')),
       sheet = saved.sheets.find((s) => s.number === 'DWG-001');
-    assert.equal(saved.schema_version, 11);
+    assert.equal(saved.schema_version, 12);
     assert.deepEqual(sheet.paper, {
       width_um: 297000,
       height_um: 420000,

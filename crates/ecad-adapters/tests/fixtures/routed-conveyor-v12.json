@@ -1,0 +1,260 @@
+{
+  "schema_version": 12,
+  "project_id": "00000000000000000000000000000001",
+  "metadata": {},
+  "template_defaults": {
+    "schematic": "standard-v1",
+    "cover": "cover-v1",
+    "drawing_list": "drawing-list-v1"
+  },
+  "drawing_documents": [
+    {
+      "id": "00000000000000000000000000000001",
+      "number": "1",
+      "title": "Drawings",
+      "revision": "",
+      "default_template": "standard-v1",
+      "sheets": []
+    }
+  ],
+  "sheets": [],
+  "subsystems": [
+    {
+      "id": "0000000000000000000000000000000a",
+      "name": "Conveyor",
+      "parent": null
+    },
+    {
+      "id": "00000000000000000000000000000014",
+      "name": "Sensor assembly",
+      "parent": "0000000000000000000000000000000a"
+    }
+  ],
+  "devices": [
+    {
+      "id": "00000000000000000000000000000001",
+      "designation": "-Controller",
+      "terminals": [
+        {
+          "id": "00000000000000000000000000000065",
+          "number": "1"
+        }
+      ],
+      "subsystem": null
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "designation": "-Junction",
+      "terminals": [
+        {
+          "id": "000000000000000000000000000000c9",
+          "number": "1"
+        }
+      ],
+      "subsystem": "0000000000000000000000000000000a"
+    },
+    {
+      "id": "00000000000000000000000000000003",
+      "designation": "-Sensor",
+      "terminals": [
+        {
+          "id": "0000000000000000000000000000012d",
+          "number": "1"
+        }
+      ],
+      "subsystem": "00000000000000000000000000000014"
+    }
+  ],
+  "ports": [
+    {
+      "id": "00000000000000000000000000000001",
+      "subsystem": "0000000000000000000000000000000a",
+      "name": "Sensor cable input",
+      "terminal": "000000000000000000000000000000c9"
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "subsystem": "00000000000000000000000000000014",
+      "name": "Sensor signal",
+      "terminal": "0000000000000000000000000000012d"
+    }
+  ],
+  "conductors": [
+    {
+      "id": "00000000000000000000000000000001",
+      "a": "00000000000000000000000000000065",
+      "b": "000000000000000000000000000000c9"
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "a": "000000000000000000000000000000c9",
+      "b": "0000000000000000000000000000012d"
+    }
+  ],
+  "cables": [
+    {
+      "id": "00000000000000000000000000000001",
+      "designation": "-C1",
+      "a": {
+        "kind": "device",
+        "id": "00000000000000000000000000000001"
+      },
+      "b": {
+        "kind": "subsystem",
+        "id": "0000000000000000000000000000000a"
+      },
+      "conductors": [
+        "00000000000000000000000000000001"
+      ]
+    }
+  ],
+  "definitions": [],
+  "instances": [],
+  "local_origins": [],
+  "drawing": {
+    "settings": {
+      "base": {
+        "font": "sans-serif",
+        "text_height_um": 2500,
+        "stroke_width_um": 250,
+        "colour": [
+          0,
+          0,
+          0
+        ]
+      },
+      "text_creation": {
+        "style": null,
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      },
+      "stroke_creation": {
+        "style": null,
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      }
+    },
+    "route_creation": {
+      "style": null,
+      "overrides": {
+        "font": null,
+        "text_height_um": null,
+        "stroke_width_um": null,
+        "colour": null
+      }
+    },
+    "styles": [],
+    "views": [
+      {
+        "id": "00000000000000000000000000000001",
+        "name": "Detailed wiring",
+        "overrides": {
+          "font": null,
+          "text_height_um": null,
+          "stroke_width_um": null,
+          "colour": null
+        }
+      }
+    ],
+    "labels": [],
+    "polylines": [],
+    "anchors": [
+      {
+        "id": "00000000000000000000000000000001",
+        "view": "00000000000000000000000000000001",
+        "terminal": "00000000000000000000000000000065",
+        "position_um": [
+          0,
+          0
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "view": "00000000000000000000000000000001",
+        "terminal": "000000000000000000000000000000c9",
+        "position_um": [
+          10000,
+          0
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000003",
+        "view": "00000000000000000000000000000001",
+        "terminal": "0000000000000000000000000000012d",
+        "position_um": [
+          20000,
+          0
+        ]
+      }
+    ],
+    "routes": [
+      {
+        "id": "00000000000000000000000000000001",
+        "view": "00000000000000000000000000000001",
+        "conductor": "00000000000000000000000000000001",
+        "anchors": [
+          "00000000000000000000000000000001",
+          "00000000000000000000000000000002"
+        ],
+        "points_um": [
+          [
+            0,
+            0
+          ],
+          [
+            10000,
+            0
+          ]
+        ],
+        "mode": "orthogonal",
+        "appearance": {
+          "style": null,
+          "overrides": {
+            "font": null,
+            "text_height_um": null,
+            "stroke_width_um": null,
+            "colour": null
+          }
+        }
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "view": "00000000000000000000000000000001",
+        "conductor": "00000000000000000000000000000002",
+        "anchors": [
+          "00000000000000000000000000000002",
+          "00000000000000000000000000000003"
+        ],
+        "points_um": [
+          [
+            10000,
+            0
+          ],
+          [
+            20000,
+            0
+          ]
+        ],
+        "mode": "orthogonal",
+        "appearance": {
+          "style": null,
+          "overrides": {
+            "font": null,
+            "text_height_um": null,
+            "stroke_width_um": null,
+            "colour": null
+          }
+        }
+      }
+    ]
+  },
+  "template_revisions": []
+}

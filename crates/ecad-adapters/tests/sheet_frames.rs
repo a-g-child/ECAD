@@ -156,7 +156,7 @@ fn v9_upgrade_and_current_template_validation_are_strict_and_deterministic() {
     let b = decode_project(old).unwrap();
     assert_eq!(a, b);
     let current = encode_project(&a).unwrap();
-    assert_eq!(current, include_str!("fixtures/routed-conveyor-v11.json"));
+    assert_eq!(current, include_str!("fixtures/routed-conveyor-v12.json"));
     assert_eq!(decode_project(&current).unwrap(), a);
     let data: Value = serde_json::from_str(&current).unwrap();
     for bad in [

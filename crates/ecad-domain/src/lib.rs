@@ -111,3 +111,5 @@ mod template_library;
 pub use template_library::{
     TemplateLibrary, TemplateLibraryError, TemplateRevision, TemplateRevisionRef,
 };
+
+mod project_templates;

@@ -41,6 +41,8 @@ pub struct Project {
     pub(crate) sheets: Vec<crate::DrawingSheet>,
     pub(crate) metadata: crate::ProjectMetadata,
     pub(crate) template_defaults: crate::DrawingTemplateDefaults,
+    pub(crate) template_revisions:
+        BTreeMap<crate::TemplateRevisionRef, Arc<crate::TemplateRevision>>,
     drawing: crate::DrawingDocument,
     devices: BTreeMap<DeviceId, Device>,
     terminal_owners: BTreeMap<TerminalId, DeviceId>,
@@ -67,6 +69,7 @@ impl Project {
             sheets: Vec::new(),
             metadata: crate::ProjectMetadata::default(),
             template_defaults: crate::DrawingTemplateDefaults::default(),
+            template_revisions: BTreeMap::new(),
             drawing: crate::DrawingDocument::default(),
             devices: BTreeMap::new(),
             terminal_owners: BTreeMap::new(),

@@ -65,6 +65,9 @@ impl SubsystemRevision {
         if !content.sheets().is_empty() {
             return Err(crate::SheetError::ReusableSheetsUnsupported.into());
         }
+        if content.template_revisions().len() != 0 {
+            return Err(crate::DrawingError::ReusableDrawingsUnsupported.into());
+        }
         if !content.metadata().values().is_empty() {
             return Err(crate::ReuseError::ProjectMetadataUnsupported.into());
         }

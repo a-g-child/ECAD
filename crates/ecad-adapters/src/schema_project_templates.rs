@@ -8,7 +8,7 @@ use ecad_domain::*;
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct DefaultsData {
+pub(crate) struct DefaultsData {
     schematic: TemplateData,
     cover: TemplateData,
     drawing_list: TemplateData,
@@ -49,7 +49,7 @@ impl From<KindData> for SheetKind {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct RoleSheetData {
+pub(crate) struct RoleSheetData {
     id: String,
     number: String,
     title: String,
@@ -75,21 +75,21 @@ impl From<&DrawingSheet> for RoleSheetData {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct CurrentProjectData {
-    schema_version: u32,
-    project_id: String,
-    metadata: crate::schema_metadata::MetadataData,
-    template_defaults: DefaultsData,
-    drawing_documents: Vec<TemplatedDocumentData>,
-    sheets: Vec<RoleSheetData>,
-    subsystems: Vec<crate::schema_structure::SubsystemData>,
-    devices: Vec<crate::schema::DeviceData>,
-    ports: Vec<crate::schema_structure::PortData>,
-    conductors: Vec<crate::schema::ConductorData>,
-    cables: Vec<crate::schema_structure::CableData>,
-    definitions: Vec<crate::schema_definition::DefinitionData>,
-    instances: Vec<crate::schema_reuse::InstanceData>,
-    local_origins: Vec<crate::schema_reuse::InstanceData>,
-    drawing: crate::schema_routes::RoutedDrawingData,
+    pub(crate) schema_version: u32,
+    pub(crate) project_id: String,
+    pub(crate) metadata: crate::schema_metadata::MetadataData,
+    pub(crate) template_defaults: DefaultsData,
+    pub(crate) drawing_documents: Vec<TemplatedDocumentData>,
+    pub(crate) sheets: Vec<RoleSheetData>,
+    pub(crate) subsystems: Vec<crate::schema_structure::SubsystemData>,
+    pub(crate) devices: Vec<crate::schema::DeviceData>,
+    pub(crate) ports: Vec<crate::schema_structure::PortData>,
+    pub(crate) conductors: Vec<crate::schema::ConductorData>,
+    pub(crate) cables: Vec<crate::schema_structure::CableData>,
+    pub(crate) definitions: Vec<crate::schema_definition::DefinitionData>,
+    pub(crate) instances: Vec<crate::schema_reuse::InstanceData>,
+    pub(crate) local_origins: Vec<crate::schema_reuse::InstanceData>,
+    pub(crate) drawing: crate::schema_routes::RoutedDrawingData,
 }
 impl From<&Project> for CurrentProjectData {
     fn from(p: &Project) -> Self {

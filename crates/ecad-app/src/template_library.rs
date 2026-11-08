@@ -113,3 +113,19 @@ impl<S: VersionedTemplateLibraryStore> TemplatePublisher<S> {
         Ok(())
     }
 }
+
+/// Prepare an explicit template import through ordinary project undo. Publication,
+/// project bundling and sheet assignment are distinct operations.
+/// # Errors
+/// Rejects a revision missing from this catalogue. Key conflicts are checked on execution.
+pub fn template_library_import(
+    catalog: &TemplateLibrary,
+    pin: TemplateRevisionRef,
+) -> Result<crate::Command, TemplateLibraryError> {
+    let revision = catalog
+        .revision(pin)
+        .ok_or(TemplateLibraryError::MissingRevision(pin))?;
+    Ok(crate::Command::InsertTemplateRevision(Arc::new(
+        revision.clone(),
+    )))
+}

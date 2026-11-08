@@ -88,7 +88,7 @@ fn ownership_metadata_and_order_roundtrip_and_undo_exactly_without_rewriting_sou
     );
     assert_eq!(saved.drawing(), before.drawing());
     let data: Value = serde_json::from_str(&std::fs::read_to_string(file.path()).unwrap()).unwrap();
-    assert_eq!(data["schema_version"], 11);
+    assert_eq!(data["schema_version"], 12);
     assert_eq!(
         data["drawing_documents"][0]["sheets"],
         json!([format!("{:032x}", 2)])

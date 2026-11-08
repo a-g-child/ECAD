@@ -10,6 +10,10 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Bundle an explicitly selected complete template revision; does not assign sheets.
+    InsertTemplateRevision(Arc<ecad_domain::TemplateRevision>),
+    /// Remove a bundled template body, with its exact body retained by undo.
+    RemoveTemplateRevision(ecad_domain::TemplateRevisionRef),
     /// Replace only project creation-template choices; existing sheets keep their frame.
     TemplateDefaults(ecad_domain::DrawingTemplateDefaults),
     /// Logical drawing package metadata and sheet ownership with exact inverses.
@@ -113,6 +117,15 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::InsertTemplateRevision(revision) => {
+                if !project.insert_template_revision(Arc::clone(revision))? {
+                    return Ok(None);
+                }
+                Self::RemoveTemplateRevision(revision.reference())
+            }
+            Self::RemoveTemplateRevision(pin) => {
+                Self::InsertTemplateRevision(project.remove_template_revision(*pin)?)
+            }
             Self::DrawingDocument(command) => {
                 return Ok(command.apply(project)?.map(Self::DrawingDocument));
             }

@@ -237,12 +237,15 @@ Project-page creation: [decision 0036](decisions/0036-project-template-defaults-
 
 ## Consolidated template library/editor
 
-See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [requirements/task sequence](template-editor-plan.md). Headless layouts and local immutable template publication are implemented; project bundling/migration and the editor UI remain planned.
+See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [requirements/task sequence](template-editor-plan.md). Headless layouts and local immutable template publication are implemented; project bundles and preservation capture are implemented; saved-reference assignment migration and the editor UI remain planned.
 
 - [x] Add immutable template-variant bodies with typed IDs, explicit content bounds and validated structured table/cell partitions, including unequal rows/spans and literal/known-field text runs.
 - [x] Add strict standalone template-variant schema v1 serialization and route existing sheet frames through project-independent legacy layout projection, preserving exact geometry/tiny-sheet behavior.
 - [x] Publish complete immutable template revisions with explicit recommendations, strict library schema v1, observed-version saves and cooperating-writer coordination; failed writes/reloads retain state and storage rejects history rewrites.
-- [ ] Complete transitive project bundling and deterministic preservation migration; project persistence remains v11 and current assignments/controls remain unchanged.
+- [x] Bundle/import complete current template bodies with exact project undo/rollback and strict canonical schema v12; reopen offline without the library.
+- [x] Capture legacy sheet layouts and unused document/creation defaults deterministically, retaining paper, geometry and explicit override/inheritance intent in a closed revision-bound proposal.
+- [ ] Finish saved-reference assignment/default migration and in-use guards before restricting sheet authoring; current enum/paper assignments and controls remain unchanged.
+- [ ] Extend dependency closure/bundling when reusable title blocks and portable assets are implemented.
 - [ ] Move paper/profile/margin/title-block structure ownership into saved template variants.
 - [ ] Add Libraries access, a separate template editor view, contextual ribbon and template/table/cell properties.
 - [ ] Add ISO/ANSI paper/profile presets with verified edition-specific layout rules and Custom provenance.
@@ -253,6 +256,10 @@ Template foundations: [layout/partition regressions](../crates/ecad-domain/tests
 
 Template foundation validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (41 browser workflows) and `cargo xtask desktop` passed, including nine new headless layout/serialization checks. The browser harness required loopback permissions outside the filesystem sandbox. Native Windows/Linux execution and template-editor interaction remain unverified.
 
-Template publication: [decision 0038](decisions/0038-closed-template-revision-publication.md), [real-file catalogue/publication checks](../crates/ecad-adapters/tests/template_library.rs) and [offline executable example](../crates/ecad-adapters/examples/template_library.rs). Library publication is outside project history; project template import/bundling, migration, editor lifecycle and saved-only assignment remain pending.
+Template publication: [decision 0038](decisions/0038-closed-template-revision-publication.md), [real-file catalogue/publication checks](../crates/ecad-adapters/tests/template_library.rs) and [offline executable example](../crates/ecad-adapters/examples/template_library.rs). Library publication is outside project history. Project import/bundling and preservation capture are implemented below; actual assignment migration, editor lifecycle and saved-only assignment remain pending.
 
 Template publication validation (macOS/aarch64): `cargo xtask full` passed, including ten new template-publication checks and the thirteen existing subsystem-library checks. `cargo run --offline --locked -p ecad-adapters --example template_library` also passed. This is a headless storage/application change; UI/native interaction suites were not rerun. Project schema and sheet controls remain unchanged.
+
+Project template bundles: [decision 0039](decisions/0039-project-template-bundles-and-legacy-capture.md), [bundle/capture regressions](../crates/ecad-adapters/tests/project_template_bundles.rs) and [offline example](../crates/ecad-adapters/examples/project_templates.rs). Explicit saves now write strict v12, retaining v2–v11 readers and historical fixtures. This captures preserved bodies without silently adopting them; saved-template sheet assignment and its UI remain pending.
+
+Project bundle validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (41 browser workflows) and `cargo xtask desktop` passed, including seven new bundle/capture regressions. `cargo run --offline --locked -p ecad-adapters --example project_templates` passed. V12 canonical fixtures retain all earlier v11 fixtures/readers. Native Windows/Linux execution and a template-editor UI are not covered by these checks.

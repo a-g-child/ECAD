@@ -4,7 +4,7 @@ use ecad_adapters::{ProjectFileError, RandomIds, decode_project, encode_project,
 use ecad_domain::ProjectId;
 
 const LEGACY: &str = include_str!("fixtures/minimal-v1.json");
-const CURRENT: &str = include_str!("fixtures/minimal-v11.json");
+const CURRENT: &str = include_str!("fixtures/minimal-v12.json");
 
 #[test]
 fn v1_requires_explicit_migration_and_does_not_invent_a_project_identity() {
@@ -47,7 +47,7 @@ fn migration_rejects_unknown_data_and_dangling_references() {
     ));
     assert!(matches!(
         migrate_v1(CURRENT, ProjectId::new(1).unwrap()),
-        Err(ProjectFileError::UnsupportedVersion(11))
+        Err(ProjectFileError::UnsupportedVersion(12))
     ));
 }
 

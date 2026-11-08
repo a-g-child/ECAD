@@ -41,7 +41,7 @@ impl TryFrom<PinData> for TemplateRevisionRef {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct RevisionData {
+pub(crate) struct RevisionData {
     definition: String,
     revision: String,
     variants: Vec<VariantData>,
@@ -56,17 +56,7 @@ pub fn encode_template_library(
     let data = LibraryData {
         kind: Kind::TemplateLibrary,
         schema_version: 1,
-        revisions: catalog
-            .revisions()
-            .map(|revision| {
-                let pin = revision.reference();
-                RevisionData {
-                    definition: pin.definition.to_string(),
-                    revision: pin.revision.to_string(),
-                    variants: revision.variants().map(VariantData::from).collect(),
-                }
-            })
-            .collect(),
+        revisions: catalog.revisions().map(RevisionData::from).collect(),
         recommended: catalog
             .recommendations()
             .map(|(_, pin)| pin.into())
@@ -86,19 +76,12 @@ pub fn decode_template_library(text: &str) -> Result<TemplateLibrary, TemplateLi
     let data: LibraryData = serde_json::from_str(text)?;
     let mut catalog = TemplateLibrary::default();
     for revision in data.revisions {
-        let pin = TemplateRevisionRef {
-            definition: revision.definition.parse()?,
-            revision: revision.revision.parse()?,
-        };
+        let revision = TemplateRevision::try_from(revision)?;
+        let pin = revision.reference();
         if catalog.revision(pin).is_some() {
             return Err(TemplateLibraryError::DuplicateRevision(pin).into());
         }
-        let variants = revision
-            .variants
-            .into_iter()
-            .map(SavedTemplateVariant::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
-        catalog.publish(Arc::new(TemplateRevision::new(pin, variants)?))?;
+        catalog.publish(Arc::new(revision))?;
     }
     let mut seen = BTreeSet::new();
     for pin in data.recommended {
@@ -109,4 +92,30 @@ pub fn decode_template_library(text: &str) -> Result<TemplateLibrary, TemplateLi
         catalog.set_recommended(pin.definition, Some(pin))?;
     }
     Ok(catalog)
+}
+
+impl From<&TemplateRevision> for RevisionData {
+    fn from(revision: &TemplateRevision) -> Self {
+        let pin = revision.reference();
+        Self {
+            definition: pin.definition.to_string(),
+            revision: pin.revision.to_string(),
+            variants: revision.variants().map(VariantData::from).collect(),
+        }
+    }
+}
+impl TryFrom<RevisionData> for TemplateRevision {
+    type Error = TemplateLibraryFileError;
+    fn try_from(data: RevisionData) -> Result<Self, Self::Error> {
+        let pin = TemplateRevisionRef {
+            definition: data.definition.parse()?,
+            revision: data.revision.parse()?,
+        };
+        let variants = data
+            .variants
+            .into_iter()
+            .map(SavedTemplateVariant::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::new(pin, variants)?)
+    }
 }

@@ -6,6 +6,8 @@ use std::{error::Error, fmt};
 /// A proposed edit violates structural validity. Rejected edits leave state intact.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ModelError {
+    /// Bundled template revision identities or content conflict.
+    TemplateLibrary(crate::TemplateLibraryError),
     /// Paper layout, scale or sheet references are invalid.
     Sheet(crate::SheetError),
     /// Whole-route references or geometry conflict.
@@ -71,6 +73,7 @@ pub enum ModelError {
 impl fmt::Display for ModelError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::TemplateLibrary(error) => error.fmt(f),
             Self::Sheet(error) => error.fmt(f),
             Self::Reuse(error) => error.fmt(f),
             Self::Property(error) => error.fmt(f),
@@ -131,6 +134,7 @@ impl fmt::Display for ModelError {
 impl Error for ModelError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            Self::TemplateLibrary(error) => Some(error),
             Self::Reuse(error) => Some(error),
             Self::Property(error) => Some(error),
             Self::Drawing(error) => Some(error),
@@ -172,5 +176,11 @@ impl From<crate::SheetError> for ModelError {
 impl From<crate::DrawingDocumentError> for ModelError {
     fn from(error: crate::DrawingDocumentError) -> Self {
         Self::Sheet(error.into())
+    }
+}
+
+impl From<crate::TemplateLibraryError> for ModelError {
+    fn from(error: crate::TemplateLibraryError) -> Self {
+        Self::TemplateLibrary(error)
     }
 }

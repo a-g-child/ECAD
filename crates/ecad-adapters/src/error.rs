@@ -6,6 +6,8 @@ use std::{error::Error, fmt, io, path::PathBuf};
 /// A project could not be loaded or saved.
 #[derive(Debug)]
 pub enum ProjectFileError {
+    /// A bundled template body is malformed or violates complete-revision invariants.
+    TemplateBundle(Box<crate::TemplateLibraryFileError>),
     /// Filesystem operation failed.
     Io(io::Error),
     /// JSON syntax, field types, or allowed fields are invalid.
@@ -25,6 +27,7 @@ pub enum ProjectFileError {
 impl fmt::Display for ProjectFileError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::TemplateBundle(error) => error.fmt(f),
             Self::Io(error) => write!(f, "project IO failed: {error}"),
             Self::Json(error) => write!(f, "invalid project JSON: {error}"),
             Self::UnsupportedVersion(version) => {
@@ -47,6 +50,7 @@ impl fmt::Display for ProjectFileError {
 impl Error for ProjectFileError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            Self::TemplateBundle(error) => Some(error.as_ref()),
             Self::Io(error) => Some(error),
             Self::Json(error) => Some(error),
             Self::Identity(error) => Some(error),

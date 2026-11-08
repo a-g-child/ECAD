@@ -1,6 +1,6 @@
 //! Replaceable project IO, separate from the editing model and session.
 //!
-//! The adapter saves a complete experimental v9 project in one JSON file.
+//! The adapter saves a complete experimental v12 project in one JSON file.
 //! Domain structs are not serialized directly. See [`JsonFile`] for save guarantees
 //! and [`encode_project`] for deterministic text suitable for Git.
 
@@ -55,3 +55,10 @@ mod template_library_json;
 pub use template_library_error::TemplateLibraryFileError;
 pub use template_library_file::TemplateLibraryFile;
 pub use template_library_json::{decode_template_library, encode_template_library};
+
+mod schema_template_bundles;
+
+mod legacy_template_capture;
+pub use legacy_template_capture::{
+    LegacySheetTemplate, LegacyTemplateCapture, capture_legacy_templates,
+};

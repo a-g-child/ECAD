@@ -104,6 +104,8 @@ Follow [the detailed template-editor plan](template-editor-plan.md).
 
 - [x] Model immutable template-variant bodies, typed identities and validated structured cell partitions; add strict standalone serialization and project-independent legacy layout projection.
 - [x] Add closed immutable template revisions, strict canonical catalogue persistence and conflict-aware local publication, separate from project history.
+- [x] Add project-owned complete template imports, strict v12 persistence and deterministic closed legacy-layout capture with exact history.
+- [ ] Convert actual assignments/defaults to saved references with inheritance/appearance preservation and in-use guards.
 - [ ] Complete reusable title-block revisions, style/field schemas, standard-profile provenance and anchored layout.
 - [ ] Preserve current layouts/defaults/overrides as deterministic bundled variants before changing assignment behavior.
 - [ ] Restrict new sheets to saved templates/variants; move paper/margin/structure editing to Libraries.
