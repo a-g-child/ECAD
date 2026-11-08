@@ -59,10 +59,11 @@ Every actual drawing is edited directly on a CAD-template sheet. Cover, generate
 
 - [x] Add a basic bundled CAD frame and eight live drawing-info fields with mandatory document default; paper preview and numeric sheet review share the projection.
 - [x] Open the demonstration and existing drawings directly on sheets; remove the normal free Model view/paper-preview switch.
-- [ ] Add source-view creation controls for entirely new drawings; current sheet manager attaches retained existing views or creates blank pages.
+- [x] Add project-root/File/palette creation of new schematics with an independent source view and one exact view/sheet undo transaction.
 - [x] Unify paper drawing, hit testing, selection, marquee, drag, snapping, numeric placement and navigation through validated inverse placement transforms.
 - [x] Retain blank sheets and Fit without requiring a placed source view.
-- [ ] Add typed cover/content roles and independent definition-editor contexts.
+- [x] Add typed schematic, cover and generated drawing-list roles; covers/lists forbid source placements.
+- [ ] Add independent definition-editor contexts.
 - [x] Verify transformed pointer edits, paper-only edits, undo/redo and exact save/reopen; preserve per-sheet cameras during the open session.
 
 ### 4. Multi-project host and scoped bridge
@@ -87,8 +88,10 @@ Every actual drawing is edited directly on a CAD-template sheet. Cover, generate
 ### 6. Hierarchy and production layouts
 
 - [ ] Add stable hierarchical sheet links, continuation connectors and return navigation tied to electrical interfaces.
-- [ ] Add generated drawing lists, typed page roles and project/document/sheet variables.
-- [ ] Add structured title-block/table editing, reusable blocks and pinned template adoption.
+- [x] Add generated drawing-list pages with live natural number/title ordering, stable navigation targets and explicit multi-page capacity/overflow.
+- [ ] Expand custom variable schemas and output-set/frozen-issue behavior.
+- [x] Add project properties with three bundled creation-template defaults and explicit per-sheet pin/inherit choices.
+- [ ] Add structured title-block/table editing, reusable blocks and custom pinned template adoption.
 - [ ] Add output preflight, frozen issue metadata and print/export parity separately.
 
 ## Verification gates

@@ -124,6 +124,8 @@ pub enum Request {
     },
     /// Prepare initial values for a new, uncommitted paper sheet.
     NewSheet {
+        /// Optional typed creation flow; absent retains the existing sheet-manager draft behavior.
+        kind: Option<String>,
         /// Captured document context.
         context: serde_json::Value,
     },
@@ -195,6 +197,8 @@ pub enum Request {
     },
     /// Replace portable project metadata as one registered document edit.
     UpdateMetadata {
+        /// Optional reviewed creation-template defaults, applied atomically with the metadata.
+        template_defaults: Option<serde_json::Value>,
         /// Original project revision and action context.
         context: serde_json::Value,
         /// Stable catalog keys to literal text; empty values remove entries.
@@ -364,6 +368,8 @@ pub struct Response {
     pub(crate) path: Option<PathRow>,
     pub(crate) defaults: Option<crate::defaults::DefaultsRow>,
     pub(crate) metadata: Option<Vec<crate::metadata::MetadataRow>>,
+    pub(crate) project_templates: Option<crate::project_templates::TemplateCatalog>,
+    pub(crate) activate_sheet: Option<String>,
     pub(crate) profiles: Option<crate::profiles::ProfileCatalog>,
     pub(crate) profile_import: Option<crate::profiles::ImportRow>,
     pub(crate) sheet_draft: Option<crate::sheets::SheetRow>,
@@ -373,6 +379,7 @@ pub struct Response {
 pub(crate) struct Snapshot {
     pub drawing_documents: Vec<crate::document_rows::DrawingDocumentRow>,
     pub sheets: Vec<crate::sheets::SheetRow>,
+    pub drawing_lists: Vec<crate::drawing_list_rows::DrawingListRow>,
     pub sheet_frames: Vec<crate::frame_rows::FrameRow>,
     pub bridge_version: u8,
     pub next_input: String,

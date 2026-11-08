@@ -6,12 +6,32 @@ use crate::{DrawingValues, MetadataField, Project, SheetError, SheetId};
 pub enum SheetTemplate {
     /// Margin border and a bottom-right, two-column drawing-information table.
     StandardV1,
+    /// Centred information panel for a cover page.
+    CoverV1,
+    /// Compact four-column footer leaving space for drawing-list entries.
+    DrawingListV1,
 }
 impl SheetTemplate {
+    /// Complete bundled immutable catalogue.
+    pub const ALL: [Self; 3] = [Self::StandardV1, Self::CoverV1, Self::DrawingListV1];
+    /// Resolve known identities without guessing missing/future templates.
+    pub fn from_key(key: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|t| t.key() == key)
+    }
+    /// Display name independent of its pinned identity.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::StandardV1 => "Standard drawing",
+            Self::CoverV1 => "Cover page",
+            Self::DrawingListV1 => "Drawing list",
+        }
+    }
     /// Stable portable identity, independent of a translated display name.
     pub fn key(self) -> &'static str {
         match self {
             Self::StandardV1 => "standard-v1",
+            Self::CoverV1 => "cover-v1",
+            Self::DrawingListV1 => "drawing-list-v1",
         }
     }
 }
@@ -85,13 +105,15 @@ pub struct FrameCell {
 /// Derived paper geometry and values; never inserted into the electrical drawing aggregate.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SheetFrame {
-    /// Template inherited from the owning drawing package.
+    /// Resolved explicit sheet choice or inherited owning-document template.
     pub template: SheetTemplate,
     /// Margin border, always present even on a very small valid sheet.
     pub border: FrameRect,
+    /// Paper-space region above the information block, available for generated content.
+    pub content: FrameRect,
     /// Resolved title-block cells, in stable row-major order.
     pub cells: Vec<FrameCell>,
-    /// True when the interior cannot contain the fixed 180 × 40 mm title block.
+    /// True when the interior cannot contain the selected template's fixed information panel.
     /// The border remains visible; no overlapping or zero-sized cells are manufactured.
     pub title_block_too_small: bool,
     /// Project drawing fallbacks; frame geometry and text remain in paper units.
@@ -114,7 +136,34 @@ impl Project {
             width: p.width - p.left - p.right,
             height: p.height - p.top - p.bottom,
         };
-        let too_small = border.width < 180_000 || border.height < 40_000;
+        let template = sheet.template.unwrap_or(document.default_template);
+        let (columns, row_height) = match template {
+            SheetTemplate::StandardV1 => (2, 10_000),
+            SheetTemplate::CoverV1 => (2, 20_000),
+            SheetTemplate::DrawingListV1 => (4, 10_000),
+        };
+        let block_height = (8 / columns) * row_height;
+        let too_small = border.width < 180_000 || border.height < block_height;
+        let block_x = if template == SheetTemplate::CoverV1 {
+            border.x + border.width.saturating_sub(180_000) / 2
+        } else {
+            p.width - p.right - 180_000.min(border.width)
+        };
+        let block_y = if template == SheetTemplate::CoverV1 {
+            border.y + border.height.saturating_sub(block_height) / 2
+        } else {
+            p.height - p.bottom - block_height.min(border.height)
+        };
+        let content = FrameRect {
+            x: border.x + 5_000.min(border.width),
+            y: border.y + 5_000.min(border.height),
+            width: border.width.saturating_sub(10_000),
+            height: if too_small {
+                border.height.saturating_sub(10_000)
+            } else {
+                block_y.saturating_sub(border.y).saturating_sub(10_000)
+            },
+        };
         let fields = [
             FrameField::Metadata(MetadataField::CompanyName),
             FrameField::Metadata(MetadataField::ProjectTitle),
@@ -150,18 +199,19 @@ impl Project {
                         caption: field.caption(),
                         value,
                         bounds: FrameRect {
-                            x: p.width - p.right - 180_000 + (i as u32 % 2) * 90_000,
-                            y: p.height - p.bottom - 40_000 + (i as u32 / 2) * 10_000,
-                            width: 90_000,
-                            height: 10_000,
+                            x: block_x + (i as u32 % columns) * (180_000 / columns),
+                            y: block_y + (i as u32 / columns) * row_height,
+                            width: 180_000 / columns,
+                            height: row_height,
                         },
                     }
                 })
                 .collect()
         };
         Ok(SheetFrame {
-            template: document.default_template,
+            template,
             border,
+            content,
             cells,
             title_block_too_small: too_small,
             appearance: self.drawing().settings().base.clone(),

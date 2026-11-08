@@ -18,6 +18,7 @@ export class ProjectExplorer {
     private showSheet: (id: string) => boolean,
     private sheetSettings: (id: string) => void,
     private action: (id: string) => void,
+    private projectMenu: (event: MouseEvent) => void,
   ) {
     for (const [mode, label, name] of [
       ['pages', 'Pages', 'Project pages'],
@@ -112,6 +113,9 @@ export class ProjectExplorer {
         this.locked,
         this.showSheet,
         this.sheetSettings,
+        (event) => {
+          if (!this.locked) this.projectMenu(event);
+        },
       );
     else
       renderElectricalTree(

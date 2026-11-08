@@ -9,6 +9,7 @@ export function renderPageTree(
   locked: boolean,
   show: (id: string) => boolean,
   settings: (id: string) => void,
+  projectMenu: (event: MouseEvent) => void,
 ) {
   container.replaceChildren();
   const branch = (key: string, label: string, depth: number) => {
@@ -25,6 +26,11 @@ export function renderPageTree(
   const root = branch(`project:${snapshot.revision.epoch}`, snapshot.name, 0);
   root.classList.add('project-root');
   root.querySelector('summary')!.title = snapshot.path ?? snapshot.name;
+  root.querySelector('summary')!.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    projectMenu(event);
+  });
   container.append(root);
   const sheets = new Map(snapshot.sheets.map((s) => [s.id, s]));
   for (const document of snapshot.drawing_documents) {
@@ -43,7 +49,7 @@ export function renderPageTree(
       button.type = 'button';
       button.dataset.sheet = id;
       button.style.paddingInlineStart = `${10 + (elide ? 1 : 2) * 12}px`;
-      button.title = `${sheet.number}\n${sheet.title}${sheet.view ? '' : '\nBlank sheet'}`;
+      button.title = `${sheet.number}\n${sheet.title}${sheet.kind === 'cover' ? '\nCover sheet' : sheet.kind === 'drawing-list' ? '\nDrawing list' : sheet.view ? '' : '\nBlank sheet'}`;
       button.classList.toggle('selected', id === active);
       if (id === active) button.setAttribute('aria-current', 'page');
       button.disabled = locked;

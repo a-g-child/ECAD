@@ -128,7 +128,7 @@ pub use company_profile::{
     preview_profile_import,
 };
 
-pub use sheet_command::{SheetCommand, SheetPreview, preview_sheet};
+pub use sheet_command::{SheetCommand, SheetPreview, preview_sheet, preview_sheet_in_document};
 
 pub use project_workspace::{
     CloseProjectPolicy, OpenProject, ProjectWorkspace, WorkspaceProjectId,

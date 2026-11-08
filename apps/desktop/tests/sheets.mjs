@@ -95,7 +95,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await save(p);
     const saved = JSON.parse(await readFile(project(), 'utf8')),
       sheet = saved.sheets.find((s) => s.number === 'DWG-001');
-    assert.equal(saved.schema_version, 10);
+    assert.equal(saved.schema_version, 11);
     assert.deepEqual(sheet.paper, {
       width_um: 297000,
       height_um: 420000,
@@ -108,6 +108,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     saved.drawing_documents = original.drawing_documents;
     assert.deepEqual(saved, original);
     await display(p).selectOption(sheet.id);
+    await pressAction(p, 'Fit drawing · F');
     await p.getByRole('img', { name: 'Electrical drawing' }).waitFor();
     assert.equal(await p.getByRole('combobox', { name: 'Drawing view', exact: true }).count(), 0);
     assert.equal(await p.locator('.sheet-surface').count(), 0);
@@ -252,12 +253,12 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await preview(p);
     await apply(p);
     await p.getByRole('tab', { name: 'File', exact: true }).click();
-    await button(p, 'Project information').click();
-    const info = p.getByRole('dialog', { name: 'Project information', exact: true });
+    await button(p, 'Project properties').click();
+    const info = p.getByRole('dialog', { name: 'Project properties', exact: true });
     await info
       .getByRole('textbox', { name: 'Company name', exact: true })
       .fill('ACME <literal>\nSecond line\nThird line');
-    await info.getByRole('button', { name: 'Apply information', exact: true }).click();
+    await info.getByRole('button', { name: 'Apply properties', exact: true }).click();
     await info.waitFor({ state: 'hidden' });
     await until(async () => (await display(p).locator('option').count()) === 2);
     const id = await display(p).locator('option').nth(1).getAttribute('value');

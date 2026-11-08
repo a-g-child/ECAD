@@ -1,5 +1,5 @@
 //! Reversible paper operations and closed layout proposals; drawing geometry is untouched.
-use crate::{Revision, Session};
+use crate::{Command, DrawingCommand, Revision, Session};
 use ecad_domain::*;
 /// A committed edit to the project's initial ordered drawing set.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -82,9 +82,24 @@ pub struct SheetPreview {
     revision: Revision,
     sheet: DrawingSheet,
     frame: SheetFrame,
-    pub(crate) command: SheetCommand,
+    document: DrawingDocumentId,
+    list: Option<DrawingListPage>,
+    creation: bool,
+    pub(crate) commands: Vec<Command>,
 }
 impl SheetPreview {
+    /// Exact owner in the validated candidate.
+    pub fn document(&self) -> DrawingDocumentId {
+        self.document
+    }
+    /// Generated navigation content from the candidate, never copied into the document.
+    pub fn list(&self) -> Option<&DrawingListPage> {
+        self.list.as_ref()
+    }
+    /// Whether committing creates a new sheet.
+    pub fn is_creation(&self) -> bool {
+        self.creation
+    }
     /// Resolved frame from the validated candidate, including new owner-local sheet counts.
     pub fn frame(&self) -> &SheetFrame {
         &self.frame
@@ -107,20 +122,64 @@ pub fn preview_sheet(
     sheet: DrawingSheet,
     create: bool,
 ) -> Result<SheetPreview, ModelError> {
+    let document = if create {
+        session
+            .project()
+            .drawing_documents()
+            .last()
+            .expect("project owner")
+            .id
+    } else {
+        session.project().document_sheet_position(sheet.id)?.0
+    };
+    preview_sheet_in_document(session, sheet, create, document, None)
+}
+/// Validate a sheet in an explicit package, optionally creating its fresh schematic view atomically.
+/// Replacements cannot transfer ownership; dedicated document commands perform transfers.
+/// # Errors
+/// Rejects invalid owners, role/view mismatch, duplicates or any invalid candidate without mutation.
+pub fn preview_sheet_in_document(
+    session: &Session,
+    sheet: DrawingSheet,
+    create: bool,
+    document: DrawingDocumentId,
+    new_view: Option<DrawingView>,
+) -> Result<SheetPreview, ModelError> {
+    let mut commands = Vec::new();
+    if let Some(view) = new_view {
+        if !create
+            || sheet.kind != SheetKind::Schematic
+            || sheet.placement.as_ref().map(|p| p.view) != Some(view.id)
+        {
+            return Err(SheetError::CreationViewMismatch.into());
+        }
+        commands.push(Command::Drawing(DrawingCommand::InsertView(view)));
+    }
     let command = if create {
-        SheetCommand::Insert {
+        SheetCommand::InsertInDocument {
             sheet: sheet.clone(),
-            index: session.project().sheets().len(),
+            document,
+            index: session.project().sheets_in_document(document)?.len(),
         }
     } else {
+        if session.project().sheet_document(sheet.id) != Some(document) {
+            return Err(DrawingDocumentError::Membership(sheet.id).into());
+        }
         SheetCommand::Replace(sheet.clone())
     };
+    commands.push(Command::Sheet(command));
     let mut candidate = session.project().clone();
-    command.apply(&mut candidate)?;
+    for command in &commands {
+        command.apply(&mut candidate)?;
+    }
+    candidate.validate()?;
     Ok(SheetPreview {
         revision: session.revision(),
         frame: candidate.sheet_frame(sheet.id)?,
+        list: candidate.drawing_list(sheet.id)?,
+        document,
+        creation: create,
         sheet,
-        command,
+        commands,
     })
 }

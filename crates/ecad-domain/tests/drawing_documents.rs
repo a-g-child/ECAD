@@ -11,6 +11,8 @@ fn doc(id: u128, number: &str) -> ProjectDrawingDocument {
 }
 fn sheet(id: u128) -> DrawingSheet {
     DrawingSheet {
+        kind: ecad_domain::SheetKind::Schematic,
+        template: None,
         id: SheetId::new(id).unwrap(),
         number: format!("D-{id}"),
         title: "Drawing".into(),

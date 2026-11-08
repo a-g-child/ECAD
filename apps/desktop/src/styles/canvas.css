@@ -246,3 +246,16 @@
 .canvas-empty button {
   margin-top: 12px;
 }
+
+.drawing-list a {
+  cursor: pointer;
+}
+.drawing-list a:hover text {
+  text-decoration: underline;
+}
+.drawing-list a:focus {
+  outline: none;
+}
+.drawing-list a:focus rect {
+  stroke: #28755f;
+}

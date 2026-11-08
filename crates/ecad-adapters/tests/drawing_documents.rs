@@ -14,6 +14,8 @@ fn doc(id: u128, number: &str) -> ProjectDrawingDocument {
 }
 fn sheet(id: u128) -> DrawingSheet {
     DrawingSheet {
+        kind: ecad_domain::SheetKind::Schematic,
+        template: None,
         id: SheetId::new(id).unwrap(),
         number: format!("D-{id}"),
         title: "Drawing".into(),
@@ -86,7 +88,7 @@ fn ownership_metadata_and_order_roundtrip_and_undo_exactly_without_rewriting_sou
     );
     assert_eq!(saved.drawing(), before.drawing());
     let data: Value = serde_json::from_str(&std::fs::read_to_string(file.path()).unwrap()).unwrap();
-    assert_eq!(data["schema_version"], 10);
+    assert_eq!(data["schema_version"], 11);
     assert_eq!(
         data["drawing_documents"][0]["sheets"],
         json!([format!("{:032x}", 2)])
@@ -134,6 +136,10 @@ fn legacy_upgrades_use_stable_default_package_and_keep_shared_or_unplaced_views_
         serde_json::from_str(include_str!("fixtures/routed-conveyor-v8.json")).unwrap();
     let current: Value = serde_json::from_str(&encode_project(&setup()).unwrap()).unwrap();
     legacy["sheets"] = current["sheets"].clone();
+    for sheet in legacy["sheets"].as_array_mut().unwrap() {
+        sheet.as_object_mut().unwrap().remove("kind");
+        sheet.as_object_mut().unwrap().remove("template");
+    }
     legacy["sheets"].as_array_mut().unwrap().reverse();
     let p = decode_project(&legacy.to_string()).unwrap();
     assert_eq!(p.sheets()[0].id, SheetId::new(2).unwrap());

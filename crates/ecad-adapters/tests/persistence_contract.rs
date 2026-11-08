@@ -4,7 +4,7 @@ use ecad_adapters::{JsonFile, ProjectFileError, decode_project, encode_project};
 use ecad_app::{Command, ProjectStore, Session};
 use ecad_domain::{ConductorId, DeviceId, End, ModelError, Project, TerminalId};
 
-const FIXTURE: &str = include_str!("fixtures/minimal-v10.json");
+const FIXTURE: &str = include_str!("fixtures/minimal-v11.json");
 
 #[test]
 fn golden_fixture_has_known_electrical_meaning_and_canonical_encoding() {
@@ -42,13 +42,13 @@ fn insertion_order_does_not_change_saved_text() {
 #[test]
 fn schema_and_unknown_data_cannot_be_silently_downgraded() {
     assert!(matches!(
-        decode_project(&FIXTURE.replace("\"schema_version\": 10", "\"schema_version\": 11")),
-        Err(ProjectFileError::UnsupportedVersion(11))
+        decode_project(&FIXTURE.replace("\"schema_version\": 11", "\"schema_version\": 12")),
+        Err(ProjectFileError::UnsupportedVersion(12))
     ));
     for invalid in [
         FIXTURE.replace(
-            "\"schema_version\": 10,",
-            "\"schema_version\": 10, \"future_feature\": true,",
+            "\"schema_version\": 11,",
+            "\"schema_version\": 11, \"future_feature\": true,",
         ),
         FIXTURE.replace(
             "\"number\": \"1\"",

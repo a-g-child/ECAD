@@ -99,3 +99,30 @@
   color: var(--muted);
   padding: 0 12px;
 }
+
+.project-menu {
+  position: fixed;
+  margin: 0;
+  padding: 4px;
+  min-width: 210px;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: white;
+}
+.project-menu::backdrop {
+  background: transparent;
+}
+.project-menu .menu-entry {
+  display: block;
+  width: 100%;
+}
+.project-add > summary {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.project-add .menu-entry {
+  padding-inline-start: 22px;
+}

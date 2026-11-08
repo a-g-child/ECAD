@@ -1,6 +1,6 @@
 # Drawing sheets, layouts and metadata
 
-Status: target architecture revised to Project → Documents → Sheets. The bounded desktop now edits directly on template-backed sheets; the numeric sheet review remains a separate clipped preview. Project metadata, profiles, paper/history primitives, logical document ownership and v10 bundled frame defaults are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
+Status: target architecture revised to Project → Documents → Sheets. The bounded desktop now edits directly on template-backed sheets; the numeric sheet review remains a separate clipped preview. Project metadata, profiles, paper/history primitives, logical document ownership and v11 project creation defaults, typed pages and generated drawing lists are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
 ## Scope and ownership
 
@@ -99,7 +99,8 @@ See [the workspace and sheet implementation task list](workspace-and-sheet-imple
 - [ ] Add stable hierarchical-sheet navigation independently of document ownership and output drawing sets.
 - [ ] Add table/cell geometry and editing with stable identities and bulk properties.
 - [ ] Add bindings, sheet-local values, missing/required diagnostics and override/reset behavior.
-- [ ] Add standard/draft/cover/contents templates, shared blocks and contents pagination.
+- [x] Add bundled standard/cover/drawing-list templates and explicit list-page pagination.
+- [ ] Add draft/custom templates and shared reusable blocks.
 - [ ] Add pinned template revisions and explicit reviewed adoption.
 - [ ] Add portable logos, output validation, frozen issue metadata and reproducible drawing output.
 
@@ -123,4 +124,12 @@ Schema v10 requires a known default_template in each package. V2–v9 upgrade de
 
 Pages is now the desktop default: one real project root, ordered document memberships and sheets, including blank pages and empty packages. A sole unchanged default package is elided; custom and multiple packages remain visible. Page clicks and context menus target stable sheet identities through the shared sheet-switch guard. Electrical mode retains real functional/component objects and drawing representations with the full inspector, while mode changes preserve drawing selection and each mode's expansion state. Header buttons, View menu and command search use two explicit unbound registry actions.
 
-This slice supports the currently open desktop project. Multiple roots, document-management controls, new drawing-source creation and project-scoped tabs remain pending. See [decision 0035](decisions/0035-project-page-and-electrical-explorers.md).
+This slice supports the currently open desktop project. Multiple roots, document-management controls, project-scoped tabs remain pending. See [decision 0035](decisions/0035-project-page-and-electrical-explorers.md).
+
+## Project properties and typed page creation
+
+Right-click a project for Properties or Add new schematic, cover or drawing-list sheets. Properties include portable per-role template defaults, applied with metadata as one undoable edit. Defaults are copied into each new sheet's pinned frame choice, including generic sheet-manager creation, and do not restyle existing drawings. Existing sheets can explicitly inherit their document template instead. The bundled catalogue provides standard-v1, cover-v1 and drawing-list-v1 with distinct information-block geometry. All three remain general frame choices; page content role is separate.
+
+A new schematic reviews and creates its independent view and sheet together; Cancel creates neither and one Undo removes both. New covers and lists have no schematic placement. Drawing lists derive current non-list sheets, naturally ordered by number and shown with literal titles/stable targets. Their capacities follow actual paper/template/text size; multiple list sheets consume consecutive entries in document order. Remaining entries are diagnosed until additional list pages are explicitly created. Whole-row pointer links and keyboard Enter navigate within the app. PDF export/link annotations, automatic page creation, custom template authoring and richer output sets remain planned.
+
+Schema v11 stores project template defaults plus sheet role/nullable frame override. V2–v10 upgrades keep old geometry, identities and appearance without guessing a role from a title. See [decision 0036](decisions/0036-project-template-defaults-and-typed-pages.md).

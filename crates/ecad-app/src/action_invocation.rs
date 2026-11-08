@@ -85,6 +85,13 @@ pub enum ActionParameters {
     },
     /// Reviewed complete portable drawing settings.
     DrawingSettings(DrawingSettings),
+    /// Reviewed portable metadata and future-sheet template defaults; one coherent edit.
+    ProjectProperties {
+        /// Exact literal portable fields.
+        metadata: ecad_domain::ProjectMetadata,
+        /// Defaults copied into future sheets only.
+        templates: ecad_domain::DrawingTemplateDefaults,
+    },
     /// Reviewed complete project-owned metadata.
     ProjectMetadata(ecad_domain::ProjectMetadata),
     /// Exact reviewed company/contact copy into the project.
@@ -115,6 +122,8 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Request a typed sheet draft with captured project context.
+    NewSheet(ecad_domain::SheetKind),
     /// Switch the host explorer to project documents/pages without editing the project.
     ExplorerPages,
     /// Switch the host explorer to project electrical structure without editing the project.

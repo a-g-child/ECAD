@@ -84,9 +84,17 @@ export class SheetWorkspace {
     const layoutChanged = layout !== this.layout;
     if (layoutChanged || fit) this.drawing.cancelGesture();
     this.layout = layout;
+    this.shell.sheetKind.textContent = !sheet
+      ? 'SHEETS'
+      : sheet.kind === 'cover'
+        ? 'COVER'
+        : sheet.kind === 'drawing-list'
+          ? 'DRAWING LIST'
+          : 'SCHEMATIC';
     this.shell.empty.hidden = !!sheet;
     this.badge.hidden = !sheet;
-    this.drawing.setSheet(sheet, frame);
+    const list = this.snapshot?.drawing_lists.find((l) => l.sheet === this.current) ?? null;
+    this.drawing.setSheet(sheet, frame, list);
     this.drawing.render(
       this.snapshot?.scene.filter((r) => r.view === sheet?.view) ?? [],
       fit || layoutChanged,
@@ -95,7 +103,13 @@ export class SheetWorkspace {
     const uses = this.snapshot!.sheets.filter((s) => s.view && s.view === sheet.view).length;
     const messages = [`${sheet.number} · ${sheet.title}`];
     if (uses > 1) messages.push(`Shared drawing on ${uses} sheets · edits appear on all`);
-    if (!sheet.view) messages.push('Blank sheet · attach a drawing view in Sheets and paper');
+    if (!sheet.view && sheet.kind === 'schematic')
+      messages.push('Blank sheet · attach a drawing view in Sheets and paper');
+    if (sheet.kind === 'cover') messages.push('Cover sheet');
+    if (list)
+      messages.push(
+        `Drawing list · ${list.ordinal}/${list.page_count}${list.remaining !== '0' ? ` · ${list.remaining} drawings need more list pages` : ''}`,
+      );
     if (frame?.title_block_too_small) messages.push('Title block cannot fit');
     const unplaced = this.snapshot!.views.filter(
       (v) => !this.snapshot!.sheets.some((s) => s.view === v.id),

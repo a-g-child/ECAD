@@ -10,6 +10,12 @@ use serde::{Deserialize, Serialize};
 #[serde(deny_unknown_fields)]
 pub(crate) struct SheetRow {
     pub id: String,
+    #[serde(default = "schematic_kind")]
+    pub kind: String,
+    #[serde(default)]
+    pub template: Option<String>,
+    #[serde(default)]
+    pub document: Option<String>,
     pub number: String,
     pub title: String,
     pub width: String,
@@ -31,6 +37,9 @@ impl From<&DrawingSheet> for SheetRow {
         let p = s.placement.as_ref();
         Self {
             id: s.id.to_string(),
+            kind: s.kind.key().into(),
+            template: s.template.map(|t| t.key().into()),
+            document: None,
             number: s.number.clone(),
             title: s.title.clone(),
             width: s.paper.width.to_string(),
@@ -49,7 +58,15 @@ impl From<&DrawingSheet> for SheetRow {
         }
     }
 }
+fn schematic_kind() -> String {
+    "schematic".into()
+}
 impl SheetRow {
+    pub(crate) fn project(project: &Project, sheet: &DrawingSheet) -> Self {
+        let mut row = Self::from(sheet);
+        row.document = project.sheet_document(sheet.id).map(|id| id.to_string());
+        row
+    }
     fn sheet(self) -> Result<DrawingSheet, BridgeError> {
         fn parse<T: std::str::FromStr>(s: &str) -> Result<T, BridgeError> {
             s.parse().map_err(|_|BridgeError::new("sheet","Use integer micrometres and positive integer scale terms within the supported range"))
@@ -73,6 +90,15 @@ impl SheetRow {
             })
             .transpose()?;
         Ok(DrawingSheet {
+            kind: SheetKind::from_key(&self.kind)
+                .ok_or_else(|| BridgeError::new("sheet", "Unknown sheet type"))?,
+            template: self
+                .template
+                .map(|s| {
+                    SheetTemplate::from_key(&s)
+                        .ok_or_else(|| BridgeError::new("sheet", "Unknown sheet template"))
+                })
+                .transpose()?,
             id: self.id.parse().map_err(|e| BridgeError::new("sheet", e))?,
             number: self.number,
             title: self.title,
@@ -94,58 +120,17 @@ pub(crate) struct SheetPreviewRow {
     pub sheet: SheetRow,
     pub scene: Vec<SceneRow>,
     pub frame: crate::frame_rows::FrameRow,
+    pub list: Option<crate::drawing_list_rows::DrawingListRow>,
 }
 #[derive(Default)]
 pub(crate) struct SheetTool {
     pub preview: Option<(String, SheetPreview)>,
+    pub new_view: Option<(SheetId, DrawingView)>,
 }
 impl DesktopBridge {
     pub(super) fn sheet_request(&mut self, request: Request) -> Result<Response, BridgeError> {
         match request {
-            Request::NewSheet { context } => {
-                self.sheet_tool.preview = None;
-                let context = self.context(context)?;
-                let id =
-                    ecad_adapters::RandomIds::sheet().map_err(|e| BridgeError::new("sheet", e))?;
-                if self.document.session().project().sheet(id).is_some() {
-                    return Err(BridgeError::new(
-                        "sheet",
-                        "Generated sheet identity already exists; retry",
-                    ));
-                }
-                let number = (1u64..)
-                    .map(|n| n.to_string())
-                    .find(|n| {
-                        !self
-                            .document
-                            .session()
-                            .project()
-                            .sheets()
-                            .iter()
-                            .any(|s| &s.number == n)
-                    })
-                    .expect("finite sheet set");
-                let sheet = DrawingSheet {
-                    id,
-                    number,
-                    title: "New sheet".into(),
-                    paper: SheetPaper::default(),
-                    placement: context.view.map(|view| SheetViewPlacement {
-                        view,
-                        paper_origin: DrawingPoint {
-                            x: 20_000,
-                            y: 60_000,
-                        },
-                        view_origin: DrawingPoint::default(),
-                        numerator: 1,
-                        denominator: 1,
-                    }),
-                };
-                Ok(Response {
-                    sheet_draft: Some((&sheet).into()),
-                    ..Response::default()
-                })
-            }
+            Request::NewSheet { context, kind } => self.new_sheet_draft(context, kind),
             Request::PreviewSheet {
                 context,
                 sheet,
@@ -155,8 +140,36 @@ impl DesktopBridge {
                 self.context(context)?;
                 let row: SheetRow =
                     serde_json::from_value(sheet).map_err(|e| BridgeError::new("sheet", e))?;
-                let preview = preview_sheet(self.document.session(), row.sheet()?, create)
+                let owner = row
+                    .document
+                    .as_deref()
+                    .map(str::parse::<DrawingDocumentId>)
+                    .transpose()
                     .map_err(|e| BridgeError::new("sheet", e))?;
+                let sheet = row.sheet()?;
+                let new_view = self
+                    .sheet_tool
+                    .new_view
+                    .as_ref()
+                    .filter(|(id, view)| {
+                        *id == sheet.id && sheet.placement.as_ref().map(|p| p.view) == Some(view.id)
+                    })
+                    .map(|(_, view)| DrawingView {
+                        name: sheet.title.clone(),
+                        ..view.clone()
+                    });
+                let preview = if let Some(owner) = owner {
+                    preview_sheet_in_document(
+                        self.document.session(),
+                        sheet,
+                        create,
+                        owner,
+                        new_view,
+                    )
+                } else {
+                    preview_sheet(self.document.session(), sheet, create)
+                }
+                .map_err(|e| BridgeError::new("sheet", e))?;
                 let token = ecad_adapters::RandomIds::sheet()
                     .map_err(|e| BridgeError::new("sheet", e))?
                     .to_string();
@@ -173,9 +186,12 @@ impl DesktopBridge {
                     .into_iter()
                     .filter(|row| Some(&row.view) == view.as_ref())
                     .collect();
+                let mut sheet_row = SheetRow::from(preview.sheet());
+                sheet_row.document = Some(preview.document().to_string());
                 let row = SheetPreviewRow {
                     token: token.clone(),
-                    sheet: preview.sheet().into(),
+                    sheet: sheet_row,
+                    list: preview.list().map(Into::into),
                     frame: crate::frame_rows::FrameRow::new(preview.sheet().id, preview.frame()),
                     scene,
                 };
@@ -195,7 +211,14 @@ impl DesktopBridge {
                 let preview = self.sheet_tool.preview.take().expect("checked preview").1;
                 let mut context = ActionContext::for_session(self.document.session());
                 context.revision = Some(preview.revision());
-                self.invoke_sheet(context, ActionParameters::SheetPreview(preview), &input)
+                let activate = preview
+                    .is_creation()
+                    .then(|| preview.sheet().id.to_string());
+                let mut response =
+                    self.invoke_sheet(context, ActionParameters::SheetPreview(preview), &input)?;
+                response.activate_sheet = activate;
+                self.sheet_tool.new_view = None;
+                Ok(response)
             }
             Request::ChangeSheet {
                 context,
@@ -216,6 +239,7 @@ impl DesktopBridge {
             }
             Request::CancelSheet {} => {
                 self.sheet_tool.preview = None;
+                self.sheet_tool.new_view = None;
                 Ok(Response::default())
             }
             _ => unreachable!("sheet routing"),

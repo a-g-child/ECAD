@@ -19,6 +19,7 @@ import { registerMetadataTests } from './metadata.mjs';
 import { registerProfileTests } from './profiles.mjs';
 import { registerSheetTests } from './sheets.mjs';
 import { registerSheetEditingTests } from './sheet-editing.mjs';
+import { registerProjectPageTests } from './project-pages.mjs';
 import { registerExplorerTests } from './explorer.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
@@ -489,6 +490,17 @@ async function replaceProject(data) {
   await until(() => backendLog().includes('Browser harness listening'));
 }
 registerExplorerTests({
+  page,
+  button,
+  until,
+  bounds,
+  root,
+  project: () => project,
+  pressAction,
+  replaceProject,
+});
+
+registerProjectPageTests({
   page,
   button,
   until,

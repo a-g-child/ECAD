@@ -2,6 +2,7 @@
 
 use crate::schema_documents::{DocumentProjectData, TemplatedDocumentData};
 use crate::schema_metadata::MetadataProjectData;
+use crate::schema_project_templates::CurrentProjectData;
 use crate::schema_reuse::ReusableProjectData;
 use crate::schema_sheets::SheetProjectData;
 use crate::schema_styled_project::{RoutedProjectData, StyledProjectData};
@@ -17,14 +18,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Encode v10 JSON in identity order, with two-space indentation and a final LF.
+/// Encode v11 JSON in identity order, with two-space indentation and a final LF.
 ///
 /// No timestamps, session history, or platform line endings are embedded.
 /// # Errors
 /// Returns a structured model or JSON encoding error without changing the project.
 pub fn encode_project(project: &Project) -> Result<String, ProjectFileError> {
     project.validate()?;
-    Ok(serde_json::to_string_pretty(&DocumentProjectData::from(project))? + "\n")
+    Ok(serde_json::to_string_pretty(&CurrentProjectData::from(project))? + "\n")
 }
 
 /// Decode and validate a complete project without exposing intermediate objects.
@@ -44,6 +45,9 @@ pub fn decode_project(text: &str) -> Result<Project, ProjectFileError> {
     }
     if envelope.schema_version == 3 {
         return Project::try_from(serde_json::from_str::<ProjectData>(text)?);
+    }
+    if envelope.schema_version == 11 {
+        return Project::try_from(serde_json::from_str::<CurrentProjectData>(text)?);
     }
     if envelope.schema_version == 10 {
         return Project::try_from(serde_json::from_str::<

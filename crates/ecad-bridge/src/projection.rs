@@ -167,6 +167,7 @@ pub(crate) fn snapshot(
             let supported = matches!(
                 d.handler,
                 ActionHandler::Sheets
+                    | ActionHandler::NewSheet(_)
                     | ActionHandler::ExplorerPages
                     | ActionHandler::ExplorerElectrical
                     | ActionHandler::OpenProject
@@ -221,7 +222,17 @@ pub(crate) fn snapshot(
         .collect();
     Snapshot {
         drawing_documents: crate::document_rows::project(project),
-        sheets: project.sheets().iter().map(Into::into).collect(),
+        sheets: project
+            .sheets()
+            .iter()
+            .map(|s| crate::sheets::SheetRow::project(project, s))
+            .collect(),
+        drawing_lists: project
+            .sheets()
+            .iter()
+            .filter_map(|s| project.drawing_list(s.id).expect("validated list"))
+            .map(|p| (&p).into())
+            .collect(),
         sheet_frames: project
             .sheets()
             .iter()
@@ -337,6 +348,8 @@ pub(crate) fn demo() -> Result<Project, BridgeError> {
         })?;
         project.insert_sheet(
             DrawingSheet {
+                kind: ecad_domain::SheetKind::Schematic,
+                template: None,
                 id: SheetId::new(1).expect("constant"),
                 number: "DEMO".into(),
                 title: "Conveyor · detailed wiring".into(),

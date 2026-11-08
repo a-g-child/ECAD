@@ -18,6 +18,7 @@ mod cable;
 mod drawing_document;
 mod drawing_document_info;
 mod drawing_error;
+mod drawing_list;
 mod drawing_objects;
 mod drawing_style;
 mod drawing_transform;
@@ -40,6 +41,7 @@ mod route;
 mod route_error;
 mod route_geometry;
 mod sheet;
+mod sheet_defaults;
 mod sheet_frame;
 mod snapping;
 
@@ -84,7 +86,9 @@ pub use drawing_transform::{DrawingTransform, MirrorAxis, QuarterTurn};
 
 pub use project_metadata::{MetadataField, ProjectMetadata};
 
+pub use drawing_list::{DrawingListEntry, DrawingListPage};
 pub use sheet::{DrawingSheet, SheetError, SheetPaper, SheetViewPlacement};
+pub use sheet_defaults::{DrawingTemplateDefaults, SheetKind};
 pub use sheet_frame::{FrameCell, FrameField, FrameRect, SheetFrame, SheetTemplate};
 
 pub use drawing_document_info::{

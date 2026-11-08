@@ -10,6 +10,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for id in 1..=2 {
         p.insert_sheet_in_document(
             DrawingSheet {
+                kind: ecad_domain::SheetKind::Schematic,
+                template: None,
                 id: SheetId::new(id)?,
                 number: format!("D-{id}"),
                 title: format!("Harness detail {id}"),
@@ -63,7 +65,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     d.undo(d.session().revision())?;
     assert_eq!(d.session().project(), &before);
     println!(
-        "Two drawing documents: explicit sheet ownership, preserved shared views, exact undo and v10 round trip passed."
+        "Two drawing documents: explicit sheet ownership, preserved shared views, exact undo and v11 round trip passed."
     );
     Ok(())
 }

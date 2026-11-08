@@ -10,6 +10,8 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Replace only project creation-template choices; existing sheets keep their frame.
+    TemplateDefaults(ecad_domain::DrawingTemplateDefaults),
     /// Logical drawing package metadata and sheet ownership with exact inverses.
     DrawingDocument(crate::DrawingDocumentCommand),
     /// Paper-sheet layout with exact localized history.
@@ -115,6 +117,13 @@ impl Command {
                 return Ok(command.apply(project)?.map(Self::DrawingDocument));
             }
             Self::Sheet(command) => return Ok(command.apply(project)?.map(Self::Sheet)),
+            Self::TemplateDefaults(value) => {
+                if project.template_defaults() == value {
+                    return Ok(None);
+                }
+                let previous = project.replace_template_defaults(value.clone());
+                Self::TemplateDefaults(previous)
+            }
             Self::ProjectMetadata(value) => {
                 let previous = project.replace_metadata(value.clone());
                 if previous == *value {

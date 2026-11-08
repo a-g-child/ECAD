@@ -50,6 +50,7 @@ export interface DrawingDocumentRow {
 export interface Snapshot {
   drawing_documents: DrawingDocumentRow[];
   sheets: SheetRow[];
+  drawing_lists: DrawingListRow[];
   sheet_frames: FrameRow[];
   bridge_version: 1;
   next_input: string;
@@ -133,6 +134,9 @@ export interface ProfileImport {
 }
 export interface SheetRow {
   id: string;
+  kind: string;
+  template: string | null;
+  document: string | null;
   number: string;
   title: string;
   width: string;
@@ -160,13 +164,39 @@ export interface FrameRow {
   stroke_width: number;
   colour: string;
 }
+export interface TemplateDefaults {
+  schematic: string;
+  cover: string;
+  drawing_list: string;
+}
+export interface TemplateCatalog {
+  defaults: TemplateDefaults;
+  choices: [string, string][];
+}
+export interface DrawingListRow {
+  sheet: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  row_height: number;
+  capacity: string;
+  ordinal: string;
+  page_count: string;
+  total_entries: string;
+  remaining: string;
+  rows: { sheet: string; document: string; number: string; title: string }[];
+}
 export interface SheetPreview {
   token: string;
   sheet: SheetRow;
   frame: FrameRow;
+  list: DrawingListRow | null;
   scene: SceneRow[];
 }
 export interface Reply {
+  project_templates: TemplateCatalog | null;
+  activate_sheet: string | null;
   sheet_draft: SheetRow | null;
   sheet_preview: SheetPreview | null;
   profiles: ProfileCatalog | null;
@@ -197,6 +227,7 @@ export function validateReply(value: unknown): Reply {
       !Array.isArray(s.drawing_documents) ||
       !Array.isArray(s.sheets) ||
       !Array.isArray(s.sheet_frames) ||
+      !Array.isArray(s.drawing_lists) ||
       !Array.isArray(s.objects) ||
       !Array.isArray(s.scene) ||
       !Array.isArray(s.actions)

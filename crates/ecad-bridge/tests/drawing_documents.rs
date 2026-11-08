@@ -42,6 +42,8 @@ fn bridge_projects_packages_and_preserves_nondefault_ownership_during_sheet_edit
     .unwrap();
     p.insert_sheet_in_document(
         DrawingSheet {
+            kind: ecad_domain::SheetKind::Schematic,
+            template: None,
             id: SheetId::new(1).unwrap(),
             number: "D-1".into(),
             title: "Detail".into(),

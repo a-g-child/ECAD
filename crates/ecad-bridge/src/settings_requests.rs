@@ -4,12 +4,22 @@ impl DesktopBridge {
     pub(super) fn settings_request(&mut self, request: Request) -> Result<Response, BridgeError> {
         match request {
             Request::UpdateMetadata {
+                template_defaults,
                 context,
                 values,
                 input,
             } => {
                 let context = self.context(context)?;
                 let values = metadata::parse(values)?;
+                let properties = template_defaults.is_some();
+                let parameters = if let Some(defaults) = template_defaults {
+                    ActionParameters::ProjectProperties {
+                        metadata: values,
+                        templates: crate::project_templates::parse(defaults)?,
+                    }
+                } else {
+                    ActionParameters::ProjectMetadata(values)
+                };
                 let revision = self.document.session().revision();
                 let invocation = ActionInvocation {
                     input_id: input_id(&input)?,
@@ -17,14 +27,22 @@ impl DesktopBridge {
                     source: InvocationSource::Toolbar,
                     repeat: false,
                     context,
-                    parameters: ActionParameters::ProjectMetadata(values),
+                    parameters,
                 };
                 let mut response = self.invoke(invocation)?;
                 response.message = Some(
                     if self.document.session().revision() == revision {
-                        "Project information already matches · no document changes"
+                        if properties {
+                            "Project properties already match · no document changes"
+                        } else {
+                            "Project information already matches · no document changes"
+                        }
                     } else {
-                        "Project information updated · one undo operation"
+                        if properties {
+                            "Project properties updated · one undo operation"
+                        } else {
+                            "Project information updated · one undo operation"
+                        }
                     }
                     .into(),
                 );

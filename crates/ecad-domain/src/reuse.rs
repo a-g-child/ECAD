@@ -68,7 +68,9 @@ impl SubsystemRevision {
         if !content.metadata().values().is_empty() {
             return Err(crate::ReuseError::ProjectMetadataUnsupported.into());
         }
-        if content.drawing() != &crate::DrawingDocument::default() {
+        if content.template_defaults() != &crate::DrawingTemplateDefaults::default()
+            || content.drawing() != &crate::DrawingDocument::default()
+        {
             return Err(crate::DrawingError::ReusableDrawingsUnsupported.into());
         }
         if content.definition_count() != 0 || content.instances().next().is_some() {

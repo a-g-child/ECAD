@@ -13,7 +13,10 @@ export function createShell(action: (id: string) => void) {
       [
         ['Open project…', 'document.open'],
         ['Save', 'document.save'],
-        ['Project information…', 'document.metadata.edit'],
+        ['Project properties…', 'document.metadata.edit'],
+        ['New schematic sheet…', 'drawing.sheet.new_schematic'],
+        ['New cover sheet…', 'drawing.sheet.new_cover'],
+        ['New drawing list sheet…', 'drawing.sheet.new_list'],
         ['Company / contact profiles…', 'workspace.profiles'],
       ],
     ],
@@ -80,7 +83,9 @@ export function createShell(action: (id: string) => void) {
   const tabs = element('div', 'drawing-tabs');
   const sheets = element('select', 'sheet-selector');
   sheets.setAttribute('aria-label', 'Sheet display');
-  tabs.append(sheets, element('span', 'pane-tag', 'SCHEMATIC'));
+  const sheetKind = element('span', 'pane-tag', 'SHEETS');
+  sheetKind.setAttribute('aria-label', 'Sheet type');
+  tabs.append(sheets, sheetKind);
   const canvas = element('div', 'canvas');
   canvas.tabIndex = 0;
   canvas.dataset.focus = 'canvas';
@@ -139,6 +144,7 @@ export function createShell(action: (id: string) => void) {
     tree,
     explorerModes,
     sheets,
+    sheetKind,
     canvas,
     placement,
     svg,

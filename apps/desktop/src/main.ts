@@ -6,11 +6,12 @@ import { LayoutTool } from './layout';
 import { DefaultsDialog } from './defaults';
 import { MetadataDialog } from './metadata';
 import { ProfilesDialog } from './profiles';
-import { SheetsDialog } from './sheets';
+import { SheetsDialog, sheetKindForRequest } from './sheets';
 import { SheetWorkspace } from './sheet-workspace';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
 import { renderProperties, renderReport } from './panels';
+import { ProjectMenu } from './project-menu';
 import { ProjectExplorer } from './project-explorer';
 import { element } from './ui';
 import { chooseFile, errorText, inputId, native, send, syncInput } from './transport';
@@ -78,6 +79,10 @@ const paper = new SheetWorkspace(
   },
   () => void action('drawing.sheets.edit'),
 );
+drawing.navigateSheet = (id) => {
+  paper.show(id);
+};
+const projectMenu = new ProjectMenu(shell, (id, captured) => void action(id, captured));
 const explorer = new ProjectExplorer(
   shell,
   choose,
@@ -86,6 +91,7 @@ const explorer = new ProjectExplorer(
     if (paper.show(id)) void action('drawing.sheets.edit');
   },
   (id) => void action(id),
+  (event) => projectMenu.open(event, context()),
 );
 function toolActive() {
   return !!(movement?.active || layout?.active || annotation?.active || path?.active);
@@ -135,7 +141,8 @@ function availableAction(id: string, enabled: boolean) {
   if (
     !view &&
     id.startsWith('drawing.') &&
-    !['drawing.sheets.edit', 'drawing.styles.edit', 'drawing.view.fit'].includes(id)
+    !['drawing.sheets.edit', 'drawing.styles.edit', 'drawing.view.fit'].includes(id) &&
+    !id.startsWith('drawing.sheet.new_')
   )
     return false;
   if (id === 'drawing.view.fit' && !paper.id) return false;
@@ -231,12 +238,16 @@ async function apply(reply: Reply) {
   if (reply.request === 'fit') {
     drawing.fit();
   }
+  if (reply.activate_sheet) paper.show(reply.activate_sheet);
+  const newKind = sheetKindForRequest(reply.request);
+  if (newKind && snapshot) await sheets.open(context(), snapshot, '', newKind);
   if (reply.request === 'sheets' && snapshot) await sheets.open(context(), snapshot, paper.id);
   if (reply.request === 'explorer_pages') explorer.show('pages');
   if (reply.request === 'explorer_electrical') explorer.show('electrical');
   if (reply.request === 'palette') openPalette();
   if (reply.request === 'profiles' && reply.profiles) profiles.open(context(), reply.profiles);
-  if (reply.request === 'metadata' && reply.metadata) metadata.open(context(), reply.metadata);
+  if (reply.request === 'metadata' && reply.metadata && reply.project_templates)
+    metadata.open(context(), reply.metadata, reply.project_templates);
   if (reply.request === 'defaults' && reply.defaults) defaults.open(context(), reply.defaults);
   if (reply.request === 'save_as' || reply.request === 'open') {
     const result = await chooseFile(reply.request === 'save_as');
@@ -404,7 +415,8 @@ document.addEventListener('keydown', (event) => {
     defaults.active ||
     metadata.active ||
     profiles.active ||
-    sheets.active
+    sheets.active ||
+    projectMenu.active
   )
     return;
   if (event.key === 'Escape' && drawing.cancelGesture()) {

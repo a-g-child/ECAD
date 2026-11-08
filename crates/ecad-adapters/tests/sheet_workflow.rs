@@ -5,6 +5,8 @@ use ecad_domain::*;
 use serde_json::{Value, json};
 fn sheet(id: u128, number: &str) -> DrawingSheet {
     DrawingSheet {
+        kind: ecad_domain::SheetKind::Schematic,
+        template: None,
         id: SheetId::new(id).unwrap(),
         number: number.into(),
         title: "Harness\nDetail".into(),
@@ -54,7 +56,7 @@ fn reviewed_sheet_creation_saves_and_undoes_without_changing_any_source_record()
     let before: Value = serde_json::from_str(&encode_project(&original).unwrap()).unwrap();
     let mut saved: Value =
         serde_json::from_str(&std::fs::read_to_string(file.path()).unwrap()).unwrap();
-    assert_eq!(saved["schema_version"], 10);
+    assert_eq!(saved["schema_version"], 11);
     saved["sheets"] = json!([]);
     saved["drawing_documents"] = before["drawing_documents"].clone();
     assert_eq!(saved, before);

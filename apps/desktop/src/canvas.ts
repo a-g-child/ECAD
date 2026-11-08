@@ -1,5 +1,5 @@
 /** SVG view state is transient; scene rendering never writes domain coordinates. */
-import type { FrameRow, SceneRow, SheetRow, Target } from './types';
+import type { DrawingListRow, FrameRow, SceneRow, SheetRow, Target } from './types';
 import { keyOf } from './types';
 import type { Shell } from './shell';
 import { renderText, reserveTextBounds } from './text';
@@ -11,11 +11,14 @@ export class DrawingCanvas {
   private input: CanvasInput;
   private sheet: SheetRow | null = null;
   private frame: FrameRow | null = null;
-  setSheet(sheet: SheetRow | null, frame: FrameRow | null) {
+  private list: DrawingListRow | null = null;
+  navigateSheet: (id: string) => void = () => {};
+  setSheet(sheet: SheetRow | null, frame: FrameRow | null, list: DrawingListRow | null) {
     if (sheet && !frame) throw new Error('The active sheet has no resolved frame');
     if (sheet) sheetTransform(sheet); // Validate before installing display state.
     this.sheet = sheet;
     this.frame = frame;
+    this.list = list;
     this.shell.svg.style.visibility = sheet ? 'visible' : 'hidden';
   }
   camera() {
@@ -162,7 +165,7 @@ export class DrawingCanvas {
       const transform = sheetTransform(this.sheet);
       const paper = make('g', { transform: transform.inverse, class: 'sheet-paper' });
       this.shell.svg.append(paper);
-      renderPaperBackground(paper, this.sheet, this.frame);
+      renderPaperBackground(paper, this.sheet, this.frame, this.list, this.navigateSheet);
       this.shell.svg.append(
         make('rect', { ...transform.bounds, fill: 'url(#grid)', 'pointer-events': 'none' }),
       );

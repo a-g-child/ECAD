@@ -90,6 +90,9 @@ impl ActionDispatcher {
             (ActionHandler::ExplorerElectrical, ActionParameters::None) => {
                 request(ActionRequestKind::ExplorerElectrical, None)
             }
+            (ActionHandler::NewSheet(kind), ActionParameters::None) => {
+                request(ActionRequestKind::NewSheet(kind), None)
+            }
             (ActionHandler::FitDrawing, ActionParameters::None) => {
                 request(ActionRequestKind::FitDrawing, None)
             }
@@ -275,7 +278,7 @@ impl ActionDispatcher {
                 }
                 ActionOutcome::Edited(
                     document
-                        .execute(revision, Command::Sheet(preview.command))
+                        .execute_batch(revision, preview.commands)
                         .map_err(ActionDispatchError::Edit)?,
                 )
             }
@@ -300,6 +303,23 @@ impl ActionDispatcher {
             (ActionHandler::ProjectMetadata, ActionParameters::None) => {
                 request(ActionRequestKind::ProjectMetadata, None)
             }
+            (
+                ActionHandler::ProjectMetadata,
+                ActionParameters::ProjectProperties {
+                    metadata,
+                    templates,
+                },
+            ) => ActionOutcome::Edited(
+                document
+                    .execute_batch(
+                        revision,
+                        vec![
+                            Command::ProjectMetadata(metadata),
+                            Command::TemplateDefaults(templates),
+                        ],
+                    )
+                    .map_err(ActionDispatchError::Edit)?,
+            ),
             (ActionHandler::ProjectMetadata, ActionParameters::ProjectMetadata(values)) => {
                 ActionOutcome::Edited(
                     document

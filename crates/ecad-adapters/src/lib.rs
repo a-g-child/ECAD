@@ -21,6 +21,7 @@ mod schema_documents;
 mod schema_drawing;
 mod schema_drawing_values;
 mod schema_metadata;
+mod schema_project_templates;
 mod schema_reuse;
 mod schema_routes;
 mod schema_sheets;

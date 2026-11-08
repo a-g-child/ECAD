@@ -17,12 +17,12 @@ export function registerMetadataTests({
     await p.getByRole('tab', { name: 'Drawing', exact: true }).click();
     await sharedAction(p, name, message);
   }
-  const dialog = (p) => p.getByRole('dialog', { name: 'Project information', exact: true });
+  const dialog = (p) => p.getByRole('dialog', { name: 'Project properties', exact: true });
   const field = (p, name) => dialog(p).getByRole('textbox', { name, exact: true });
-  const apply = (p) => dialog(p).getByRole('button', { name: 'Apply information', exact: true });
+  const apply = (p) => dialog(p).getByRole('button', { name: 'Apply properties', exact: true });
   async function ribbon(p) {
     await p.getByRole('tab', { name: 'File', exact: true }).click();
-    await button(p, 'Project information').click();
+    await button(p, 'Project properties').click();
     await dialog(p).waitFor();
   }
   test('project information carries multiline company and project fields with unchanged geometry and exact saved history', async () => {
@@ -54,7 +54,7 @@ export function registerMetadataTests({
     await p.waitForFunction(
       () =>
         document.querySelector('.status-message')?.textContent ===
-        'Project information updated · one undo operation',
+        'Project properties updated · one undo operation',
     );
     await p.setViewportSize({ width: 1360, height: 880 });
     assert.deepEqual(await bounds(p), before);
@@ -84,8 +84,8 @@ export function registerMetadataTests({
       original = await readFile(project(), 'utf8');
     await p.locator('.canvas').focus();
     await p.keyboard.press(`${primary}+Shift+p`);
-    await p.getByRole('textbox', { name: 'Search commands' }).fill('Project information');
-    await p.locator('.palette-item').filter({ hasText: 'Project information' }).click();
+    await p.getByRole('textbox', { name: 'Search commands' }).fill('Project properties');
+    await p.locator('.palette-item').filter({ hasText: 'Project properties' }).click();
     await dialog(p).waitFor();
     assert.equal(await field(p, 'Company address').inputValue(), ' Unit 2\n\nExample Road\n');
     assert.equal(await field(p, 'Project title').inputValue(), 'Vehicle <harness>\nPrototype');
@@ -101,7 +101,7 @@ export function registerMetadataTests({
       .filter({ has: p.locator('summary').filter({ hasText: /^File$/ }) })
       .locator('summary')
       .click();
-    await button(p, 'Project information…').click();
+    await button(p, 'Project properties…').click();
     await dialog(p).waitFor();
     assert.equal(await field(p, 'Company name').inputValue(), '');
     await apply(p).click();
@@ -109,7 +109,7 @@ export function registerMetadataTests({
     await p.waitForFunction(
       () =>
         document.querySelector('.status-message')?.textContent ===
-        'Project information already matches · no document changes',
+        'Project properties already match · no document changes',
     );
     await until(async () => !(await button(p, 'Redo').isDisabled()));
     await pressAction(p, 'Redo', 'Redo complete');

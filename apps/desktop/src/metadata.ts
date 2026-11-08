@@ -1,5 +1,5 @@
 /** Portable project information; profile import and sheet placement are separate future workflows. */
-import type { Context, MetadataRow, Reply } from './types';
+import type { Context, MetadataRow, Reply, TemplateCatalog } from './types';
 import type { Shell } from './shell';
 import { element } from './ui';
 import { textEditor, applyTextKey } from './text';
@@ -9,9 +9,10 @@ export class MetadataDialog {
   private form = element('form', 'settings-form');
   private body = element('div', 'metadata-fields');
   private error = element('div', 'settings-error');
-  private applyButton = element('button', 'plain', 'Apply information');
+  private applyButton = element('button', 'plain', 'Apply properties');
   private cancel = element('button', 'plain', 'Cancel');
   private fields = new Map<string, HTMLTextAreaElement>();
+  private templates = new Map<string, HTMLSelectElement>();
   private captured: Context | null = null;
   private pending = false;
   get active() {
@@ -22,7 +23,7 @@ export class MetadataDialog {
     private apply: (reply: Reply) => Promise<void>,
     private status: (message: string) => void,
   ) {
-    const title = element('h2', '', 'Project information');
+    const title = element('h2', '', 'Project properties');
     title.id = 'project-information-heading';
     this.dialog.setAttribute('aria-labelledby', title.id);
     this.error.setAttribute('role', 'alert');
@@ -36,7 +37,7 @@ export class MetadataDialog {
       element(
         'p',
         'settings-note',
-        'These values travel with this project. Engineer/contact is separate from drawn, checked or approved responsibilities. Reusable defaults are available under File → Profiles; sheet templates are planned.',
+        'These values travel with this project. Engineer/contact is separate from drawn, checked or approved responsibilities. Reusable defaults are available under File → Profiles; drawing template defaults apply to new sheets. Existing sheets retain their chosen template.',
       ),
       this.body,
       this.error,
@@ -60,7 +61,7 @@ export class MetadataDialog {
       if (!this.pending) this.close();
     });
   }
-  open(context: Context, rows: MetadataRow[]) {
+  open(context: Context, rows: MetadataRow[], catalog: TemplateCatalog) {
     this.captured = context;
     this.error.textContent = '';
     this.fields.clear();
@@ -82,6 +83,26 @@ export class MetadataDialog {
         this.fields.set(row.key, field);
       }
     }
+    this.templates.clear();
+    this.body.append(element('strong', 'metadata-group', 'Default drawing templates'));
+    for (const [key, label] of [
+      ['schematic', 'Schematic template'],
+      ['cover', 'Cover template'],
+      ['drawing_list', 'Drawing list template'],
+    ] as const) {
+      const field = element('select', 'property-input');
+      field.setAttribute('aria-label', label);
+      for (const [value, name] of catalog.choices) {
+        const option = element('option', '', name);
+        option.value = value;
+        field.append(option);
+      }
+      field.value = catalog.defaults[key];
+      this.templates.set(key, field);
+      const row = element('label', 'settings-field');
+      row.append(element('span', '', label), field);
+      this.body.append(row);
+    }
     this.dialog.showModal();
     this.fields.values().next().value?.focus();
   }
@@ -94,11 +115,15 @@ export class MetadataDialog {
     if (this.pending || !this.captured) return;
     this.pending = true;
     this.error.textContent = '';
-    for (const field of this.fields.values()) field.disabled = true;
+    for (const field of [...this.fields.values(), ...this.templates.values()])
+      field.disabled = true;
     this.applyButton.disabled = this.cancel.disabled = true;
     try {
       const reply = await send({
         type: 'update_metadata',
+        template_defaults: Object.fromEntries(
+          [...this.templates].map(([key, field]) => [key, field.value]),
+        ),
         context: this.captured,
         values: Object.fromEntries([...this.fields].map(([key, field]) => [key, field.value])),
         input: inputId(),
@@ -110,7 +135,8 @@ export class MetadataDialog {
       this.error.textContent = errorText(error);
     } finally {
       this.pending = false;
-      for (const field of this.fields.values()) field.disabled = false;
+      for (const field of [...this.fields.values(), ...this.templates.values()])
+        field.disabled = false;
       this.applyButton.disabled = this.cancel.disabled = false;
     }
   }

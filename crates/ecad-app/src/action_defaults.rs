@@ -27,6 +27,36 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "drawing.sheet.new_schematic",
+                "New schematic sheet",
+                "Drawing",
+                "Review a new schematic sheet and its independent drawing view",
+                Handler::NewSheet(ecad_domain::SheetKind::Schematic),
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "drawing.sheet.new_cover",
+                "New cover sheet",
+                "Drawing",
+                "Review a new cover sheet using the project template default",
+                Handler::NewSheet(ecad_domain::SheetKind::Cover),
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "drawing.sheet.new_list",
+                "New drawing list sheet",
+                "Drawing",
+                "Review a generated list page with numbered navigation targets",
+                Handler::NewSheet(ecad_domain::SheetKind::DrawingList),
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "workspace.explorer.pages",
                 "Project pages",
                 "View",
@@ -78,7 +108,7 @@ impl ActionRegistry {
             ),
             (
                 "document.metadata.edit",
-                "Project information",
+                "Project properties",
                 "Document",
                 "Edit portable company, contact, project and engineering issue fields for sheet variables",
                 Handler::ProjectMetadata,

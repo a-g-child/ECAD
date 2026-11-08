@@ -20,6 +20,9 @@ export class SheetsDialog {
   private context: Context | null = null;
   private snapshot: Snapshot | null = null;
   private row: SheetRow | null = null;
+  private owner = element('select', 'property-input');
+  private template = element('select', 'property-input');
+  private kindLabel = element('p', 'settings-note');
   private create = false;
   private dirty = false;
   private pending = false;
@@ -94,6 +97,15 @@ export class SheetsDialog {
       this.controlsMap.set(name, b);
       actions.append(b);
     }
+    this.owner.setAttribute('aria-label', 'Drawing document');
+    this.template.setAttribute('aria-label', 'Sheet template');
+    for (const input of [this.owner, this.template])
+      input.addEventListener('change', () => this.edited());
+    this.body.prepend(
+      this.kindLabel,
+      this.label('Drawing document', this.owner),
+      this.label('Sheet template', this.template),
+    );
     this.form.append(
       title,
       element(
@@ -179,7 +191,7 @@ export class SheetsDialog {
   private button(name: string, operation: () => Promise<void>) {
     this.controlsMap.get(name)!.addEventListener('click', () => void this.work(operation));
   }
-  async open(context: Context, snapshot: Snapshot, id: string) {
+  async open(context: Context, snapshot: Snapshot, id: string, kind?: string) {
     this.context = context;
     this.snapshot = snapshot;
     this.options(
@@ -190,17 +202,50 @@ export class SheetsDialog {
       ['', 'No placed view'],
       ...snapshot.views.map((v) => [v.id, v.name] as [string, string]),
     ]);
+    this.options(
+      this.owner,
+      snapshot.drawing_documents.map((d) => [d.id, `${d.number} · ${d.title}`]),
+    );
+    this.options(this.template, [
+      ['', 'Inherit document template'],
+      ['standard-v1', 'Standard drawing'],
+      ['cover-v1', 'Cover page'],
+      ['drawing-list-v1', 'Drawing list'],
+    ]);
     this.dialog.showModal();
+    if (kind) {
+      await this.work(() => this.newSheet(kind));
+      return;
+    }
     const row = snapshot.sheets.find((s) => s.id === id) ?? snapshot.sheets[0];
     if (row) this.populate(row, false);
     else await this.work(() => this.newSheet());
   }
-  private async newSheet() {
-    const reply = await send({ type: 'new_sheet', context: this.context });
+  private async newSheet(kind?: string) {
+    const reply = await send({
+      type: 'new_sheet',
+      context: this.context,
+      ...(kind ? { kind } : {}),
+    });
     if (reply.sheet_draft) this.populate(reply.sheet_draft, true);
   }
   private populate(row: SheetRow, create: boolean) {
     this.row = row;
+    this.view.querySelector('option[data-new-view]')?.remove();
+    if (row.view && !this.snapshot?.views.some((v) => v.id === row.view)) {
+      const option = element('option', '', 'New independent drawing view');
+      option.value = row.view;
+      option.dataset.newView = 'true';
+      this.view.append(option);
+    }
+    this.owner.value = row.document ?? this.snapshot?.drawing_documents[0]?.id ?? '';
+    this.template.value = row.template ?? '';
+    this.kindLabel.textContent =
+      row.kind === 'cover'
+        ? 'Cover sheet'
+        : row.kind === 'drawing-list'
+          ? 'Drawing list · generated number/title navigation'
+          : 'Schematic sheet';
     this.create = create;
     this.select.querySelector('option[data-draft]')?.remove();
     if (create) {
@@ -224,6 +269,8 @@ export class SheetsDialog {
       ...this.row!,
       ...Object.fromEntries([...this.fields].map(([key, input]) => [key, input.value])),
       view: this.view.value || null,
+      document: this.owner.value,
+      template: this.template.value || null,
     };
   }
   private invalidate() {
@@ -240,6 +287,9 @@ export class SheetsDialog {
   private controls() {
     for (const input of [...this.fields.values(), this.preset, this.orientation, this.view])
       input.disabled = this.pending;
+    this.owner.disabled = this.pending || !this.create;
+    this.template.disabled = this.pending;
+    this.view.disabled = this.pending || this.row?.kind !== 'schematic';
     this.select.disabled =
       this.pending || this.dirty || this.create || !this.snapshot?.sheets.length;
     for (const b of this.controlsMap.values()) b.disabled = this.pending;
@@ -264,10 +314,16 @@ export class SheetsDialog {
     });
     if (!reply.sheet_preview) throw new Error('Missing sheet preview');
     this.proposal = reply.sheet_preview;
-    renderPaper(this.previewSvg, this.proposal.sheet, this.proposal.scene, this.proposal.frame);
+    renderPaper(
+      this.previewSvg,
+      this.proposal.sheet,
+      this.proposal.scene,
+      this.proposal.frame,
+      this.proposal.list,
+    );
     this.previewSvg.setAttribute('viewBox', paperBox(this.proposal.sheet, 1.25).join(' '));
     this.message.textContent = this.proposal.frame.title_block_too_small
-      ? 'Title block cannot fit: the standard frame needs a 180 × 40 mm interior. The border is retained.'
+      ? 'Title block cannot fit within the paper margins. The border is retained.'
       : 'Reviewed paper layout · Apply sheet commits one edit.';
   }
   private async commit() {
@@ -319,4 +375,14 @@ export class SheetsDialog {
       this.controls();
     }
   }
+}
+
+/** Typed creation requests share the same reviewed paper editor. */
+export function sheetKindForRequest(request: string | null) {
+  return (
+    { new_schematic: 'schematic', new_cover: 'cover', new_drawing_list: 'drawing-list' } as Record<
+      string,
+      string
+    >
+  )[request ?? ''];
 }

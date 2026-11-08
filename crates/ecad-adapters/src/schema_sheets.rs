@@ -12,14 +12,14 @@ use ecad_domain::*;
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct PaperData {
+pub(crate) struct PaperData {
     width_um: u32,
     height_um: u32,
     margins_um: [u32; 4],
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct PlacementData {
+pub(crate) struct PlacementData {
     view: String,
     paper_origin_um: [i64; 2],
     view_origin_um: [i64; 2],
@@ -28,11 +28,11 @@ struct PlacementData {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct SheetData {
-    id: String,
-    number: String,
-    title: String,
-    paper: PaperData,
-    placement: Option<PlacementData>,
+    pub(crate) id: String,
+    pub(crate) number: String,
+    pub(crate) title: String,
+    pub(crate) paper: PaperData,
+    pub(crate) placement: Option<PlacementData>,
 }
 impl From<&DrawingSheet> for SheetData {
     fn from(s: &DrawingSheet) -> Self {
@@ -76,6 +76,8 @@ impl TryFrom<SheetData> for DrawingSheet {
             })
             .transpose()?;
         let sheet = Self {
+            kind: SheetKind::Schematic,
+            template: None,
             id: s.id.parse()?,
             number: s.number,
             title: s.title,

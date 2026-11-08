@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Review creation of a new typed sheet (and a fresh view for schematics).
+    NewSheet(ecad_domain::SheetKind),
     /// Show project pages and logical drawing packages in the host explorer.
     ExplorerPages,
     /// Show the selected project's electrical structure in the host explorer.

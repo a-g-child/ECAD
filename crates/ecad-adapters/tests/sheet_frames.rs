@@ -8,6 +8,8 @@ fn setup() -> (Project, SheetId) {
     let id = SheetId::new(1).unwrap();
     p.insert_sheet(
         DrawingSheet {
+            kind: ecad_domain::SheetKind::Schematic,
+            template: None,
             id,
             number: "E-01".into(),
             title: "Harness\nDetail".into(),
@@ -148,13 +150,13 @@ fn title_block_stays_in_paper_units_and_tiny_or_extreme_paper_is_safe() {
     assert!(p.sheet_frame(SheetId::new(999).unwrap()).is_err());
 }
 #[test]
-fn v9_upgrade_and_v10_template_validation_are_strict_and_deterministic() {
+fn v9_upgrade_and_current_template_validation_are_strict_and_deterministic() {
     let old = include_str!("fixtures/routed-conveyor-v9.json");
     let a = decode_project(old).unwrap();
     let b = decode_project(old).unwrap();
     assert_eq!(a, b);
     let current = encode_project(&a).unwrap();
-    assert_eq!(current, include_str!("fixtures/routed-conveyor-v10.json"));
+    assert_eq!(current, include_str!("fixtures/routed-conveyor-v11.json"));
     assert_eq!(decode_project(&current).unwrap(), a);
     let data: Value = serde_json::from_str(&current).unwrap();
     for bad in [

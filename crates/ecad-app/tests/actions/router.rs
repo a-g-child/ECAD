@@ -317,6 +317,8 @@ fn sequence_cannot_finish_on_another_sheet_even_when_the_source_view_is_shared()
         project
             .insert_sheet(
                 DrawingSheet {
+                    kind: ecad_domain::SheetKind::Schematic,
+                    template: None,
                     id: SheetId::new(n).unwrap(),
                     number: n.to_string(),
                     title: "Shared view".into(),

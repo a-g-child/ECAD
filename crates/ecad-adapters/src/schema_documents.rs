@@ -54,20 +54,20 @@ impl TryFrom<DocumentData> for DrawingDocumentLayout {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct DocumentProjectData<D = DocumentData> {
-    schema_version: u32,
-    project_id: String,
-    metadata: MetadataData,
-    drawing_documents: Vec<D>,
-    sheets: Vec<SheetData>,
-    subsystems: Vec<SubsystemData>,
-    devices: Vec<DeviceData>,
-    ports: Vec<PortData>,
-    conductors: Vec<ConductorData>,
-    cables: Vec<CableData>,
-    definitions: Vec<DefinitionData>,
-    instances: Vec<InstanceData>,
-    local_origins: Vec<InstanceData>,
-    drawing: RoutedDrawingData,
+    pub(crate) schema_version: u32,
+    pub(crate) project_id: String,
+    pub(crate) metadata: MetadataData,
+    pub(crate) drawing_documents: Vec<D>,
+    pub(crate) sheets: Vec<SheetData>,
+    pub(crate) subsystems: Vec<SubsystemData>,
+    pub(crate) devices: Vec<DeviceData>,
+    pub(crate) ports: Vec<PortData>,
+    pub(crate) conductors: Vec<ConductorData>,
+    pub(crate) cables: Vec<CableData>,
+    pub(crate) definitions: Vec<DefinitionData>,
+    pub(crate) instances: Vec<InstanceData>,
+    pub(crate) local_origins: Vec<InstanceData>,
+    pub(crate) drawing: RoutedDrawingData,
 }
 impl From<&Project> for DocumentProjectData<TemplatedDocumentData> {
     fn from(project: &Project) -> Self {
@@ -143,8 +143,10 @@ impl DocumentRecord for DocumentData {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum TemplateData {
+pub(crate) enum TemplateData {
     StandardV1,
+    CoverV1,
+    DrawingListV1,
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -160,6 +162,8 @@ impl From<DrawingDocumentLayout> for TemplatedDocumentData {
     fn from(layout: DrawingDocumentLayout) -> Self {
         let default_template = match layout.document.default_template {
             SheetTemplate::StandardV1 => TemplateData::StandardV1,
+            SheetTemplate::CoverV1 => TemplateData::CoverV1,
+            SheetTemplate::DrawingListV1 => TemplateData::DrawingListV1,
         };
         let d = DocumentData::from(layout);
         Self {
@@ -177,6 +181,8 @@ impl DocumentRecord for TemplatedDocumentData {
     fn layout(self) -> Result<DrawingDocumentLayout, ProjectFileError> {
         let template = match self.default_template {
             TemplateData::StandardV1 => SheetTemplate::StandardV1,
+            TemplateData::CoverV1 => SheetTemplate::CoverV1,
+            TemplateData::DrawingListV1 => SheetTemplate::DrawingListV1,
         };
         let mut layout = DrawingDocumentLayout::try_from(DocumentData {
             id: self.id,
@@ -187,5 +193,24 @@ impl DocumentRecord for TemplatedDocumentData {
         })?;
         layout.document.default_template = template;
         Ok(layout)
+    }
+}
+
+impl From<SheetTemplate> for TemplateData {
+    fn from(t: SheetTemplate) -> Self {
+        match t {
+            SheetTemplate::StandardV1 => Self::StandardV1,
+            SheetTemplate::CoverV1 => Self::CoverV1,
+            SheetTemplate::DrawingListV1 => Self::DrawingListV1,
+        }
+    }
+}
+impl From<TemplateData> for SheetTemplate {
+    fn from(t: TemplateData) -> Self {
+        match t {
+            TemplateData::StandardV1 => Self::StandardV1,
+            TemplateData::CoverV1 => Self::CoverV1,
+            TemplateData::DrawingListV1 => Self::DrawingListV1,
+        }
     }
 }

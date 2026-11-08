@@ -187,20 +187,22 @@ Follow the ordered [workspace and sheet task list](workspace-and-sheet-implement
 
 ## Drawing sheets and templates
 
-Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. The bounded desktop now edits directly on template-backed sheets; logical document management, multi-project host integration and page tabs remain pending.
+Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. The bounded desktop now edits directly on template-backed sheets; project properties/typed page creation are implemented; logical document management, multi-project host integration and page tabs remain pending.
 
 - [x] Add logical drawing-document IDs, metadata, ordered ownership, transfer/rename/reorder commands and deterministic v9 ownership upgrade.
 - [x] Add mandatory standard-v1 document default, bundled frame/live fields and strict v10 persistence with deterministic legacy upgrades.
 - [x] Integrate the frame with a unified editable sheet canvas, paper Fit (including blank pages), source-unit input/tools and transient per-sheet cameras.
 - [x] Preserve legacy sheets, source records and shared/unplaced views in a deterministic initial drawing document without renumbering or copying.
 - [x] Offer explicit reviewed per-view sheet attachment for unplaced views and expose shared-view editing behavior; no silent load-time geometry copies.
-- [ ] Add bulk wrapping and new drawing-source creation controls.
+- [x] Add reviewed independent schematic source creation through project-root/File/search actions, with exact combined view/sheet undo.
+- [ ] Add bulk wrapping.
 - [x] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated inverse placement input.
 - [x] Resolve a basic standard frame/eight live fields for every drawing sheet in paper preview and numeric review, with small-paper/overflow diagnostics.
 - [ ] Expand custom table/template editing and output preflight.
 - [x] Make pages/sheets the default Project explorer, retaining electrical structure as an alternate mode, with stable selection/expansion and guarded page context menus.
 - [ ] Add selectable sheet tabs/panes with retained camera/selection, stable tab identity and shared project history.
-- [ ] Include cover/generated drawing-list/overview/detail page roles; every page resolves its CAD template.
+- [x] Add schematic/cover/generated drawing-list roles and project-owned creation-template defaults; every page resolves a real bundled frame.
+- [ ] Add richer overview/detail specialization and output drawing sets.
 - [ ] Add off-sheet continuation representations tied to actual connectivity and stable target references.
 - [ ] Keep symbol/component/footprint/template-definition editors separate from project sheet workspaces.
 - [ ] Link hierarchical overview blocks to stable sheet identities and electrical interfaces independently of document ownership.
@@ -213,7 +215,8 @@ Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents
 - [ ] Add multiple named drawing sets, multiple placements, interactive paper placement and unified bulk sheet properties.
 - [ ] Add stable table/cell identities, split/merge/resize and bulk formatting.
 - [ ] Add field bindings, sheet-specific entries, override/reset and missing/required-field diagnostics.
-- [ ] Add shared standard/draft/cover/contents templates, generated contents pagination and pinned template adoption.
+- [x] Add bundled standard/cover/drawing-list frames and explicit physical drawing-list pagination with live stable destinations.
+- [ ] Add custom shared/draft templates and reviewed pinned-library adoption.
 - [ ] Add portable logos, output preflight and reproducible historical issue output.
 
 ## Later scope
@@ -229,3 +232,5 @@ Frame slice: see [decision 0033](decisions/0033-bundled-sheet-frame.md), [frame 
 Editable sheets: [decision 0034](decisions/0034-editable-sheet-workspace.md), [sheet-context bridge regressions](../crates/ecad-bridge/tests/sheet_editor_bridge.rs) and [scaled editing/attachment workflows](../apps/desktop/tests/sheet-editing.mjs). Native execution on Windows/Linux remains unverified.
 
 Explorer slice: [decision 0035](decisions/0035-project-page-and-electrical-explorers.md), [bridge contracts](../crates/ecad-bridge/tests/explorer_bridge.rs) and [browser workflows](../apps/desktop/tests/explorer.mjs). One desktop project/root is supported; multi-project host integration, document management and page tabs remain pending.
+
+Project-page creation: [decision 0036](decisions/0036-project-template-defaults-and-typed-pages.md), [project/default/list workflows](../crates/ecad-adapters/tests/project_pages.rs), [typed bridge contracts](../crates/ecad-bridge/tests/project_creation_bridge.rs) and [project-menu browser workflows](../apps/desktop/tests/project-pages.mjs). Project schema v11 preserves v2–v10 input; actual PDF generation, annotations/outlines, custom template authoring and native Windows/Linux execution remain pending.

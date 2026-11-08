@@ -2,6 +2,8 @@
 use ecad_domain::*;
 fn sheet(id: u128, number: &str) -> DrawingSheet {
     DrawingSheet {
+        kind: ecad_domain::SheetKind::Schematic,
+        template: None,
         id: SheetId::new(id).unwrap(),
         number: number.into(),
         title: "Drawing\nTitle".into(),

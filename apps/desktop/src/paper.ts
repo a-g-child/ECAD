@@ -1,6 +1,7 @@
 /** Paper-space review projection; the editable canvas shares this background/frame renderer. */
-import type { FrameRow, SceneRow, SheetRow } from './types';
+import type { DrawingListRow, FrameRow, SceneRow, SheetRow } from './types';
 import { renderText } from './text';
+import { renderDrawingList } from './drawing-list';
 import { renderFrame } from './frame';
 const ns = 'http://www.w3.org/2000/svg';
 function node(tag: string, attrs: Record<string, string | number>) {
@@ -14,6 +15,7 @@ export function renderPaper(
   sheet: SheetRow,
   scene: SceneRow[],
   frame: FrameRow,
+  list: DrawingListRow | null = null,
 ) {
   svg.replaceChildren();
   const mm = (value: string) => Number(value) / 1000,
@@ -25,7 +27,7 @@ export function renderPaper(
   path.append(node('rect', { width: w, height: h }));
   defs.append(path);
   svg.append(defs);
-  renderPaperBackground(svg, sheet, frame);
+  renderPaperBackground(svg, sheet, frame, list);
   if (!sheet.view) return;
   const clipped = node('g', { 'clip-path': `url(#${clip})` });
   const placed = node('g', {
@@ -90,7 +92,13 @@ export function paperBox(sheet: SheetRow, aspect: number) {
   return [(w - width) / 2, (h - height) / 2, width, height];
 }
 
-export function renderPaperBackground(svg: SVGElement, sheet: SheetRow, frame: FrameRow) {
+export function renderPaperBackground(
+  svg: SVGElement,
+  sheet: SheetRow,
+  frame: FrameRow,
+  list: DrawingListRow | null = null,
+  navigate?: (id: string) => void,
+) {
   const w = Number(sheet.width) / 1000,
     h = Number(sheet.height) / 1000;
   svg.append(
@@ -104,4 +112,5 @@ export function renderPaperBackground(svg: SVGElement, sheet: SheetRow, frame: F
     }),
   );
   renderFrame(svg, frame);
+  if (list) renderDrawingList(svg, list, frame, navigate);
 }

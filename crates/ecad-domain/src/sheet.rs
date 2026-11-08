@@ -66,24 +66,31 @@ pub struct SheetViewPlacement {
 pub struct DrawingSheet {
     /// Persistent identity.
     pub id: SheetId,
+    /// Content role; generated and cover pages cannot carry source-view placements.
+    pub kind: crate::SheetKind,
+    /// Pinned frame override; None retains the owning document's template.
+    pub template: Option<crate::SheetTemplate>,
     /// Nonblank unique drawing number, separate from its ordinal position.
     pub number: String,
     /// Literal multiline sheet title.
     pub title: String,
     /// Paper dimensions and guides.
     pub paper: SheetPaper,
-    /// Optional single view placement; empty sheets support future cover layouts.
+    /// Optional single schematic view; cover and generated-list roles stay unplaced.
     pub placement: Option<SheetViewPlacement>,
 }
 impl DrawingSheet {
     /// Validate local sheet values; project insertion also checks view references and uniqueness.
     /// # Errors
-    /// Rejects blank number/title, invalid paper/margins or zero scale terms.
+    /// Rejects blank number/title, invalid paper/margins/scale or a source on a cover/list.
     pub fn validate(&self) -> Result<(), SheetError> {
         if self.number.trim().is_empty() || self.title.trim().is_empty() {
             return Err(SheetError::Blank);
         }
         self.paper.validate()?;
+        if self.kind != crate::SheetKind::Schematic && self.placement.is_some() {
+            return Err(SheetError::RolePlacement);
+        }
         if self
             .placement
             .as_ref()
@@ -97,6 +104,10 @@ impl DrawingSheet {
 /// Sheet validation failed without changing existing content.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SheetError {
+    /// Cover/generated-list content cannot also place an editable schematic source.
+    RolePlacement,
+    /// A proposed new view must belong to a new schematic sheet and match its placement.
+    CreationViewMismatch,
     /// Invalid drawing-document metadata or sheet ownership.
     Document(crate::DrawingDocumentError),
     /// Paper dimensions must be positive.
@@ -123,6 +134,12 @@ pub enum SheetError {
 impl fmt::Display for SheetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::CreationViewMismatch => {
+                f.write_str("The new view must match the new schematic sheet placement")
+            }
+            Self::RolePlacement => {
+                f.write_str("Cover and drawing-list sheets cannot place a schematic view")
+            }
             Self::Document(error) => error.fmt(f),
             Self::Paper => f.write_str("Paper width and height must be positive"),
             Self::Margins => f.write_str("Margins must leave a positive paper interior"),
