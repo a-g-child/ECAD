@@ -71,6 +71,13 @@ fn main() {
                 .lock()
                 .map_err(|_| std::io::Error::other("The document controller is unavailable"))?
                 .configure_profile_store(path);
+            app.state::<Host>()
+                .0
+                .lock()
+                .map_err(|_| std::io::Error::other("The document controller is unavailable"))?
+                .configure_template_store(
+                    app.path().app_config_dir()?.join("drawing-templates.json"),
+                )?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![bridge, choose_file])

@@ -1,6 +1,6 @@
 # Consolidated drawing-template library editor
 
-Status: saved definitions, local publication, project bundling, assignment migration and saved-only desktop controls are implemented. The independent library editor is the next phase. The v13 desktop resolves exact saved variants and shows read-only paper/margins in sheet settings; frozen frame enums remain for compatibility/migration. See [current behavior](decisions/0040-saved-template-assignments-and-inherited-variants.md) and [template requirements](sheets-and-templates.md).
+Status: saved definitions, local publication, project bundling, assignment migration and saved-only desktop controls are implemented. A first independent library editor now provides its own history, contextual ribbon, placeholder preview and exact paper/content/cell-content properties. Structured table authoring and verified standards presets remain planned. See [editor boundary](decisions/0041-independent-template-editor.md) and [template requirements](sheets-and-templates.md).
 
 ## 1. User workflow and separation
 
@@ -171,3 +171,14 @@ This preservation stage preceded assignment conversion. The saved-reference, inh
 Retained tiny legacy layouts carry explicit authoring eligibility in independently versioned variant v2 bodies. Existing sheets render/reopen/undo exactly; new selection requires a repaired revision. Normal v1 bodies retain canonical encoding. Actual sheet rendering now uses arbitrary retained table geometry and literal/composed multiline bindings rather than manufacturing eight legacy cells.
 
 The [migration regressions](../crates/ecad-adapters/tests/template_assignment_migration.rs) and 42 real browser workflows cover these contracts. Raw headless compatibility remains explicit, while normal desktop loading/creation uses saved references. The Libraries manager, dedicated draft editor/session, contextual ribbon/properties and table editing are the next major delivery phase.
+
+
+## First independent editor slice
+
+Libraries → Drawing templates opens a separate editor over the existing project workspace, with a fixed contextual ribbon and bounded library/preview/properties panes. The project canvas and selection remain mounted. New starts a separate custom layout; Open selects a saved variant from the local catalogue or project bundle. The preview uses literal placeholders rather than company/project values. Cursor zoom, Shift horizontal pan, Ctrl vertical pan, middle pan and Fit apply to its own camera.
+
+Template name, exact paper/margins/content bounds and selected cell captions/literal/variable runs are editable. Text remains multiline. Apply validates the complete replacement layout and records one template history entry; invalid proposals retain the fields. Revert discards uncommitted fields. Right-click a cell opens the same properties. Current table/cell bounds are read-only; insert/delete/split/merge/resize, content-run insertion, styling, anchors, reusable blocks and standard-profile presets remain future work. This slice does not claim full table authoring or standards compliance.
+
+The headless `TemplateDocument` needs no electrical project, sheet or source view. It owns an independent epoch, exact bounded undo/redo and publication checkpoint. The desktop currently hosts one template editor alongside one project. Save publishes a complete fresh immutable revision outside project undo; undo never retracts a publication. Add saved revision to project is an explicit project-history operation; existing sheet pins/defaults do not change. New/Open/Close require a clean draft; explicit Discard closes without publishing. Pending property fields must be applied, reverted or discarded before other operations. Native close/quit includes draft and pending-field dirty state; project Open/Save As is unavailable until the template editor closes. Unapplied fields are transient browser state, not crash recovery.
+
+The native library is stored at the platform application configuration directory as `drawing-templates.json`. Reads do not create it. Explicit Save creates a missing parent and uses observed-version/lock protection. Reload library refreshes publication state after a conflict without losing the draft. Project bundles remain sufficient for offline drawings. The browser harness uses its temporary project directory or an explicit `ECAD_UI_TEMPLATES` path.

@@ -11,7 +11,7 @@ function node<K extends keyof SVGElementTagNameMap>(
   for (const [key, value] of Object.entries(attrs)) n.setAttribute(key, String(value));
   return n;
 }
-export function renderFrame(svg: SVGElement, frame: FrameRow) {
+export function renderFrame(svg: SVGElement, frame: Omit<FrameRow, 'sheet'>) {
   const group = node('g', {
     class: 'sheet-frame',
     'data-template': frame.template,

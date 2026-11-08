@@ -20,11 +20,21 @@ use std::{
 #[derive(Clone, Debug)]
 pub struct TemplateLibraryFile {
     path: PathBuf,
+    create_parent: bool,
 }
 impl TemplateLibraryFile {
     /// Target an explicit path. The parent must exist when IO is performed; no IO occurs here.
     pub fn new(path: impl Into<PathBuf>) -> Self {
-        Self { path: path.into() }
+        Self {
+            path: path.into(),
+            create_parent: false,
+        }
+    }
+    /// Allow explicit publication to create the configured parent directory. Construction
+    /// and reads remain side-effect free; the default adapter still requires an existing parent.
+    pub fn with_parent_creation(mut self) -> Self {
+        self.create_parent = true;
+        self
     }
     /// Configured destination, independent of project paths.
     pub fn path(&self) -> &Path {
@@ -58,6 +68,11 @@ impl VersionedTemplateLibraryStore for TemplateLibraryFile {
         catalog: &TemplateLibrary,
         expected: Option<&FileVersion>,
     ) -> Result<FileVersion, Self::Error> {
+        if self.create_parent
+            && let Some(parent) = self.path.parent().filter(|p| !p.as_os_str().is_empty())
+        {
+            fs::create_dir_all(parent)?;
+        }
         let path = canonical_library_path(&self.path)?;
         let lock = library_lock_path(&path);
         let _lock = LibraryWriterLock::acquire(lock.clone()).map_err(|error| {

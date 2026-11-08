@@ -23,6 +23,7 @@ impl DesktopBridge {
                         ActionRequestKind::ExplorerPages => "explorer_pages",
                         ActionRequestKind::ExplorerElectrical => "explorer_electrical",
                         ActionRequestKind::Sheets => "sheets",
+                        ActionRequestKind::TemplateLibrary => return self.open_templates(),
                         ActionRequestKind::CompanyProfiles => {
                             response.profiles = self.profiles.load()?.profiles;
                             "profiles"

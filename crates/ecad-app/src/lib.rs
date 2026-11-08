@@ -142,3 +142,11 @@ pub use template_library::{
     TemplateLibrarySnapshot, TemplatePublisher, VersionedTemplateLibraryStore,
     template_library_import,
 };
+
+mod template_document;
+pub use template_document::{
+    TemplateDocument, TemplateDocumentError, TemplateDraftVariant, TemplateEditError,
+};
+
+mod template_actions;
+pub use template_actions::{TemplateActionOutcome, TemplateDispatchError, TemplateOperation};

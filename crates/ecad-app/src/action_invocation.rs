@@ -36,6 +36,17 @@ pub enum InvocationSource {
 /// Concrete parameters; missing placement data becomes a request, not inferred geometry.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ActionParameters {
+    /// Exact saved source chosen in the template library.
+    TemplateSource(ecad_domain::TemplateVariantRef),
+    /// Complete validated template variant edit, at its captured editor revision.
+    TemplateEdit {
+        /// Stable draft variant target.
+        variant: ecad_domain::TemplateVariantId,
+        /// Literal multiline display name.
+        name: String,
+        /// Exact retained paper/table proposal.
+        layout: Box<ecad_domain::TemplateLayout>,
+    },
     /// Prepare exact geometry for a layout action without changing the document.
     PreviewLayout(LayoutOperation),
     /// Commit an inspected closed layout proposal for the matching captured action.
@@ -122,6 +133,8 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Open the separate template library/editor workspace.
+    TemplateLibrary,
     /// Request a typed sheet draft with captured project context.
     NewSheet(ecad_domain::SheetKind),
     /// Switch the host explorer to project documents/pages without editing the project.

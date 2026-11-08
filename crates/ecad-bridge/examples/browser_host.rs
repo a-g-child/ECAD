@@ -34,6 +34,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(path) = profile_path {
         bridge.configure_profile_store(path);
     }
+    let template_path = std::env::var_os("ECAD_UI_TEMPLATES")
+        .map(std::path::PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("ECAD_UI_PROJECT").and_then(|p| {
+                Path::new(&p)
+                    .parent()
+                    .map(|p| p.join("drawing-templates.json"))
+            })
+        });
+    if let Some(path) = template_path {
+        bridge.configure_template_store(path)?;
+    }
     let listener = TcpListener::bind("127.0.0.1:3838")?;
     println!("Browser harness listening on 127.0.0.1:3838; only the local Vite origin may call it");
     for stream in listener.incoming() {

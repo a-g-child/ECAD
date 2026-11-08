@@ -237,7 +237,7 @@ Project-page creation: [decision 0036](decisions/0036-project-template-defaults-
 
 ## Consolidated template library/editor
 
-See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [requirements/task sequence](template-editor-plan.md). Headless layouts and local immutable template publication are implemented; project bundles and preservation capture are implemented; saved-reference assignments and saved-only desktop controls are implemented; the independent template editor UI remains planned.
+See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [requirements/task sequence](template-editor-plan.md). Headless layouts and local immutable template publication are implemented; project bundles and preservation capture are implemented; saved-reference assignments and saved-only desktop controls are implemented; a bounded independent template editor UI is implemented; interactive table authoring remains planned.
 
 - [x] Add immutable template-variant bodies with typed IDs, explicit content bounds and validated structured table/cell partitions, including unequal rows/spans and literal/known-field text runs.
 - [x] Add strict standalone template-variant schema v1 serialization and route existing sheet frames through project-independent legacy layout projection, preserving exact geometry/tiny-sheet behavior.
@@ -249,13 +249,14 @@ See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [re
 - [ ] Extend dependency closure/bundling when reusable title blocks and portable assets are implemented.
 - [x] Store paper/margins and retained title-block structure in saved variants, with validated read-only sheet projections.
 - [ ] Complete standard-profile provenance and the separate title-block authoring workflow.
-- [ ] Add Libraries access, a separate template editor view, contextual ribbon and template/table/cell properties.
+- [x] Add Libraries access, a separate template editor view, independent draft history/publication, contextual ribbon and exact template/cell-content properties.
+- [ ] Extend editor properties to full table geometry, shared styles, anchors and multiple selections.
 - [ ] Add ISO/ANSI paper/profile presets with verified edition-specific layout rules and Custom provenance.
 - [ ] Add structured unequal-row tables, coherent sizing/split/merge and stable field bindings.
 - [x] Implement saved-only desktop assignment with deterministic legacy preservation and project bundling.
 - [ ] Complete reviewed bulk revision adoption and custom value mapping.
 
-Template foundations: [layout/partition regressions](../crates/ecad-domain/tests/template_layout.rs) and [standalone format checks](../crates/ecad-adapters/tests/template_variants.rs). No template manager/editor view is exposed yet; encoding a variant does not publish it or make it selectable.
+Template foundations: [layout/partition regressions](../crates/ecad-domain/tests/template_layout.rs) and [standalone format checks](../crates/ecad-adapters/tests/template_variants.rs). The first independent editor is described below; encoding alone does not publish a variant or make it selectable.
 
 Template foundation validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (41 browser workflows) and `cargo xtask desktop` passed, including nine new headless layout/serialization checks. The browser harness required loopback permissions outside the filesystem sandbox. Native Windows/Linux execution and template-editor interaction remain unverified.
 
@@ -270,3 +271,8 @@ Project bundle validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` 
 Saved template assignments: [decision 0040](decisions/0040-saved-template-assignments-and-inherited-variants.md) and [seven migration/assignment regressions](../crates/ecad-adapters/tests/template_assignment_migration.rs). Current desktop loads migrate in memory before the clean checkpoint; explicit saves write v13 with exact saved pins/inherited variants, and observed-byte conflicts remain protected. Standalone retained legacy bodies use v2 eligibility while ordinary v1 output stays unchanged. Template editor/ribbon/properties and interactive table authoring remain pending.
 
 Validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (42 workflows) and `cargo xtask desktop` passed. Older v12 fixtures/readers are retained alongside canonical v13 fixtures. Browser migration tests use temporary project files and real Rust state; native Windows/Linux and output/font parity remain unverified.
+
+
+Independent template editor: [decision 0041](decisions/0041-independent-template-editor.md), [headless history/publication checks](../crates/ecad-adapters/tests/template_editor.rs), [bridge lifecycle regressions](../crates/ecad-bridge/tests/template_editor_bridge.rs) and [real browser workflows](../apps/desktop/tests/template-editor.mjs). Library Save and project import have separate histories. Exact custom paper/content bounds and multiline cell captions/literal/variable runs are editable; table geometry, split/merge/resize, standard profiles and bulk adoption remain pending.
+
+Independent editor validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (44 browser workflows) and `cargo xtask desktop` passed. Six new headless/bridge workflows cover draft history, durable failures, stale contexts, pending fields, explicit import and closed-editor guards. Browser checks cover the actual separate editor, multiline properties, fixed minimum-window bounds and independent publication/history. Native checks compile/lint the available host; they are not native interaction automation or Linux/Windows execution.

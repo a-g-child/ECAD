@@ -8,6 +8,7 @@ import { MetadataDialog } from './metadata';
 import { ProfilesDialog } from './profiles';
 import { SheetsDialog, sheetKindForRequest } from './sheets';
 import { SheetWorkspace } from './sheet-workspace';
+import { TemplateEditor } from './template-editor';
 import { AnnotationTool } from './annotation';
 import { PathTool } from './path';
 import { renderProperties, renderReport } from './panels';
@@ -32,6 +33,7 @@ let movement: MovementTool | undefined;
 let layout: LayoutTool | undefined;
 let annotation: AnnotationTool | undefined;
 let path: PathTool | undefined;
+let templateEditor: TemplateEditor;
 movement = new MovementTool(shell, drawing, apply, status, buttons, () => {
   movement?.clear();
   void action('placement.cancel');
@@ -93,6 +95,14 @@ const explorer = new ProjectExplorer(
   (id) => void action(id),
   (event) => projectMenu.open(event, context()),
 );
+templateEditor = new TemplateEditor(
+  shell,
+  context,
+  apply,
+  status,
+  (id) => void action(id),
+  buttons,
+);
 function toolActive() {
   return !!(movement?.active || layout?.active || annotation?.active || path?.active);
 }
@@ -121,6 +131,15 @@ function status(message: string, error = false) {
 }
 function context(): Context {
   if (!snapshot) throw new Error('The document is not ready');
+  if (snapshot.template_editor)
+    return {
+      revision: snapshot.revision,
+      editor: snapshot.template_editor.revision,
+      selection: [],
+      view: null,
+      sheet: null,
+      focus,
+    };
   return {
     revision: snapshot.revision,
     selection: [...selection],
@@ -138,6 +157,7 @@ const layoutActions = new Set([
 ]);
 function availableAction(id: string, enabled: boolean) {
   if (!enabled || (id === 'document.open' && !native)) return false;
+  if (snapshot?.template_editor) return true;
   if (
     !view &&
     id.startsWith('drawing.') &&
@@ -159,12 +179,25 @@ function availableAction(id: string, enabled: boolean) {
   return true;
 }
 function buttons() {
-  if (snapshot) explorer.setLocked(busy || toolActive() || drawing.gestureActive);
-  shell.sheets.disabled = busy || toolActive();
+  templateEditor?.setBusy(busy);
+  if (snapshot)
+    explorer.setLocked(busy || toolActive() || drawing.gestureActive || templateEditor.active);
+  shell.sheets.disabled = busy || toolActive() || !!templateEditor?.active;
   for (const button of document.querySelectorAll<HTMLButtonElement>('button[data-action]')) {
     const id = button.dataset.action!;
+    if (id === 'document.save') {
+      button.dataset.projectLabel ??= button.getAttribute('aria-label') ?? button.title;
+      button.setAttribute(
+        'aria-label',
+        snapshot?.template_editor ? 'Save template revision' : button.dataset.projectLabel,
+      );
+    }
     const definition = snapshot?.actions.find((a) => a.id === id);
-    button.disabled = busy || toolActive() || !availableAction(id, definition?.enabled ?? false);
+    button.disabled =
+      busy ||
+      templateEditor?.working ||
+      toolActive() ||
+      !availableAction(id, definition?.enabled ?? false);
     const label = button.dataset.tooltip ?? button.title;
     button.dataset.tooltip = label;
     const reasons: Record<string, string> = {
@@ -196,6 +229,8 @@ async function apply(reply: Reply) {
     }
     syncInput(next.next_input);
     const replaced = snapshot?.revision.epoch !== next.revision.epoch;
+    if (snapshot?.template_editor?.revision.epoch !== next.template_editor?.revision.epoch)
+      pendingSequence = false;
     snapshot = next;
     if (changed) {
       clearTools();
@@ -220,6 +255,7 @@ async function apply(reply: Reply) {
       ? `${selection.length} selected`
       : 'No selection';
     explorer.update(next, selection, paper.id, replaced);
+    templateEditor.update(next.template_editor);
     buttons();
     await inspect();
   }
@@ -238,6 +274,13 @@ async function apply(reply: Reply) {
   if (reply.request === 'fit') {
     drawing.fit();
   }
+  if (reply.request === 'template_fit') templateEditor.fit();
+  if (reply.request === 'template_properties') templateEditor.properties();
+  if (reply.request === 'template_apply_properties') await templateEditor.commitProperties();
+  if (reply.request === 'template_library_focus')
+    shell.workspace
+      .querySelector<HTMLSelectElement>('[aria-label="Saved template variants"]')
+      ?.focus();
   if (reply.activate_sheet) paper.show(reply.activate_sheet);
   const newKind = sheetKindForRequest(reply.request);
   if (newKind && snapshot) await sheets.open(context(), snapshot, '', newKind);
@@ -255,7 +298,7 @@ async function apply(reply: Reply) {
   }
 }
 async function inspect() {
-  if (!snapshot) return;
+  if (!snapshot || snapshot.template_editor) return;
   const serial = ++selectionSequence;
   const captured = context();
   const reply = await send({ type: 'inspect', context: captured });
@@ -332,9 +375,16 @@ async function action(id: string, captured?: Context) {
   // the captured revision, view and selection. Keyboard routing keeps its focus rules.
   if (!availableAction(id, true)) return;
   const drawingAction = id.startsWith('drawing.');
-  if (drawingAction) shell.canvas.focus();
-  const invocationContext = drawingAction ? { ...target, focus: 'canvas' } : target;
+  if (drawingAction) {
+    if (templateEditor.active) templateEditor.focus();
+    else shell.canvas.focus();
+  }
+  let invocationContext = drawingAction ? { ...target, focus: 'canvas' } : target;
   await run(async () => {
+    if (id === 'document.save' && templateEditor.pending) {
+      await templateEditor.commitProperties();
+      invocationContext = context();
+    }
     const reply = await send({
       type: 'action',
       context: invocationContext,

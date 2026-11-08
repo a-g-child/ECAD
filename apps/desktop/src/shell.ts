@@ -140,6 +140,8 @@ export function createShell(action: (id: string) => void) {
   app.append(menu, ribbon, workspace, status, palette);
   return {
     app,
+    workspace,
+    ribbon,
     title,
     tree,
     explorerModes,

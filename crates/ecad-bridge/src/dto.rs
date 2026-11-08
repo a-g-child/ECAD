@@ -96,6 +96,8 @@ impl From<ObjectRef> for Target {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Context {
+    #[serde(default)]
+    pub editor: Option<Token>,
     pub revision: Token,
     pub selection: Vec<Target>,
     pub view: Option<String>,
@@ -106,6 +108,26 @@ pub(crate) struct Context {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    /// Commit or invoke an explicitly targeted template editor operation.
+    TemplateOperation {
+        /// Captured project and independent editor context.
+        context: serde_json::Value,
+        /// Registered action identity.
+        action: String,
+        /// Exact saved source for Open, otherwise absent.
+        source: Option<String>,
+        /// Closed property values for Apply, otherwise absent.
+        values: Option<serde_json::Value>,
+        /// Shared monotonic host input identity.
+        input: String,
+    },
+    /// Protect uncommitted template property fields during native close/quit.
+    TemplatePending {
+        /// Captured independent editor context.
+        context: serde_json::Value,
+        /// Shared monotonic host input identity.
+        input: String,
+    },
     /// Resynchronize a full revisioned read projection.
     Snapshot {},
     /// Inspect a captured selection, retaining every applicable property.
@@ -377,6 +399,7 @@ pub struct Response {
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
+    pub template_editor: Option<crate::template_rows::TemplateView>,
     pub template_choices: Vec<crate::project_templates::SavedTemplateRow>,
     pub drawing_documents: Vec<crate::document_rows::DrawingDocumentRow>,
     pub sheets: Vec<crate::sheets::SheetRow>,

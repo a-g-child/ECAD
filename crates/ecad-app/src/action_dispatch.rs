@@ -37,6 +37,9 @@ impl ActionDispatcher {
         {
             return Err(ActionDispatchError::ProtectedInput);
         }
+        if invocation.context.editor.is_some() {
+            return Err(ActionDispatchError::Disabled(ActionDisabled::NoDocument));
+        }
         let state = registry.state(
             &invocation.action,
             &invocation.context,
@@ -61,6 +64,12 @@ impl ActionDispatcher {
             }))
         };
         match (handler, &invocation.parameters) {
+            (ActionHandler::TemplateLibrary, ActionParameters::None) => {
+                return Ok(request(ActionRequestKind::TemplateLibrary, None));
+            }
+            (ActionHandler::TemplateLibrary, _) => {
+                return Err(ActionDispatchError::WrongParameters);
+            }
             (ActionHandler::OpenProject, ActionParameters::None) => {
                 return Ok(request(ActionRequestKind::OpenProject, None));
             }

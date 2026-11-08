@@ -43,8 +43,12 @@ export function registerRibbonTests({ page, tree, button, input, until, bounds, 
     await tab(p, 'Library').click();
     const library = panel(p, 'Library');
     assert.match(await library.innerText(), /planned/);
-    assert.equal(await library.locator('button:not([disabled])').count(), 0);
-    assert.equal(await library.locator('button[data-action]').count(), 0);
+    assert.equal(await library.locator('button:not([disabled])').count(), 1);
+    assert.equal(await library.locator('button[data-action]').count(), 1);
+    assert.equal(
+      await library.getByRole('button', { name: 'Drawing templates', exact: true }).isDisabled(),
+      false,
+    );
     assert.equal(
       await library.getByRole('button', { name: 'Symbols (planned)', exact: true }).isDisabled(),
       true,

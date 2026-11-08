@@ -8,6 +8,7 @@ export interface Revision {
   sequence: string;
 }
 export interface Context {
+  editor?: Revision | null;
   revision: Revision;
   selection: Target[];
   view: string | null;
@@ -48,6 +49,7 @@ export interface DrawingDocumentRow {
   sheets: string[];
 }
 export interface Snapshot {
+  template_editor: TemplateView | null;
   template_choices: SavedTemplateRow[];
   drawing_documents: DrawingDocumentRow[];
   sheets: SheetRow[];
@@ -253,4 +255,38 @@ export function validateReply(value: unknown): Reply {
         throw new Error('Invalid scene coordinate');
   }
   return reply;
+}
+
+export interface TemplateRun {
+  kind: 'literal' | 'field';
+  value: string;
+}
+export interface TemplateCell {
+  id: string;
+  caption: string;
+  bounds: string[];
+  contents: TemplateRun[];
+}
+export interface TemplateTable {
+  id: string;
+  bounds: string[];
+  cells: TemplateCell[];
+}
+export interface TemplateVariant {
+  id: string;
+  name: string;
+  paper: string[];
+  content: string[];
+  tables: TemplateTable[];
+}
+export interface TemplateView {
+  revision: Revision;
+  definition: string;
+  published: string | null;
+  selected: string;
+  dirty: boolean;
+  pending: boolean;
+  variants: TemplateVariant[];
+  catalog: [string, string][];
+  catalog_error: string | null;
 }

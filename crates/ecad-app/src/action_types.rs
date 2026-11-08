@@ -114,19 +114,24 @@ impl BindingScope {
         match self {
             Self::Application => true,
             Self::Document => {
-                context.revision.is_some()
+                (context.revision.is_some() || context.editor.is_some())
                     && matches!(
                         context.focus,
                         ActionFocus::Canvas | ActionFocus::ProjectTree | ActionFocus::Inspector
                     )
             }
-            Self::Canvas => context.revision.is_some() && context.focus == ActionFocus::Canvas,
+            Self::Canvas => {
+                (context.revision.is_some() || context.editor.is_some())
+                    && context.focus == ActionFocus::Canvas
+            }
             Self::Tool => context.focus == ActionFocus::Canvas && context.tool_active,
             Self::ProjectTree => {
-                context.revision.is_some() && context.focus == ActionFocus::ProjectTree
+                (context.revision.is_some() || context.editor.is_some())
+                    && context.focus == ActionFocus::ProjectTree
             }
             Self::Inspector => {
-                context.revision.is_some() && context.focus == ActionFocus::Inspector
+                (context.revision.is_some() || context.editor.is_some())
+                    && context.focus == ActionFocus::Inspector
             }
         }
     }
@@ -135,6 +140,8 @@ impl BindingScope {
 /// Capture this before opening a menu/palette/dialog; revalidate before committing.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ActionContext {
+    /// Separate template-editor epoch/revision; never a project revision or sheet identity.
+    pub editor: Option<Revision>,
     /// Observed document/session revision, never replaced silently during invocation.
     pub revision: Option<Revision>,
     /// Original target focus, not the transient popup's focus.
@@ -164,7 +171,8 @@ impl ActionContext {
         }
     }
     pub(crate) fn same_sequence_target(&self, other: &Self) -> bool {
-        self.revision == other.revision
+        self.editor == other.editor
+            && self.revision == other.revision
             && self.focus == other.focus
             && self.selection == other.selection
             && self.view == other.view
@@ -178,6 +186,8 @@ impl ActionContext {
 /// Typed unavailability, shared by palette, menus, shortcuts, and execution.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActionDisabled {
+    /// Save or explicitly discard the template draft before this operation.
+    UnsavedTemplate,
     /// Selection cannot participate in this drawing layout action.
     Layout(crate::LayoutError),
     /// Action is not registered.

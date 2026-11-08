@@ -167,6 +167,7 @@ pub(crate) fn snapshot(
             let supported = matches!(
                 d.handler,
                 ActionHandler::Sheets
+                    | ActionHandler::TemplateLibrary
                     | ActionHandler::NewSheet(_)
                     | ActionHandler::ExplorerPages
                     | ActionHandler::ExplorerElectrical
@@ -221,6 +222,7 @@ pub(crate) fn snapshot(
         })
         .collect();
     Snapshot {
+        template_editor: None,
         template_choices: crate::project_templates::choices(project),
         drawing_documents: crate::document_rows::project(project),
         sheets: project

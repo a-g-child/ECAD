@@ -21,3 +21,8 @@ mod sheet_creation;
 mod sheets;
 pub use controller::DesktopBridge;
 pub use dto::{BridgeError, Request, Response};
+
+mod template_rows;
+mod template_workspace;
+
+mod captured_context;

@@ -12,6 +12,25 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a reusable template lineage from OS entropy.
+    /// # Errors
+    /// Returns the original OS entropy failure without a weak fallback.
+    pub fn template_definition() -> Result<ecad_domain::TemplateDefinitionId, getrandom::Error> {
+        Ok(ecad_domain::TemplateDefinitionId::new(random_value()?).expect("nonzero UUID"))
+    }
+    /// Generate a fresh immutable template revision from OS entropy.
+    /// # Errors
+    /// Returns the original OS entropy failure without a weak fallback.
+    pub fn template_revision() -> Result<ecad_domain::TemplateRevisionId, getrandom::Error> {
+        Ok(ecad_domain::TemplateRevisionId::new(random_value()?).expect("nonzero UUID"))
+    }
+    /// Generate a stable template variant identity from OS entropy.
+    /// # Errors
+    /// Returns the original OS entropy failure without a weak fallback.
+    pub fn template_variant() -> Result<ecad_domain::TemplateVariantId, getrandom::Error> {
+        Ok(ecad_domain::TemplateVariantId::new(random_value()?).expect("nonzero UUID"))
+    }
+
     /// Generate a persistent logical drawing-package identity.
     /// # Errors
     /// Returns OS entropy failure without a weak fallback.

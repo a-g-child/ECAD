@@ -7,7 +7,6 @@ use ecad_adapters::JsonFile;
 use ecad_app::*;
 
 use std::{
-    collections::BTreeSet,
     num::NonZeroU64,
     path::{Path, PathBuf},
 };
@@ -21,10 +20,10 @@ mod tools;
 pub struct DesktopBridge {
     pub(crate) document: Document<JsonFile>,
     path: Option<PathBuf>,
-    registry: ActionRegistry,
+    pub(crate) registry: ActionRegistry,
     keymap: EffectiveKeymap,
-    router: ActionInputRouter,
-    dispatcher: ActionDispatcher,
+    pub(crate) router: ActionInputRouter,
+    pub(crate) dispatcher: ActionDispatcher,
     demo: bool,
     last_input: u64,
     clock: std::time::Instant,
@@ -35,6 +34,7 @@ pub struct DesktopBridge {
     move_serial: u64,
     pub(crate) sheet_tool: crate::sheets::SheetTool,
     profiles: crate::profiles::ProfilePanel,
+    pub(crate) templates: crate::template_workspace::TemplateWorkspace,
 }
 impl DesktopBridge {
     /// Start an explicitly unsaved demonstration backed by the real electrical/drawing model.
@@ -75,6 +75,7 @@ impl DesktopBridge {
             move_serial: 0,
             sheet_tool: crate::sheets::SheetTool::default(),
             profiles: crate::profiles::ProfilePanel::default(),
+            templates: crate::template_workspace::TemplateWorkspace::default(),
         })
     }
     /// Configure per-user profile storage without performing IO or modifying the document.
@@ -84,10 +85,21 @@ impl DesktopBridge {
     /// Opaque current session token for guarding asynchronous native file choosers.
     pub fn revision_key(&self) -> String {
         let r = self.document.session().revision();
-        format!("{}:{}", r.epoch().get(), r.get())
+        format!(
+            "{}:{}:{:?}",
+            r.epoch().get(),
+            r.get(),
+            self.templates
+                .editor
+                .as_ref()
+                .map(TemplateDocument::revision)
+        )
     }
     /// Whether the native host must protect unsaved edits before replacing/closing a document.
     pub fn is_dirty(&self) -> bool {
+        self.project_dirty() || self.templates.dirty()
+    }
+    fn project_dirty(&self) -> bool {
         self.document.session().is_dirty()
             && (!self.demo
                 || self.document.session().undo_len() > 0
@@ -95,12 +107,18 @@ impl DesktopBridge {
     }
     /// Whether a native save-as chooser is required before a save can complete.
     pub fn needs_save_as(&self) -> bool {
-        self.path.is_none()
+        self.templates.editor.is_none() && self.path.is_none()
     }
     /// Open an explicitly chosen local file. Dirty edits are never discarded implicitly.
     /// # Errors
     /// Rejects dirty replacement or invalid/missing files, retaining the current model/history.
     pub fn open(&mut self, path: &Path) -> Result<Response, BridgeError> {
+        if self.templates.editor.is_some() {
+            return Err(BridgeError::new(
+                "template",
+                "Close the template editor before opening a project",
+            ));
+        }
         if self.is_dirty() {
             return Err(BridgeError::new(
                 "dirty",
@@ -137,6 +155,12 @@ impl DesktopBridge {
     /// # Errors
     /// Existing unobserved destinations and IO failures preserve the document checkpoint/path.
     pub fn save_as(&mut self, path: &Path) -> Result<Response, BridgeError> {
+        if self.templates.editor.is_some() {
+            return Err(BridgeError::new(
+                "template",
+                "Use Save template revision in the template editor",
+            ));
+        }
         self.document
             .save_as(JsonFile::new(path).with_saved_templates())
             .map_err(|e| BridgeError::new("save", e))?;
@@ -152,80 +176,40 @@ impl DesktopBridge {
             &self.registry,
             &self.keymap,
         );
-        snapshot.dirty = self.is_dirty();
+        snapshot.dirty = self.project_dirty();
+        snapshot.template_editor = self.templates.view(self.document.session().project());
+        if let Some(editor) = &self.templates.editor {
+            let context = ActionContext {
+                editor: Some(editor.revision()),
+                focus: ActionFocus::Canvas,
+                ..ActionContext::default()
+            };
+            for row in &mut snapshot.actions {
+                let id = ActionId::new(row.id.clone()).expect("registered ID");
+                let state = self.registry.template_state(&id, &context, editor);
+                row.enabled = state.disabled.is_none();
+                row.reason = state.disabled.map(|e| format!("{e:?}"));
+                if id.as_str() == "document.save" {
+                    row.label = "Save template revision".into();
+                }
+            }
+        }
         snapshot.next_input = self.last_input.saturating_add(1).to_string();
         Response {
             snapshot: Some(snapshot),
             ..Response::default()
         }
     }
-    pub(crate) fn context(&self, value: serde_json::Value) -> Result<ActionContext, BridgeError> {
-        let ctx: Context =
-            serde_json::from_value(value).map_err(|e| BridgeError::new("context", e))?;
-        if ctx.revision != Token::from(self.document.session().revision()) {
-            return Err(BridgeError::new(
-                "stale",
-                "The document changed. Refresh before applying this operation",
-            ));
-        }
-        let selection = ctx
-            .selection
-            .iter()
-            .map(Target::object)
-            .collect::<Result<BTreeSet<_>, _>>()?;
-        for target in &selection {
-            self.document
-                .session()
-                .project()
-                .require_object(*target)
-                .map_err(|e| BridgeError::new("target", e))?;
-        }
-        let view = ctx
-            .view
-            .map(|id| id.parse())
-            .transpose()
-            .map_err(|e| BridgeError::new("view", e))?;
-        let sheet = ctx
-            .sheet
-            .map(|id| id.parse::<ecad_domain::SheetId>())
-            .transpose()
-            .map_err(|e| BridgeError::new("sheet", e))?;
-        if let Some(id) = sheet
-            && self
-                .document
-                .session()
-                .project()
-                .sheet(id)
-                .is_none_or(|s| s.placement.as_ref().map(|p| p.view) != view)
-        {
-            return Err(BridgeError::new(
-                "sheet",
-                "The captured sheet is missing or has a different drawing view",
-            ));
-        }
-        let focus = match ctx.focus.as_str() {
-            "canvas" => ActionFocus::Canvas,
-            "tree" => ActionFocus::ProjectTree,
-            "text" => ActionFocus::TextInput,
-            "inspector" => ActionFocus::Inspector,
-            "modal" => ActionFocus::Modal,
-            "workspace" => ActionFocus::Workspace,
-            _ => return Err(BridgeError::new("focus", "Unknown input focus")),
-        };
-        Ok(ActionContext {
-            revision: Some(self.document.session().revision()),
-            selection,
-            view,
-            sheet,
-            focus,
-            tool_active: self.movement.is_some()
-                || self.layout.is_some()
-                || self.annotation.is_some()
-                || self.path_draft.is_some(),
-            ..ActionContext::default()
-        })
+    pub(crate) fn has_active_tools(&self) -> bool {
+        self.movement.is_some()
+            || self.layout.is_some()
+            || self.annotation.is_some()
+            || self.path_draft.is_some()
     }
     pub(crate) fn invoke(&mut self, invocation: ActionInvocation) -> Result<Response, BridgeError> {
+        if invocation.context.editor.is_some() {
+            return self.template_invoke(invocation);
+        }
         if invocation.action.as_str() == "document.save" && self.path.is_none() {
             return Ok(Response {
                 request: Some("save_as".into()),
@@ -243,7 +227,9 @@ impl DesktopBridge {
     /// Invalid/stale input, model validation, replay/protected input, and IO errors preserve
     /// the document/history. Invalid move updates deliberately invalidate older proposals.
     pub fn handle(&mut self, request: Request) -> Result<Response, BridgeError> {
-        if let Request::Action { input, .. }
+        if let Request::TemplateOperation { input, .. }
+        | Request::TemplatePending { input, .. }
+        | Request::Action { input, .. }
         | Request::Key { input, .. }
         | Request::CommitMove { input, .. }
         | Request::CommitTransform { input, .. }
@@ -262,7 +248,25 @@ impl DesktopBridge {
             }
             self.last_input = id;
         }
+        if self.templates.editor.is_some()
+            && !matches!(
+                &request,
+                Request::Action { .. }
+                    | Request::Key { .. }
+                    | Request::Snapshot {}
+                    | Request::TemplateOperation { .. }
+                    | Request::TemplatePending { .. }
+            )
+        {
+            return Err(BridgeError::new(
+                "template",
+                "Return to the project drawing before using project tools",
+            ));
+        }
         match request {
+            request @ (Request::TemplateOperation { .. } | Request::TemplatePending { .. }) => {
+                self.template_request(request)
+            }
             request @ (Request::BeginMove { .. }
             | Request::PreviewMove { .. }
             | Request::CommitMove { .. }

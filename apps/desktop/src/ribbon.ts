@@ -116,6 +116,10 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
     label: 'Library',
     groups: [
       {
+        title: 'Drawing templates',
+        commands: [command('Templates', 'Drawing templates', 'properties', 'library.templates')],
+      },
+      {
         title: 'Definitions · planned',
         commands: [
           planned('Symbols', 'symbols'),
@@ -126,6 +130,49 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
       {
         title: 'Reuse · planned',
         commands: [planned('Shared blocks', 'blocks'), planned('Revisions', 'revisions')],
+      },
+    ],
+  },
+  {
+    id: 'template',
+    label: 'Template',
+    groups: [
+      {
+        title: 'Template',
+        commands: [
+          command('New', 'New template', 'properties', 'template.new'),
+          command('Open', 'Open saved template', 'open', 'template.open'),
+          command('Save revision', 'Save template revision', 'save', 'document.save'),
+        ],
+      },
+      {
+        title: 'History',
+        commands: [
+          command('Undo', 'Undo', 'undo', 'document.undo'),
+          command('Redo', 'Redo', 'redo', 'document.redo'),
+        ],
+      },
+      {
+        title: 'Properties',
+        commands: [
+          command('Properties', 'Template properties', 'properties', 'selection.properties'),
+          command('Revert fields', 'Revert property fields', 'undo', 'template.properties.revert'),
+          command('Fit', 'Fit template paper', 'fit', 'drawing.view.fit'),
+        ],
+      },
+      {
+        title: 'Project',
+        commands: [
+          command('Reload library', 'Reload template library', 'open', 'template.library.reload'),
+          command('Add saved', 'Add saved revision to project', 'blocks', 'template.import'),
+        ],
+      },
+      {
+        title: 'Editor',
+        commands: [
+          command('Close', 'Close template editor', 'properties', 'template.close'),
+          command('Discard', 'Discard template draft', 'undo', 'template.discard'),
+        ],
       },
     ],
   },
@@ -157,7 +204,9 @@ export function createRibbon(action: (id: string) => void, select: () => void) {
   const body = element('div', 'ribbon-body');
   const buttons: HTMLButtonElement[] = [];
   const panels: HTMLElement[] = [];
+  let templateContext = false;
   function activate(index: number, focus = false) {
+    if (definitions[index].id === 'template' && !templateContext) return;
     buttons.forEach((button, i) => {
       const active = i === index;
       button.setAttribute('aria-selected', String(active));
@@ -190,16 +239,20 @@ export function createRibbon(action: (id: string) => void, select: () => void) {
   definitions.forEach((definition, index) => {
     const tab = element('button', 'ribbon-tab', definition.label);
     tab.type = 'button';
+    tab.hidden = definition.id === 'template';
     tab.id = `ribbon-tab-${definition.id}`;
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-controls', `ribbon-panel-${definition.id}`);
     tab.addEventListener('click', () => activate(index));
     tab.addEventListener('keydown', (event) => {
       let next: number | undefined;
-      if (event.key === 'ArrowRight') next = (index + 1) % definitions.length;
-      if (event.key === 'ArrowLeft') next = (index + definitions.length - 1) % definitions.length;
+      const visible = definitions.map((_, i) => i).filter((i) => !buttons[i].hidden);
+      const current = visible.indexOf(index);
+      if (event.key === 'ArrowRight') next = visible[(current + 1) % visible.length];
+      if (event.key === 'ArrowLeft')
+        next = visible[(current + visible.length - 1) % visible.length];
       if (event.key === 'Home') next = 0;
-      if (event.key === 'End') next = definitions.length - 1;
+      if (event.key === 'End') next = visible[visible.length - 1];
       if (next !== undefined) {
         event.preventDefault();
         activate(next, true);
@@ -220,7 +273,11 @@ export function createRibbon(action: (id: string) => void, select: () => void) {
       panel.append(section);
     }
     if (definition.id === 'library') {
-      const note = element('p', 'ribbon-note', 'Library management tools are planned.');
+      const note = element(
+        'p',
+        'ribbon-note',
+        'Drawing templates are available. Other library tools are planned.',
+      );
       note.id = 'ribbon-library-note';
       panel.append(note);
       panel.setAttribute('aria-describedby', note.id);
@@ -238,5 +295,12 @@ export function createRibbon(action: (id: string) => void, select: () => void) {
   tabs.append(tabList, hint);
   root.append(tabs, body);
   activate(1);
-  return root;
+  return Object.assign(root, {
+    setTemplateContext(enabled: boolean) {
+      if (templateContext === enabled) return;
+      templateContext = enabled;
+      buttons[3].hidden = !enabled;
+      activate(enabled ? 3 : 1);
+    },
+  });
 }

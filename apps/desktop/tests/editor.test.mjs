@@ -21,6 +21,7 @@ import { registerSheetTests } from './sheets.mjs';
 import { registerSheetEditingTests } from './sheet-editing.mjs';
 import { registerProjectPageTests } from './project-pages.mjs';
 import { registerExplorerTests } from './explorer.mjs';
+import { registerTemplateEditorTests } from './template-editor.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -529,3 +530,5 @@ registerProjectPageTests({
   pressAction,
   replaceProject,
 });
+
+registerTemplateEditorTests({ page, button, until, project: () => project, root, pressAction });

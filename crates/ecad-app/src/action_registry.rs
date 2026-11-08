@@ -6,6 +6,10 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Open the independent drawing-template library workspace.
+    TemplateLibrary,
+    /// Template editor operation, independent of the electrical document.
+    Template(crate::TemplateOperation),
     /// Review creation of a new typed sheet (and a fresh view for schematics).
     NewSheet(ecad_domain::SheetKind),
     /// Show project pages and logical drawing packages in the host explorer.
@@ -222,8 +226,29 @@ impl ActionRegistry {
             return Some(ActionDisabled::UnknownAction(id.clone()));
         };
         let handler = definition.handler;
-        if matches!(handler, ActionHandler::Palette | ActionHandler::OpenProject) {
+        if matches!(
+            handler,
+            ActionHandler::Palette | ActionHandler::OpenProject | ActionHandler::TemplateLibrary
+        ) {
             return None;
+        }
+        if context.editor.is_some() {
+            return if matches!(
+                handler,
+                ActionHandler::Template(_)
+                    | ActionHandler::Save
+                    | ActionHandler::Undo
+                    | ActionHandler::Redo
+                    | ActionHandler::Properties
+                    | ActionHandler::FitDrawing
+            ) {
+                None
+            } else {
+                Some(ActionDisabled::NoDocument)
+            };
+        }
+        if matches!(handler, ActionHandler::Template(_)) {
+            return Some(ActionDisabled::NoDocument);
         }
         if handler == ActionHandler::CancelPlacement {
             return if context.tool_active {
