@@ -39,6 +39,7 @@ mod layout_preview;
 mod library;
 mod move_preview;
 mod project_usage;
+mod project_workspace;
 mod property_edits;
 mod property_selection;
 mod revision;
@@ -49,6 +50,7 @@ mod shortcut;
 mod transaction;
 mod usage_index;
 mod versioned_store;
+mod workspace_error;
 
 pub use action_dispatch::ActionDispatcher;
 pub use action_invocation::{
@@ -126,3 +128,8 @@ pub use company_profile::{
 };
 
 pub use sheet_command::{SheetCommand, SheetPreview, preview_sheet};
+
+pub use project_workspace::{
+    CloseProjectPolicy, OpenProject, ProjectWorkspace, WorkspaceProjectId,
+};
+pub use workspace_error::WorkspaceError;

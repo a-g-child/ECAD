@@ -20,6 +20,12 @@ The default left explorer is a page/sheet navigator, with electrical structure a
 
 The next implementation must introduce logical document ownership and a content-preserving migration before unifying the sheet editor and template frame. Existing v8 geometry, mappings and identifiers must not be flattened, silently duplicated, renumbered or rewired. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
+## Multi-project workspace
+
+The target explorer can hold several project roots. Electrical/component structure is selected per project; project sheet tabs share that project's history, never another project's model or checkpoint. Use process-local open-project handles rather than persistent ProjectId alone: copied/branched files can have identical lineage and electrical IDs. All delayed operations retain their original handle and revision.
+
+The first implemented foundation is ProjectWorkspace<S>, owning independent Document<S> controllers in open order, with explicit project-targeted edits/actions/save/reload/close and a workspace-wide action input stream. Host-normalized opaque location keys provide duplicate-open focus and Save-as reservation; path/alias normalization remains a host responsibility. Workspace selection is transient, and reload retains the workspace handle while replacing the session epoch. The desktop host/bridge is not yet wired to this owner. Follow [the task/rework list](workspace-and-sheet-implementation.md) and [decision 0031](decisions/0031-multi-project-workspace-foundation.md).
+
 ## Dependency direction
 
 ```mermaid

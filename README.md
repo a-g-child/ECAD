@@ -49,12 +49,13 @@ The app starts with a real, editable conveyor demonstration. Save it to a new fi
 | --- | --- |
 | `cargo xtask quick` | Dependency-boundary checks, formatting, Clippy, unit/integration/regression tests |
 | `cargo xtask full` | Quick checks plus example-target compilation, doctests, and documentation with warnings treated as errors |
-| `cargo xtask ui` | Bridge tests, frontend formatting/type/build checks, and four Chromium tests against the real Rust engine |
+| `cargo xtask ui` | Bridge tests, frontend formatting/type/build checks, and Chromium workflows against the real Rust engine |
 | `cargo xtask desktop` | Frontend build/format checks plus offline native-host Rust formatting and Clippy; does not automate the native window |
 | `cargo xtask scale` | Optimized headless probe at 100, 1,000, and 10,000 devices; writes `target/scale/latest.json` |
 | `cargo run --offline --locked -p ecad-adapters --example headless` | Creates two devices and one conductor, exercises undo/redo, and saves/reopens in an automatically cleaned temporary directory |
 | `cargo run --offline --locked -p ecad-adapters --example conveyor` | Builds a controller, nested conveyor/sensor assembly, interfaces, cable, and internal wiring as one transaction; verifies undo/redo and save/reopen |
 | `cargo run --offline --locked -p ecad-adapters --example actions` | Routes T to captured placement input, creates one annotation, rejects duplicate delivery, and verifies undo/redo/guarded save/reopen |
+| `cargo run --offline --locked -p ecad-adapters --example workspace` | Opens two same-lineage projects in isolated temporary files and verifies independent editing, dirty state, targeted saves and close guards |
 | `cargo run --offline --locked -p ecad-adapters --example reports` | Prints a wire list, checks report freshness after a rename, refreshes values, and verifies undo/reopen output stability |
 | `cargo run --offline --locked -p ecad-adapters --example transforms` | Previews rotation and mirroring of connected anchor groups, then verifies exact route geometry, unchanged connectivity, save/reopen, and undo/redo |
 | `cargo run --offline --locked -p ecad-adapters --example placement` | Previews a grid-snapped group move without document mutation, commits matching geometry, and verifies save/reopen and exact undo/redo |
@@ -68,7 +69,7 @@ The app starts with a real, editable conveyor demonstration. Save it to a new fi
 | `cargo run --offline --locked -p ecad-adapters --example reusable` | Places two instances of one revision, saves/reopens offline, then verifies make-local/undo without changing the other instance |
 | `cargo doc --offline --locked --workspace --no-deps --open` | Opens generated Rust API documentation |
 
-The full suite currently contains 305 behavior tests and two doctests. Integration tests use isolated temporary files and repositories, including a real Git branch/commit/checkout workflow and safe reload after checkout. They do not alter this workspace's repository or contact a remote. This workspace's `origin` is configured as [a-g-child/ECAD](https://github.com/a-g-child/ECAD).
+The full suite currently contains 310 behavior tests and two doctests. Integration tests use isolated temporary files and repositories, including a real Git branch/commit/checkout workflow and safe reload after checkout. They do not alter this workspace's repository or contact a remote. This workspace's `origin` is configured as [a-g-child/ECAD](https://github.com/a-g-child/ECAD).
 
 Four additional browser workflows verify actual edits/saves, mixed selection, protected typing, external conflicts, long values, and stable pane geometry. Native macOS build and launch are verified; automated native interaction, Linux, and Windows remain pending.
 
@@ -133,3 +134,5 @@ Typing, numeric fields, IME composition, modal UI, and control-owned input suppr
 Drawing sheets and reusable table-based templates are included scope. Their first foundation is File → Project information: eight portable, multiline company/contact and project fields with exact history. File → Profiles now stores reusable company/contact defaults separately and previews selected copies into projects. Drawing → Sheets now manages paper, margins, numbering/order and one optional scaled view placement, with read-only paper display beside Model view. Title-block cells, bindings and standard/draft/cover/contents templates remain planned. See [sheets and templates](docs/sheets-and-templates.md).
 
 The target drawing workflow is now Project → Documents → Sheets: actual drawings are edited directly on template-backed CAD pages. The implemented v8 Model view/read-only paper split is a prototype to replace; symbol/component/footprint editors will have separate workspaces. See [the corrected architecture](docs/decisions/0030-sheet-first-project-documents.md).
+
+Multi-project work has started with a headless workspace owner and real-file isolation/lifecycle tests. The desktop remains single-project until the host/bridge/explorer migration. See the [implementation task list and rework map](docs/workspace-and-sheet-implementation.md).

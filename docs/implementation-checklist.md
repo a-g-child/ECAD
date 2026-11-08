@@ -174,6 +174,16 @@ Current test owners:
 - Git interoperability: [local Git workflow](../crates/ecad-adapters/tests/git_workflow.rs).
 - Scale correctness and measurements: [scale example](../crates/ecad-adapters/examples/scale.rs).
 
+## Multi-project workspace implementation
+
+Follow the ordered [workspace and sheet task list](workspace-and-sheet-implementation.md), including the rework map for host/bridge lifecycle, project-scoped routing, paper input, explorers, tabs, profiles and Git/report caches.
+
+- [x] Add headless ProjectWorkspace with independent Document<S> controllers, runtime handles, active selection, normalized-location keys and captured-project operations.
+- [x] Verify same-lineage file copies, isolated history/dirty/save/reload state, reserved/failed Save-as, stale/dirty close, shared input replay protection and failed operations with real temporary files.
+- [ ] Integrate the owner into the native host/bridge; desktop currently still has one project context.
+- [ ] Add multiple project explorer roots and selected-project electrical/component mode alongside page navigation.
+- [ ] Add project-scoped sheet tabs and lifecycle/preview routing, with all-project close/quit protection.
+
 ## Drawing sheets and templates
 
 Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. Current v8 Model view/read-only paper behavior remains implemented but is not the intended final workflow.

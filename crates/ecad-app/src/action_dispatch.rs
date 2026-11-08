@@ -10,6 +10,15 @@ pub struct ActionDispatcher {
     last_input: Option<InputId>,
 }
 impl ActionDispatcher {
+    /// Record rejected routing attempts too, so a closed target cannot release an input ID.
+    pub(crate) fn record_input(&mut self, input: InputId) -> Result<(), InputId> {
+        if self.last_input.is_some_and(|previous| input <= previous) {
+            return Err(input);
+        }
+        self.last_input = Some(input);
+        Ok(())
+    }
+
     /// Revalidate and execute one invocation using actual commands and document lifecycle.
     /// # Errors
     /// Reports replay/protected/disabled/parameter failures or original model/save errors.
@@ -19,13 +28,8 @@ impl ActionDispatcher {
         invocation: ActionInvocation,
         mut document: Option<&mut Document<S>>,
     ) -> Result<ActionOutcome, ActionDispatchError<S::Error>> {
-        if self
-            .last_input
-            .is_some_and(|previous| invocation.input_id <= previous)
-        {
-            return Err(ActionDispatchError::ReplayedInput(invocation.input_id));
-        }
-        self.last_input = Some(invocation.input_id);
+        self.record_input(invocation.input_id)
+            .map_err(ActionDispatchError::ReplayedInput)?;
         if matches!(
             invocation.source,
             InvocationSource::Keyboard | InvocationSource::NativeAccelerator
