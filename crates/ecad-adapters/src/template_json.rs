@@ -55,7 +55,7 @@ impl From<TemplateError> for TemplateFileError {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct VariantData {
+pub(crate) struct VariantData {
     schema_version: u32,
     definition: String,
     revision: String,
@@ -110,47 +110,53 @@ fn coords(value: FrameRect) -> [u32; 4] {
 /// # Errors
 /// Returns JSON encoding failure; domain constructors have already validated geometry.
 pub fn encode_template_variant(value: &SavedTemplateVariant) -> Result<String, TemplateFileError> {
-    let paper = value.layout().paper();
-    let pin = value.reference();
-    let data = VariantData {
-        schema_version: 1,
-        definition: pin.definition.to_string(),
-        revision: pin.revision.to_string(),
-        variant: pin.variant.to_string(),
-        name: value.name().to_owned(),
-        paper_um: [paper.width, paper.height],
-        margins_um: [paper.left, paper.right, paper.top, paper.bottom],
-        content_um: coords(value.layout().content()),
-        tables: value
-            .layout()
-            .tables()
-            .iter()
-            .map(|table| TableData {
-                id: table.id().to_string(),
-                bounds_um: coords(table.bounds()),
-                cells: table
-                    .cells()
-                    .iter()
-                    .map(|cell| CellData {
-                        id: cell.id.to_string(),
-                        bounds_um: coords(cell.bounds),
-                        caption: cell.caption.clone(),
-                        contents: cell
-                            .contents
-                            .iter()
-                            .map(|run| match run {
-                                TemplateTextRun::Literal(text) => RunData::Literal(text.clone()),
-                                TemplateTextRun::Field(field) => {
-                                    RunData::Field(field.key().to_owned())
-                                }
-                            })
-                            .collect(),
-                    })
-                    .collect(),
-            })
-            .collect(),
-    };
-    Ok(serde_json::to_string_pretty(&data)? + "\n")
+    Ok(serde_json::to_string_pretty(&VariantData::from(value))? + "\n")
+}
+impl From<&SavedTemplateVariant> for VariantData {
+    fn from(value: &SavedTemplateVariant) -> Self {
+        let paper = value.layout().paper();
+        let pin = value.reference();
+        Self {
+            schema_version: 1,
+            definition: pin.definition.to_string(),
+            revision: pin.revision.to_string(),
+            variant: pin.variant.to_string(),
+            name: value.name().to_owned(),
+            paper_um: [paper.width, paper.height],
+            margins_um: [paper.left, paper.right, paper.top, paper.bottom],
+            content_um: coords(value.layout().content()),
+            tables: value
+                .layout()
+                .tables()
+                .iter()
+                .map(|table| TableData {
+                    id: table.id().to_string(),
+                    bounds_um: coords(table.bounds()),
+                    cells: table
+                        .cells()
+                        .iter()
+                        .map(|cell| CellData {
+                            id: cell.id.to_string(),
+                            bounds_um: coords(cell.bounds),
+                            caption: cell.caption.clone(),
+                            contents: cell
+                                .contents
+                                .iter()
+                                .map(|run| match run {
+                                    TemplateTextRun::Literal(text) => {
+                                        RunData::Literal(text.clone())
+                                    }
+                                    TemplateTextRun::Field(field) => {
+                                        RunData::Field(field.key().to_owned())
+                                    }
+                                })
+                                .collect(),
+                        })
+                        .collect(),
+                })
+                .collect(),
+        }
+    }
 }
 /// Decode an entire standalone body before exposing it. Unknown fields/field keys are
 /// errors, preserving data rather than dropping unfamiliar content on a subsequent save.
@@ -163,54 +169,63 @@ pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, Templ
         return Err(TemplateFileError::Version(version.schema_version));
     }
     let data: VariantData = serde_json::from_str(text)?;
-    let paper = SheetPaper {
-        width: data.paper_um[0],
-        height: data.paper_um[1],
-        left: data.margins_um[0],
-        right: data.margins_um[1],
-        top: data.margins_um[2],
-        bottom: data.margins_um[3],
-    };
-    let tables = data
-        .tables
-        .into_iter()
-        .map(|table| {
-            let cells = table
-                .cells
-                .into_iter()
-                .map(|cell| {
-                    let contents = cell
-                        .contents
-                        .into_iter()
-                        .map(|run| match run {
-                            RunData::Literal(text) => Ok(TemplateTextRun::Literal(text)),
-                            RunData::Field(key) => FrameField::from_key(&key)
-                                .map(TemplateTextRun::Field)
-                                .ok_or(TemplateFileError::Field(key)),
+    data.try_into()
+}
+impl TryFrom<VariantData> for SavedTemplateVariant {
+    type Error = TemplateFileError;
+    fn try_from(data: VariantData) -> Result<Self, Self::Error> {
+        if data.schema_version != 1 {
+            return Err(TemplateFileError::Version(data.schema_version));
+        }
+        let paper = SheetPaper {
+            width: data.paper_um[0],
+            height: data.paper_um[1],
+            left: data.margins_um[0],
+            right: data.margins_um[1],
+            top: data.margins_um[2],
+            bottom: data.margins_um[3],
+        };
+        let tables = data
+            .tables
+            .into_iter()
+            .map(|table| {
+                let cells = table
+                    .cells
+                    .into_iter()
+                    .map(|cell| {
+                        let contents = cell
+                            .contents
+                            .into_iter()
+                            .map(|run| match run {
+                                RunData::Literal(text) => Ok(TemplateTextRun::Literal(text)),
+                                RunData::Field(key) => FrameField::from_key(&key)
+                                    .map(TemplateTextRun::Field)
+                                    .ok_or(TemplateFileError::Field(key)),
+                            })
+                            .collect::<Result<Vec<_>, _>>()?;
+                        Ok::<_, TemplateFileError>(TemplateCell {
+                            id: cell.id.parse()?,
+                            bounds: rect(cell.bounds_um),
+                            caption: cell.caption,
+                            contents,
                         })
-                        .collect::<Result<Vec<_>, _>>()?;
-                    Ok::<_, TemplateFileError>(TemplateCell {
-                        id: cell.id.parse()?,
-                        bounds: rect(cell.bounds_um),
-                        caption: cell.caption,
-                        contents,
                     })
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok::<_, TemplateFileError>(TemplateTable::new(
-                table.id.parse()?,
-                rect(table.bounds_um),
-                cells,
-            )?)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    Ok(SavedTemplateVariant::new(
-        TemplateVariantRef {
-            definition: data.definition.parse()?,
-            revision: data.revision.parse()?,
-            variant: data.variant.parse()?,
-        },
-        data.name,
-        TemplateLayout::new(paper, rect(data.content_um), tables)?,
-    )?)
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok::<_, TemplateFileError>(TemplateTable::new(
+                    table.id.parse()?,
+                    rect(table.bounds_um),
+                    cells,
+                )?)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(SavedTemplateVariant::new(
+            TemplateVariantRef {
+                definition: data.definition.parse()?,
+                revision: data.revision.parse()?,
+                variant: data.variant.parse()?,
+            },
+            data.name,
+            TemplateLayout::new(paper, rect(data.content_um), tables)?,
+        )?)
+    }
 }

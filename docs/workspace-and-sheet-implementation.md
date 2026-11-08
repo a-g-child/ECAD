@@ -103,6 +103,7 @@ Each code slice runs cargo xtask full and focused real-file regressions. UI/host
 Follow [the detailed template-editor plan](template-editor-plan.md).
 
 - [x] Model immutable template-variant bodies, typed identities and validated structured cell partitions; add strict standalone serialization and project-independent legacy layout projection.
+- [x] Add closed immutable template revisions, strict canonical catalogue persistence and conflict-aware local publication, separate from project history.
 - [ ] Complete reusable title-block revisions, style/field schemas, standard-profile provenance and anchored layout.
 - [ ] Preserve current layouts/defaults/overrides as deterministic bundled variants before changing assignment behavior.
 - [ ] Restrict new sheets to saved templates/variants; move paper/margin/structure editing to Libraries.

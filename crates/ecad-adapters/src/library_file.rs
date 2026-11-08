@@ -1,11 +1,11 @@
 //! Cooperative writer exclusion and coherent single-file library publication.
 
+use crate::library_lock::{LibraryWriterLock, canonical_library_path, library_lock_path};
 use crate::{FileVersion, JsonFile, LibraryFileError, decode_library, encode_library};
 use ecad_app::{LibrarySnapshot, VersionedLibraryStore};
 use ecad_domain::SubsystemLibrary;
 use std::{
-    fs::{self, File, OpenOptions},
-    io,
+    fs, io,
     path::{Path, PathBuf},
 };
 
@@ -31,78 +31,13 @@ impl LibraryFile {
         &self.path
     }
     fn canonical_path(&self) -> Result<PathBuf, LibraryFileError> {
-        let name = self.path.file_name().ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "library path needs a file name",
-            )
-        })?;
-        let parent = self
-            .path
-            .parent()
-            .filter(|p| !p.as_os_str().is_empty())
-            .unwrap_or(Path::new("."));
-        let path = parent.canonicalize()?.join(name);
-        match fs::symlink_metadata(&path) {
-            Ok(metadata) if metadata.file_type().is_symlink() => {
-                return Err(io::Error::new(
-                    io::ErrorKind::InvalidInput,
-                    "library destination symlinks are unsupported",
-                )
-                .into());
-            }
-            Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error.into()),
-            _ => {}
-        }
-        Ok(path)
+        Ok(canonical_library_path(&self.path)?)
     }
     /// Locate the reserved writer lock for diagnostics; never remove an active lock.
     /// # Errors
     /// Reports an invalid destination or inaccessible parent directory.
     pub fn lock_path(&self) -> Result<PathBuf, LibraryFileError> {
-        Ok(lock_path(&self.canonical_path()?))
-    }
-}
-
-fn lock_path(path: &Path) -> PathBuf {
-    let mut name = std::ffi::OsString::from(".");
-    name.push(
-        path.file_name()
-            .expect("canonical library path has a file name"),
-    );
-    name.push(".ecad-library-lock");
-    path.with_file_name(name)
-}
-
-struct WriterLock {
-    path: PathBuf,
-    file: Option<File>,
-}
-impl WriterLock {
-    fn acquire(path: PathBuf) -> Result<Self, LibraryFileError> {
-        let file = OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&path)
-            .map_err(|error| {
-                if error.kind() == io::ErrorKind::AlreadyExists {
-                    LibraryFileError::Busy(path.clone())
-                } else {
-                    error.into()
-                }
-            })?;
-        Ok(Self {
-            path,
-            file: Some(file),
-        })
-    }
-}
-impl Drop for WriterLock {
-    fn drop(&mut self) {
-        // Close before unlinking for Windows. Cleanup failure leaves a visible lock
-        // and blocks future writes; it never grants another writer unsafe access.
-        drop(self.file.take());
-        let _ = fs::remove_file(&self.path);
+        Ok(library_lock_path(&self.canonical_path()?))
     }
 }
 
@@ -138,7 +73,14 @@ impl VersionedLibraryStore for LibraryFile {
         expected: Option<&FileVersion>,
     ) -> Result<FileVersion, Self::Error> {
         let path = self.canonical_path()?;
-        let _lock = WriterLock::acquire(lock_path(&path))?;
+        let lock = library_lock_path(&path);
+        let _lock = LibraryWriterLock::acquire(lock.clone()).map_err(|error| {
+            if error.kind() == io::ErrorKind::AlreadyExists {
+                LibraryFileError::Busy(lock)
+            } else {
+                error.into()
+            }
+        })?;
         let bytes = read_optional(&path)?;
         let current = bytes
             .as_ref()

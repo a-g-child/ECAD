@@ -136,3 +136,8 @@ pub use project_workspace::{
 pub use workspace_error::WorkspaceError;
 
 pub use drawing_document_command::DrawingDocumentCommand;
+
+mod template_library;
+pub use template_library::{
+    TemplateLibrarySnapshot, TemplatePublisher, VersionedTemplateLibraryStore,
+};

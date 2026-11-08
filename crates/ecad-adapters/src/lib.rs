@@ -46,3 +46,12 @@ pub use profile_file::{ProfileFile, ProfileFileError, ProfileSnapshot};
 
 mod template_json;
 pub use template_json::{TemplateFileError, decode_template_variant, encode_template_variant};
+
+mod library_lock;
+
+mod template_library_error;
+mod template_library_file;
+mod template_library_json;
+pub use template_library_error::TemplateLibraryFileError;
+pub use template_library_file::TemplateLibraryFile;
+pub use template_library_json::{decode_template_library, encode_template_library};

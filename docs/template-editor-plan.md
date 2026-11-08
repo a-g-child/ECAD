@@ -1,6 +1,6 @@
 # Consolidated drawing-template library editor
 
-Status: implementation started with headless layout/variant bodies and a standalone serialization contract; library publication, project bundling/migration and editor UI remain planned. This replaces inline template/layout authoring in new-sheet creation with a dedicated library workspace. The current v11 prototype still has three bundled frame enums and editable per-sheet paper/margins. See [current behavior](decisions/0036-project-template-defaults-and-typed-pages.md) and [template requirements](sheets-and-templates.md).
+Status: implementation started with headless layouts, closed immutable revisions, standalone serialization and local library publication; project bundling/migration and editor UI remain planned. This replaces inline template/layout authoring in new-sheet creation with a dedicated library workspace. The current v11 prototype still has three bundled frame enums and editable per-sheet paper/margins. See [current behavior](decisions/0036-project-template-defaults-and-typed-pages.md) and [template requirements](sheets-and-templates.md).
 
 ## 1. User workflow and separation
 
@@ -110,7 +110,8 @@ Legacy layouts which do not meet new authoring validation still need faithful re
 - [x] Add template definition/revision/variant and table/cell IDs, immutable variant bodies, validated rectangular partitions, literal/known-field runs and project-independent legacy layout projection.
 - [x] Add strict standalone template-variant schema v1 encoding/decoding with exact units and retained presentation order.
 - [ ] Complete reusable title-block revisions, custom field schemas, style/overflow intent and general anchored layout projection.
-- [ ] Implement canonical library persistence/publication, project bundling and a preservation migration for all current v11 layouts/defaults/inheritance.
+- [x] Implement closed complete template revisions, append-only catalogue/recommendations, strict canonical library persistence and observed-version publication with cooperating-writer coordination.
+- [ ] Implement project bundling and a preservation migration for all current v11 layouts/defaults/inheritance.
 - [ ] Integrate the saved-template picker and project defaults; lock inline paper/margin/template-structure authoring out of sheet creation/properties only after legacy layouts are preserved.
 - [ ] Add Libraries → Drawing templates manager and a separate template workspace/session with independent save/close/undo and contextual ribbon/properties.
 - [ ] Deliver the first usable editor: paper presets/profiles, one anchored structured title block, numeric/drag cell sizing, per-row subdivisions, literals/known bindings and sample preview.
@@ -142,4 +143,12 @@ Implementation runs cargo xtask full, cargo xtask ui and cargo xtask desktop whe
 
 The three existing enum templates now materialize this model through `SheetTemplate::layout`, used by actual `Project::sheet_frame` rendering. Existing border/table/content geometry, cell ordering, captions and missing-value behavior remain preserved, including tiny legacy sheets with no title block. These are explicitly legacy/custom borders, with no standards-compliance claim. This is the extraction needed before the preservation migration; it does not yet migrate assignments or remove paper controls.
 
-Checks cover unequal partitions/spans, repeated identities, overlap/gaps, owner containment, maximum integer extents, multiline runs, missing/empty values, exact legacy geometry, tiny-sheet preservation and strict canonical serialization. Library IO/concurrent publication, transitive project bundles, deterministic migration pins, paper catalogues/verified profiles, cell styling/border projection, independent application history, editor/ribbon/properties and saved-only pickers remain pending.
+Checks cover unequal partitions/spans, repeated identities, overlap/gaps, owner containment, maximum integer extents, multiline runs, missing/empty values, exact legacy geometry, tiny-sheet preservation and strict canonical serialization. Transitive project bundles, deterministic migration pins, paper catalogues/verified profiles, cell styling/border projection, independent application history, editor/ribbon/properties and saved-only pickers remain pending.
+
+## Implemented local library publication
+
+`TemplateRevision` closes a nonempty complete set of saved variants under one definition/revision pin. Adding a variant to that set requires a new revision; a published revision cannot grow incrementally. `TemplateLibrary` stores immutable complete revisions and explicit advisory recommendations, while exact variant lookups retain their original pins. Recommendations can move backward or be cleared without deleting history.
+
+`TemplatePublisher` and `VersionedTemplateLibraryStore` keep publication outside project editing. `TemplateLibraryFile` writes strict canonical library schema v1, validates observed destination/content tokens even for no-ops, rejects history removal/rewrites, coordinates cooperating writers and retains observed state on failed save/reload. Shared file-lock mechanics preserve the subsystem library's existing lock convention/guarantees. See [decision 0038](decisions/0038-closed-template-revision-publication.md) for the closed-revision contract and filesystem limits.
+
+The offline [template publication example](../crates/ecad-adapters/examples/template_library.rs) saves/reopens two variants; [real-file checks](../crates/ecad-adapters/tests/template_library.rs) cover strict fixtures, invalid/dangling recommendations, conflicts, complete-revision immutability, concurrent creators, locks and failed IO/reloads. Project schema remains v11. These bodies are not yet project-bundled, migrated or exposed in assignment pickers; project import/adoption and the independent editor lifecycle remain pending.

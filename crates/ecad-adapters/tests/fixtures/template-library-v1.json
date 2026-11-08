@@ -1,0 +1,42 @@
+{
+  "kind": "ecad-template-library",
+  "schema_version": 1,
+  "revisions": [
+    {
+      "definition": "00000000000000000000000000000001",
+      "revision": "00000000000000000000000000000002",
+      "variants": [
+        {
+          "schema_version": 1,
+          "definition": "00000000000000000000000000000001",
+          "revision": "00000000000000000000000000000002",
+          "variant": "00000000000000000000000000000003",
+          "name": "Retained tiny custom paper",
+          "paper_um": [
+            10,
+            20
+          ],
+          "margins_um": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "content_um": [
+            8,
+            8,
+            0,
+            3
+          ],
+          "tables": []
+        }
+      ]
+    }
+  ],
+  "recommended": [
+    {
+      "definition": "00000000000000000000000000000001",
+      "revision": "00000000000000000000000000000002"
+    }
+  ]
+}

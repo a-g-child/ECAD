@@ -106,3 +106,8 @@ pub use template_table::{
 };
 
 mod legacy_template_layout;
+
+mod template_library;
+pub use template_library::{
+    TemplateLibrary, TemplateLibraryError, TemplateRevision, TemplateRevisionRef,
+};
