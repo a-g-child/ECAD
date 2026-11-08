@@ -37,6 +37,8 @@ Tauri with a Rust core is a preferred candidate, subject to interaction and rend
 
 ## Drawing sheets and reusable layouts
 
+Organize actual drawings as Project → Documents → Sheets. Cable overviews, hierarchical diagrams and detailed wire/connector schematics are edited directly on template-backed CAD sheets with borders and drawing information. The separate Model view/read-only paper workflow in the v8 prototype is superseded. Symbol/component/footprint and template-definition editors are different workspace kinds with their own appropriate coordinate surfaces. Logical drawing documents and sheet organization remain independent of electrical subsystem hierarchy and output drawing sets.
+
 Include structured sheet layouts and title-block tables with row/cell split/merge, multiline entries, bulk formatting, scoped variables and explicit local overrides. Personal/company profiles supply copied project values; sheet-local and derived values remain distinct. Plan standard, draft, cover and generated contents layouts, pinned template revisions, paper-space sizing, portable logos and reproducible issued output. See [sheets and templates](sheets-and-templates.md) for the feature contract and delivery checklist.
 
 ## Core concepts
@@ -53,7 +55,10 @@ Include structured sheet layouts and title-block tables with row/cell split/merg
 | Wire or conductor | An individual conducting element with properties and terminations. A conductor may belong to a cable. |
 | Cable | An identifiable assembly of conductors and applicable shields, pairs, and other structure. |
 | Symbol | A graphical representation of a device, interface, or part of a device. |
-| View or sheet | A presentation of selected model objects and their drawing positions. |
+| Drawing document | A logical project drawing package with its own metadata, ordered sheets and default sheet template. |
+| Sheet | An editable template-backed CAD page with paper, drawing information and schematic representations. |
+| Drawing view | An internal representation/coordinate context; project schematics are presented and edited on their sheets. |
+| Definition editor | A dedicated symbol, component, footprint or template workspace, separate from project drawing sheets. |
 | Manufacturer part | An orderable item with technical properties and mappings to compatible generic devices and representations. |
 | Library definition | A reusable, versioned definition from which project instances are created. |
 | Drawing style | A named, reusable set of presentation properties that objects can inherit, with explicit overrides. |

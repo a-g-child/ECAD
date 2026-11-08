@@ -1,6 +1,6 @@
 # 0029: Paper sheets and independent drawing-view placement
 
-Status: implemented for one initial ordered drawing set and at most one view placement per sheet.
+Status: implemented v8 prototype. The separate editable Model view/read-only paper workflow and flat initial ownership are superseded by [decision 0030](0030-sheet-first-project-documents.md): Project → Documents → Sheets with direct template-backed sheet editing. The numeric paper/placement/history primitives remain useful; the implementation below is historical evidence, not the target user workflow.
 
 ## Decision
 

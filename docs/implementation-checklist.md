@@ -176,6 +176,14 @@ Current test owners:
 
 ## Drawing sheets and templates
 
+Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. Current v8 Model view/read-only paper behavior remains implemented but is not the intended final workflow.
+
+- [ ] Introduce logical drawing documents with stable identity, ordered sheet ownership, metadata and default templates.
+- [ ] Migrate legacy free views and paper placements without geometry/style/electrical loss, implicit renumbering or silent changes to shared views.
+- [ ] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated coordinate input.
+- [ ] Supply a basic standard frame/drawing-info template for every drawing sheet; expand custom table/template editing afterward.
+- [ ] Keep symbol/component/footprint/template-definition editors separate from project sheet workspaces.
+- [ ] Link hierarchical overview blocks to stable sheet identities and electrical interfaces independently of document ownership.
 - [x] Include reusable sheets/title-block tables, scoped variables, company profiles and standard/draft/cover/contents layouts in [the feature scope](sheets-and-templates.md).
 - [x] Implement eight typed project metadata fields, literal multiline values, exact history/rollback, strict schema v7 and v2–v6 empty-metadata upgrades.
 - [x] Integrate File/menu/palette project-information editing with fixed modal bounds, portable saved fields, cancel/no-op redo behavior and local Rust/browser regressions.

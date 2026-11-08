@@ -1,10 +1,19 @@
 # Drawing sheets, layouts and metadata
 
-Status: included product feature. Project-owned metadata, reusable company/contact profiles and reviewed selective imports are implemented. Ordered paper sheets, one optional view placement, reviewed editing and read-only paper display are implemented. Table editing and placeholder placement remain planned.
+Status: target architecture revised to Project → Documents → Sheets. The current v8 prototype still implements an editable Model view plus read-only paper display; that workflow is superseded and must be migrated before further template UI expansion. Project metadata, profiles and paper/history primitives remain useful foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
 ## Scope and ownership
 
-Keep drawing views (model representations and geometry), sheets (paper, numbering and local entries), reusable templates (borders, blocks and bindings), view placements (position/scale on paper), and ordered drawing sets distinct. A sheet never owns electrical connectivity. Existing free drawing views remain valid without a sheet. Begin eventual sheet placement with one view per sheet, leaving multiple placements possible later.
+Actual project drawings always belong to template-backed sheets. Organize them as Project → Documents → Sheets. Documents are logical drawing packages, not automatically separate files or electrical subsystems. A sheet is the normal editable drawing workspace, with paper, border, drawing information and template together with its schematic content. Cable overviews, hierarchical diagrams, detailed conductor/connector schematics and project layout drawings all follow this rule. Cover and contents sheets use the same paper model with their own content type.
+
+Each sheet has one owning document and a stable identity independent of numbering/order. Each document has a stable identity, metadata, an ordered sheet collection and a default template. Each sheet must resolve an explicit project-bundled template or its document's default. New drawings receive a basic standard template; there is no intentionally untemplated project-drawing mode. The table/template editor customizes this frame rather than making sheets optional.
+
+Internal drawing views may remain representation/coordinate structures, but are not separate free-canvas project documents exposed to users. Source geometry remains separate from paper/template geometry so changing paper or a title block does not move or rewire the schematic. Tools operate directly on the active sheet through its validated coordinate transform, using existing headless commands and exact undo.
+
+Symbol, generic component/device, footprint and template-definition editors are distinct workspace kinds. They use their own origins, units, grids and preview contexts and do not require project drawing borders. Opening one must not create a project sheet or turn library definitions into schematic occurrences.
+
+Keep electrical hierarchy independent of document ownership. A hierarchical block on an overview links to the target sheet by stable identity and to its electrical subsystem/interfaces explicitly. Moving a sheet between documents or renumbering it must not change electrical containment or break navigation. Drawing sets are output/issue selections over documents/sheets, not a replacement for the document hierarchy.
+
 
 Variables have explicit scopes:
 
@@ -12,6 +21,7 @@ Variables have explicit scopes:
 | --- | --- | --- |
 | Personal/company profile | Company name, address, logo, engineer/contact | Reusable starting values outside project undo |
 | Project | Project title, product, client, contract, issue, copied company/contact values | Portable document values with undo |
+| Document | Document title/number/revision and default template | Logical drawing-package values with undo |
 | Sheet | Drawing title/number/revision, drawn/checked/approved responsibilities, custom entries | Sheet-owned values with undo |
 | Derived | Sheet number, drawing-set count, placement scale, contents rows | Read projections from the chosen drawing set |
 
@@ -47,7 +57,9 @@ Saving a profile is outside project undo and does not dirty a project or clear r
 
 Native profiles live in company-profiles.json under the Tauri-provided per-user application configuration directory. Startup/configuration and missing-file reads do not create it; explicit Save profile creates directories and writes it. Projects retain copied values and never reference this path. The browser test harness uses a separate file alongside its temporary project; ECAD_UI_PROFILES can explicitly override its location. Profile schema v1 is separate from project schema v7. Saves use observed-byte/location checks and staged replacement; concurrent uncooperative writers can still race between check and rename. Automatic default-profile selection, deletion, profile import/export packaging and logos remain future work.
 
-## Paper sheets and view placement
+## Current v8 prototype: paper sheets and view placement
+
+The following describes implemented prototype behavior, not the target workflow. Its Model view/read-only paper split is superseded by the sheet editor described above.
 
 Drawing → Sheets opens a complete numeric paper editor. Create a blank sheet or place one existing drawing view. Set a literal drawing number/title, oriented paper dimensions, nonnegative left/right/top/bottom guide margins, a positive rational scale, paper origin and source-view origin. A4/A3/Letter presets and portrait/landscape controls set editable dimensions; custom paper is supported. All dimensions/origins use integer micrometres; scale is paper/model, so 1/2 means half size. Margins must leave a positive interior.
 
@@ -64,7 +76,12 @@ Project schema v8 adds an ordered sheets array alongside v7 metadata. V2–v7 lo
 - [x] Include the feature and define scope, variable ownership and portability rules.
 - [x] Add project metadata, stable field catalog, exact history, versioned persistence and a bounded multiline editor.
 - [x] Add personal/company profile storage and explicit previewed copy/update into a project.
-- [x] Add sheets, paper settings, numbering, initial drawing-set order and one optional view placement per sheet.
+- [x] Add v8 prototype sheets, paper settings, numbering, initial ordering and optional view placement/history.
+- [ ] Add logical project documents with stable identities, ordered owned sheets, document metadata and default templates.
+- [ ] Migrate existing v8 layouts/free views without losing geometry, electrical bindings, appearance or numbering; preserve or explicitly reconcile shared legacy views.
+- [ ] Replace Model view/read-only paper navigation with direct template-backed sheet editing, including transformed pointer/snapping input and one coherent viewport.
+- [ ] Separate library/definition editor workspace kinds from project drawing sheets.
+- [ ] Add stable hierarchical-sheet navigation independently of document ownership and output drawing sets.
 - [ ] Add table/cell geometry and editing with stable identities and bulk properties.
 - [ ] Add bindings, sheet-local values, missing/required diagnostics and override/reset behavior.
 - [ ] Add standard/draft/cover/contents templates, shared blocks and contents pagination.

@@ -2,6 +2,8 @@
 
 Status: a working Tauri 2 desktop prototype backed by the real Rust document engine. Native macOS/aarch64 build and launch are verified. Chromium workflows test the same bridge and actual temporary project files. Linux/Windows execution, comprehensive native interaction automation, packaging, and large-document rendering validation remain pending.
 
+Target architecture has since been corrected to Project → Documents → Sheets, with editing directly on template-backed drawing sheets. The Model view/read-only paper behavior documented below remains the current prototype and is scheduled for replacement. Definition editors will be separate workspaces. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
+
 ## Start the app
 
 Install the repository's Rust toolchain/components, Node 22.12+, and the appropriate [Tauri system prerequisites](https://v2.tauri.app/start/prerequisites/). Node 25.9.0 was used for the current macOS validation. The frontend and native host each have committed lockfiles.
