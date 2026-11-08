@@ -95,7 +95,12 @@ pub use drawing_document_info::{
     DrawingDocumentError, DrawingDocumentLayout, ProjectDrawingDocument,
 };
 
+mod template_border_snap;
 mod template_layout;
+mod template_margin_layout;
+pub use template_border_snap::{
+    MarginEdge, TableBorderDrag, TableBorderPlacement, table_border_placement,
+};
 mod template_table;
 mod template_table_edit;
 mod template_table_insert;

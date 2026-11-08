@@ -17,6 +17,10 @@ pub(crate) struct TableEditRow {
 #[derive(Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Edit {
+    Pointer {
+        drag: PointerDrag,
+        snap_tolerance: Option<String>,
+    },
     Insert {
         axis: String,
         at: String,
@@ -42,6 +46,34 @@ enum Edit {
         to: String,
     },
 }
+#[derive(Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum PointerDrag {
+    Move { x: String, y: String },
+    Resize { edge: String, coordinate: String },
+}
+fn signed(s: &str) -> Result<i64, BridgeError> {
+    s.parse()
+        .map_err(|_| error("Use signed integer micrometres within the supported range"))
+}
+fn margin_edge(s: &str) -> Result<MarginEdge, BridgeError> {
+    match s {
+        "left" => Ok(MarginEdge::Left),
+        "right" => Ok(MarginEdge::Right),
+        "top" => Ok(MarginEdge::Top),
+        "bottom" => Ok(MarginEdge::Bottom),
+        _ => Err(error("Choose an outer table edge")),
+    }
+}
+fn margin_key(edge: MarginEdge) -> String {
+    match edge {
+        MarginEdge::Left => "left",
+        MarginEdge::Right => "right",
+        MarginEdge::Top => "top",
+        MarginEdge::Bottom => "bottom",
+    }
+    .into()
+}
 fn error(e: impl std::fmt::Display) -> BridgeError {
     BridgeError::new("template", e)
 }
@@ -56,6 +88,12 @@ impl TableEditRow {
     pub(crate) fn target(&self) -> Vec<String> {
         let mut target = vec![self.variant.clone(), self.table.clone()];
         match &self.edit {
+            Edit::Pointer { drag, .. } => match drag {
+                PointerDrag::Move { .. } => target.push("pointer_move".into()),
+                PointerDrag::Resize { edge, .. } => {
+                    target.extend(["pointer_resize".into(), edge.clone()])
+                }
+            },
             Edit::Resize { .. } => target.push("resize".into()),
             Edit::Boundary { axis, from, .. } => {
                 target.extend(["boundary".into(), axis.clone(), from.clone()])
@@ -78,6 +116,15 @@ impl TableEditRow {
         doc: &TemplateDocument,
         operation: TableOperation,
     ) -> Result<ActionParameters, BridgeError> {
+        self.proposal_with_snap(doc, operation)
+            .map(|(parameters, _)| parameters)
+    }
+    pub(crate) fn proposal_with_snap(
+        self,
+        doc: &TemplateDocument,
+        operation: TableOperation,
+    ) -> Result<(ActionParameters, Vec<String>), BridgeError> {
+        let mut snapped = vec![];
         let id = self.variant.parse::<TemplateVariantId>().map_err(error)?;
         let draft = doc
             .variant(id)
@@ -90,6 +137,30 @@ impl TableEditRow {
             .find(|t| t.id() == table_id)
             .ok_or_else(|| error("Selected table is unavailable"))?;
         let changed = match (operation, self.edit) {
+            (
+                TableOperation::Resize,
+                Edit::Pointer {
+                    drag,
+                    snap_tolerance,
+                },
+            ) => {
+                let drag = match drag {
+                    PointerDrag::Move { x, y } => TableBorderDrag::Move {
+                        x: signed(&x)?,
+                        y: signed(&y)?,
+                    },
+                    PointerDrag::Resize { edge, coordinate } => TableBorderDrag::Resize {
+                        edge: margin_edge(&edge)?,
+                        coordinate: signed(&coordinate)?,
+                    },
+                };
+                let tolerance = snap_tolerance.map(|s| number(&s)).transpose()?;
+                let placement =
+                    table_border_placement(old.bounds(), draft.layout().border(), drag, tolerance)
+                        .map_err(error)?;
+                snapped = placement.snapped.into_iter().map(margin_key).collect();
+                old.resized(placement.bounds)
+            }
             (
                 op @ (TableOperation::InsertRow | TableOperation::InsertColumn),
                 Edit::Insert {
@@ -224,10 +295,13 @@ impl TableEditRow {
             tables,
         )
         .map_err(error)?;
-        Ok(ActionParameters::TemplateEdit {
-            variant: id,
-            name: draft.name().into(),
-            layout: Box::new(layout),
-        })
+        Ok((
+            ActionParameters::TemplateEdit {
+                variant: id,
+                name: draft.name().into(),
+                layout: Box::new(layout),
+            },
+            snapped,
+        ))
     }
 }

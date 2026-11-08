@@ -24,6 +24,7 @@ import { registerExplorerTests } from './explorer.mjs';
 import { registerTemplateEditorTests } from './template-editor.mjs';
 import { registerTemplateTableTests } from './template-tables.mjs';
 import { registerTemplateTableInteractionTests } from './template-table-interactions.mjs';
+import { registerTemplateMarginTests } from './template-margins.mjs';
 const root = resolve(import.meta.dirname, '../../..');
 const processes = [];
 let browser;
@@ -538,3 +539,5 @@ registerTemplateEditorTests({ page, button, until, project: () => project, root,
 registerTemplateTableTests({ page, button, until, project: () => project, root });
 
 registerTemplateTableInteractionTests({ page, button, until, project: () => project, root });
+
+registerTemplateMarginTests({ page, button, until, project: () => project, root });

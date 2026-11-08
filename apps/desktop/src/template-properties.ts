@@ -23,6 +23,8 @@ export class TemplateProperties {
   private name = textEditor('property-input property-text', 2);
   private paper: HTMLInputElement[] = [];
   private content: HTMLInputElement[] = [];
+  private generalMargin = element('input', 'property-input');
+  private fitMargins = element('input');
   private caption = textEditor('property-input property-text', 2);
   private runs: TemplateRun[] = [];
   private runFields = element('div', 'template-run-fields');
@@ -66,17 +68,37 @@ export class TemplateProperties {
     this.name = textEditor('property-input property-text', 2);
     this.name.value = model.name;
     this.label('Template name', this.name);
-    this.paper = this.numbers(
-      [
-        'Paper width (µm)',
-        'Paper height (µm)',
-        'Left margin (µm)',
-        'Right margin (µm)',
-        'Top margin (µm)',
-        'Bottom margin (µm)',
-      ],
-      model.paper,
+    this.paper = this.numbers(['Paper width (µm)', 'Paper height (µm)'], model.paper.slice(0, 2));
+    this.generalMargin = element('input', 'property-input');
+    this.generalMargin.inputMode = 'numeric';
+    this.generalMargin.title = 'Set all four margins together. Individual margins remain editable.';
+    this.label('General margin (µm)', this.generalMargin);
+    this.paper.push(
+      ...this.numbers(
+        ['Left margin (µm)', 'Right margin (µm)', 'Top margin (µm)', 'Bottom margin (µm)'],
+        model.paper.slice(2),
+      ),
     );
+    const syncGeneral = () => {
+      const values = this.paper.slice(2).map((input) => input.value);
+      const uniform = values.every((value) => value === values[0]);
+      this.generalMargin.value = uniform ? values[0] : '';
+      this.generalMargin.placeholder = uniform ? '' : 'Mixed';
+    };
+    syncGeneral();
+    for (const side of this.paper.slice(2)) {
+      side.addEventListener('input', syncGeneral);
+      side.addEventListener('change', syncGeneral);
+    }
+    this.fitMargins = element('input');
+    this.fitMargins.type = 'checkbox';
+    this.fitMargins.title =
+      'Move tables only as needed and intersect the content region with the margins. Cell sizes stay unchanged.';
+    this.label('Fit layout inside margins', this.fitMargins);
+    this.generalMargin.addEventListener('input', () => {
+      for (const side of this.paper.slice(2)) side.value = this.generalMargin.value;
+      this.fitMargins.checked = true;
+    });
     this.content = this.numbers(
       ['Content X (µm)', 'Content Y (µm)', 'Content width (µm)', 'Content height (µm)'],
       model.content,
@@ -165,6 +187,7 @@ export class TemplateProperties {
       variant: this.model.id,
       name: this.name.value,
       paper: this.paper.map((v) => v.value),
+      fit_margins: this.fitMargins.checked,
       content: this.content.map((v) => v.value),
       cell: this.selected
         ? {

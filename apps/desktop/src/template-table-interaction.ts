@@ -3,7 +3,7 @@ import type { Context, Reply, TemplateVariant, TemplateTable, TemplateCell } fro
 import { TemplatePreview } from './template-preview';
 import { TemplateGesture } from './template-gesture';
 import { cellAt, cellRange, paperPoint, type TableSelection } from './template-table-selection';
-import { tableHandles } from './template-table-handles';
+import { marginSnapGuides, tableHandles } from './template-table-handles';
 type Point = { x: number; y: number };
 type Drag =
   | { kind: 'select'; table: TemplateTable; first: TemplateCell; before: TableSelection | null }
@@ -14,12 +14,15 @@ type Drag =
       axis: string;
       from: number;
       outer: string;
+      tolerance: number;
+      moved: boolean;
     };
 export class TemplateTableInteraction {
   private model: TemplateVariant | null = null;
   private selected: TableSelection | null = null;
   private shown: TemplateTable[] | null = null;
   private invalid = false;
+  private snapped: string[] = [];
   private drag: Drag | null = null;
   private gesture: TemplateGesture;
   get active() {
@@ -36,7 +39,8 @@ export class TemplateTableInteraction {
   ) {
     this.gesture = new TemplateGesture(
       context,
-      (tables, invalid) => {
+      (tables, invalid, snapped) => {
+        this.snapped = snapped;
         this.shown = tables;
         this.invalid = invalid;
         if (this.model)
@@ -81,6 +85,7 @@ export class TemplateTableInteraction {
     if (!this.gesture.active) {
       this.shown = null;
       this.invalid = false;
+      this.snapped = [];
     }
     this.paint();
   }
@@ -90,6 +95,9 @@ export class TemplateTableInteraction {
   }
   paint() {
     this.preview.svg.querySelector('.table-handles')?.remove();
+    this.preview.svg.querySelector('.margin-snap-guides')?.remove();
+    if (this.model && this.gesture.active)
+      marginSnapGuides(this.preview.svg, this.model.paper, this.snapped);
     if (!this.selected) return;
     const table = (this.shown ?? this.model?.tables)?.find((t) => t.id === this.selected?.table.id);
     if (!table) return;
@@ -139,8 +147,20 @@ export class TemplateTableInteraction {
       const outer = edge?.dataset.outer ?? '';
       const action = kind === 'move' || outer ? 'template.table.resize' : 'template.table.boundary';
       if (!this.gesture.begin(this.model!.id, table.id, action)) return;
-      this.drag = { kind, table, start: p, axis, from: Number(edge?.dataset.from ?? 0), outer };
-      this.propose(p);
+      const matrix = svg.getScreenCTM();
+      const scale = Math.hypot(matrix?.a ?? 1, matrix?.b ?? 0);
+      const tolerance = Math.min(4294967295, Math.ceil(8000 / Math.max(scale, Number.EPSILON)));
+      this.drag = {
+        kind,
+        table,
+        start: p,
+        axis,
+        from: Number(edge?.dataset.from ?? 0),
+        outer,
+        tolerance,
+        moved: false,
+      };
+      this.propose(p, e.altKey);
     } else {
       const hit = this.hit(e);
       if (!hit) return;
@@ -169,19 +189,22 @@ export class TemplateTableInteraction {
       if (last) this.choose(this.drag.table, cellRange(this.drag.table, this.drag.first, last));
     } else {
       const p = paperPoint(this.preview.svg, e);
-      if (p) this.propose(p);
+      if (p) this.propose(p, e.altKey);
     }
   }
-  private propose(p: Point) {
+  private propose(p: Point, bypass: boolean) {
     const drag = this.drag;
     if (!drag || drag.kind === 'select') return;
     const b = drag.table.bounds.map(Number),
       dx = p.x - drag.start.x,
       dy = p.y - drag.start.y;
+    drag.moved ||= dx !== 0 || dy !== 0;
+    const snapTolerance = drag.moved && !bypass ? String(drag.tolerance) : null;
     if (drag.kind === 'move') {
       this.gesture.propose({
-        operation: 'resize',
-        bounds: [b[0] + dx, b[1] + dy, b[2], b[3]].map(String),
+        operation: 'pointer',
+        drag: { kind: 'move', x: String(b[0] + dx), y: String(b[1] + dy) },
+        snap_tolerance: snapTolerance,
       });
       return;
     }
@@ -195,19 +218,28 @@ export class TemplateTableInteraction {
       });
       return;
     }
-    const origin = drag.axis === 'x' ? 0 : 1,
-      extent = origin + 2;
-    if (drag.outer === 'start') {
-      b[origin] += delta;
-      b[extent] -= delta;
-    } else b[extent] += delta;
-    this.gesture.propose({ operation: 'resize', bounds: b.map(String) });
+    const origin = drag.axis === 'x' ? 0 : 1;
+    const edge =
+      drag.axis === 'x'
+        ? drag.outer === 'start'
+          ? 'left'
+          : 'right'
+        : drag.outer === 'start'
+          ? 'top'
+          : 'bottom';
+    const coordinate = b[origin] + (drag.outer === 'start' ? 0 : b[origin + 2]) + delta;
+    this.gesture.propose({
+      operation: 'pointer',
+      drag: { kind: 'resize', edge, coordinate: String(coordinate) },
+      snap_tolerance: snapTolerance,
+    });
   }
+
   private async up(e: PointerEvent) {
     if (e.button !== 0 || !this.drag) return;
     if (this.drag.kind !== 'select') {
       const p = paperPoint(this.preview.svg, e);
-      if (p) this.propose(p);
+      if (p) this.propose(p, e.altKey);
     }
     this.drag = null;
     if (this.preview.svg.hasPointerCapture(e.pointerId))

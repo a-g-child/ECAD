@@ -18,7 +18,7 @@ export class TemplateGesture {
   }
   constructor(
     private context: () => Context,
-    private display: (tables: TemplateTable[] | null, invalid: boolean) => void,
+    private display: (tables: TemplateTable[] | null, invalid: boolean, snapped: string[]) => void,
     private apply: (r: Reply) => Promise<void>,
     private changed: () => void,
     private status: (s: string, error?: boolean) => void,
@@ -66,12 +66,12 @@ export class TemplateGesture {
         // A newer queued pointer coordinate owns the next preview; do not flash an obsolete reply.
         if (!state.latest) {
           state.token = reply.table_preview.token;
-          this.display(reply.table_preview.tables, false);
+          this.display(reply.table_preview.tables, false, reply.table_preview.snapped);
         }
       } catch (e) {
         state.token = null;
         if (!state.latest) {
-          this.display(null, true);
+          this.display(null, true, []);
           this.status(errorText(e), true);
         }
       }
@@ -103,7 +103,7 @@ export class TemplateGesture {
     } finally {
       this.state = null;
       this.ending = false;
-      this.display(null, false);
+      this.display(null, false, []);
       this.changed();
     }
   }

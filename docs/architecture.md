@@ -216,3 +216,6 @@ Structured template edits are pure immutable `TemplateTable` transformations: gr
 
 
 Direct table interaction adds a pure domain band-insertion operation and a bridge-owned transient gesture. Proposals are revision/target-bound, invalidate older tokens on every attempt and retain complete validated command parameters for exact commit without ID reallocation. The frontend coalesces pointer input and waits for the release coordinate; selection/handles/camera never become document data. Existing placement cancellation is available in template tool context, and native dirty guards include active gestures. See [decision 0043](decisions/0043-direct-template-table-interaction.md).
+
+
+Template margin placement uses a pure integer border-snap calculation with explicit document tolerance and typed move/resize intent. Pointer DTOs stay separate from exact numeric edits; previews expose chosen borders and retain the resulting complete command. The general margin field derives from the same four persisted side values, while explicit fitting minimally translates table origins and intersects the content region. These are one-time template edits, not persistent constraints or source-view transformations. See [decision 0044](decisions/0044-template-margin-controls-and-snapping.md).

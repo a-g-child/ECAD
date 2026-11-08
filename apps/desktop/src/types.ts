@@ -210,7 +210,7 @@ export interface SheetPreview {
   scene: SceneRow[];
 }
 export interface Reply {
-  table_preview?: { token: string; tables: TemplateTable[] };
+  table_preview?: { token: string; tables: TemplateTable[]; snapped: string[] };
   project_templates: TemplateCatalog | null;
   activate_sheet: string | null;
   sheet_draft: SheetRow | null;

@@ -19,6 +19,7 @@ pub(crate) struct TableGesture {
 pub(crate) struct TablePreviewRow {
     pub token: String,
     pub tables: Vec<TableRow>,
+    pub snapped: Vec<String>,
 }
 impl DesktopBridge {
     pub(crate) fn template_table_request(
@@ -83,13 +84,14 @@ impl DesktopBridge {
                     token: input.clone(),
                     parameters: None,
                 });
-                let parameters = row.proposal(doc, op)?;
+                let (parameters, snapped) = row.proposal_with_snap(doc, op)?;
                 let ActionParameters::TemplateEdit { layout, .. } = &parameters else {
                     unreachable!("table proposal")
                 };
                 let preview = TablePreviewRow {
                     token: input,
                     tables: layout.tables().iter().map(TableRow::new).collect(),
+                    snapped,
                 };
                 self.templates
                     .gesture

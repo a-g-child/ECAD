@@ -150,3 +150,28 @@ export function tableHandles(
   }
   svg.append(group);
 }
+
+/** Highlight only borders actually chosen by the validated Rust pointer preview. */
+export function marginSnapGuides(svg: SVGSVGElement, paper: string[], snapped: string[]) {
+  if (!snapped.length) return;
+  const [w, h, l, r, t, b] = paper.map((v) => Number(v) / 1000);
+  const group = node('g', { class: 'margin-snap-guides', 'pointer-events': 'none' });
+  for (const edge of snapped) {
+    const vertical = edge === 'left' || edge === 'right';
+    const at = edge === 'left' ? l : edge === 'right' ? w - r : edge === 'top' ? t : h - b;
+    group.append(
+      node('line', {
+        x1: vertical ? at : l,
+        y1: vertical ? t : at,
+        x2: vertical ? at : w - r,
+        y2: vertical ? h - b : at,
+        stroke: '#14875a',
+        'stroke-width': 2,
+        'stroke-dasharray': '5 3',
+        'vector-effect': 'non-scaling-stroke',
+        'data-snap-edge': edge,
+      }),
+    );
+  }
+  svg.append(group);
+}

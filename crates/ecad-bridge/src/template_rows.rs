@@ -50,6 +50,8 @@ pub(crate) struct TemplateEditRow {
     paper: [String; 6],
     content: [String; 4],
     cell: Option<CellEdit>,
+    #[serde(default)]
+    fit_margins: bool,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -158,7 +160,12 @@ impl TemplateEditRow {
             *table = TemplateTable::new(table.id(), table.bounds(), cells)
                 .map_err(|e| BridgeError::new("template", e))?;
         }
-        let layout = TemplateLayout::new(
+        let build = if self.fit_margins {
+            TemplateLayout::fit_inside_margins
+        } else {
+            TemplateLayout::new
+        };
+        let layout = build(
             SheetPaper {
                 width: p[0],
                 height: p[1],
