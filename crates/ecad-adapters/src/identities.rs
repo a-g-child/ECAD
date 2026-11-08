@@ -12,6 +12,14 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Generate a persistent logical drawing-package identity.
+    /// # Errors
+    /// Returns OS entropy failure without a weak fallback.
+    pub fn drawing_document() -> Result<ecad_domain::DrawingDocumentId, getrandom::Error> {
+        Ok(ecad_domain::DrawingDocumentId::new(random_value()?)
+            .expect("UUID-v4 identity is nonzero"))
+    }
+
     /// Generate a persistent sheet identity independently of its drawing number.
     /// # Errors
     /// Returns the OS entropy error without a weak fallback.

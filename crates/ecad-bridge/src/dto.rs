@@ -370,6 +370,7 @@ pub struct Response {
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct Snapshot {
+    pub drawing_documents: Vec<crate::document_rows::DrawingDocumentRow>,
     pub sheets: Vec<crate::sheets::SheetRow>,
     pub bridge_version: u8,
     pub next_input: String,

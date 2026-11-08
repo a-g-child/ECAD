@@ -1,6 +1,6 @@
 # Drawing sheets, layouts and metadata
 
-Status: target architecture revised to Project → Documents → Sheets. The current v8 prototype still implements an editable Model view plus read-only paper display; that workflow is superseded and must be migrated before further template UI expansion. Project metadata, profiles and paper/history primitives remain useful foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
+Status: target architecture revised to Project → Documents → Sheets. The current prototype still implements an editable Model view plus read-only paper display; that workflow is superseded and must be migrated before further template UI expansion. Project metadata, profiles, paper/history primitives and v9 logical document ownership are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
 ## Scope and ownership
 
@@ -89,7 +89,8 @@ See [the workspace and sheet implementation task list](workspace-and-sheet-imple
 - [x] Add project metadata, stable field catalog, exact history, versioned persistence and a bounded multiline editor.
 - [x] Add personal/company profile storage and explicit previewed copy/update into a project.
 - [x] Add v8 prototype sheets, paper settings, numbering, initial ordering and optional view placement/history.
-- [ ] Add logical project documents with stable identities, ordered owned sheets, document metadata and default templates.
+- [x] Add logical drawing documents with stable IDs, ordered owned sheets and literal document metadata.
+- [ ] Add actual document default-template references with the basic frame implementation.
 - [ ] Migrate existing v8 layouts/free views without losing geometry, electrical bindings, appearance or numbering; preserve or explicitly reconcile shared legacy views.
 - [ ] Replace Model view/read-only paper navigation with direct template-backed sheet editing, including transformed pointer/snapping input and one coherent viewport.
 - [ ] Replace the default component tree with a page/sheet explorer; retain electrical structure as an alternate mode.
@@ -103,3 +104,9 @@ See [the workspace and sheet implementation task list](workspace-and-sheet-imple
 - [ ] Add portable logos, output validation, frozen issue metadata and reproducible drawing output.
 
 Each slice requires headless invariant/history/persistence tests and real bridge/browser workflows where UI is added. Native Windows/Linux execution and output/rendering parity must be measured independently.
+
+## Implemented logical drawing-document ownership
+
+ProjectDrawingDocument carries stable identity, unique project-level document number, literal multiline title and engineering revision. Each project starts with an empty Drawings package. Each sheet has exactly one owner and an owner-local order; documents also have explicit order. Sheet drawing numbers remain project-wide unique as in v8, with no automatic renumbering on transfer. At least one package remains in a project; nonempty packages cannot be removed. Metadata, document order, sheet transfers and complete membership changes use reversible commands without changing view geometry or electrical content.
+
+Schema v9 stores physical sheet records by stable ID and records order only in each document's sheet-ID membership list. Missing/duplicate ownership and invalid metadata are rejected. V2–v8 ownership upgrades create the initial package deterministically from the project ID in a separate typed namespace, preserving existing sheet IDs/order/numbers/transforms and shared/unplaced views. No random document IDs are generated on decode; unplaced views are not yet wrapped into template sheets. The bridge exposes document metadata/membership, while the current UI remains flat and does not yet manage packages. Its legacy flattened sheet moves cannot cross a document boundary; new workflows use explicit owner-local operations.

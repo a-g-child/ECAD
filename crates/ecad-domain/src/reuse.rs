@@ -59,6 +59,9 @@ impl SubsystemRevision {
         content: Project,
     ) -> Result<Self, ModelError> {
         content.validate()?;
+        if content.has_custom_drawing_documents() {
+            return Err(crate::DrawingDocumentError::ReusableDocumentsUnsupported.into());
+        }
         if !content.sheets().is_empty() {
             return Err(crate::SheetError::ReusableSheetsUnsupported.into());
         }

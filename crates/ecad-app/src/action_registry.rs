@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Manage logical drawing-package metadata and ownership.
+    DrawingDocuments,
     /// Manage paper sheets and drawing-view placements.
     Sheets,
     /// Ask the host to select and open a local project, protecting existing edits.
@@ -56,6 +58,8 @@ pub enum ActionInputRequirement {
     Layout,
     /// Existing conductor, placed terminal anchors, and explicit whole-path geometry.
     RoutePlacement,
+    /// Logical package metadata or explicit sheet membership commands.
+    DrawingDocuments,
     /// No additional parameters.
     None,
     /// Existing selected objects are required.
@@ -122,6 +126,7 @@ impl ActionDefinition {
             ActionHandler::CreatePolyline => ActionInputRequirement::PolylinePlacement,
             ActionHandler::DrawingSettings => ActionInputRequirement::DrawingSettings,
             ActionHandler::ProjectMetadata => ActionInputRequirement::ProjectMetadata,
+            ActionHandler::DrawingDocuments => ActionInputRequirement::DrawingDocuments,
             _ => ActionInputRequirement::None,
         }
     }

@@ -16,6 +16,7 @@
 mod adoption_changes;
 mod cable;
 mod drawing_document;
+mod drawing_document_info;
 mod drawing_error;
 mod drawing_objects;
 mod drawing_style;
@@ -27,6 +28,7 @@ mod identity;
 mod library;
 mod objects;
 mod project;
+mod project_documents;
 mod project_metadata;
 mod project_sheets;
 mod property;
@@ -51,7 +53,7 @@ pub use drawing_style::{
 pub use drawing_values::{DrawingColour, DrawingLength, DrawingPoint, FontFamily};
 pub use error::ModelError;
 pub use hierarchy::{InterfacePort, MAX_SUBSYSTEM_DEPTH, Subsystem};
-pub use identity::{AnchorId, ProfileId, RouteId, SheetId};
+pub use identity::{AnchorId, DrawingDocumentId, ProfileId, RouteId, SheetId};
 pub use identity::{
     CableId, ConductorId, DefinitionId, DefinitionRevisionId, DeviceId, IdError, InterfacePortId,
     ProjectId, SubsystemId, TerminalId,
@@ -82,3 +84,7 @@ pub use drawing_transform::{DrawingTransform, MirrorAxis, QuarterTurn};
 pub use project_metadata::{MetadataField, ProjectMetadata};
 
 pub use sheet::{DrawingSheet, SheetError, SheetPaper, SheetViewPlacement};
+
+pub use drawing_document_info::{
+    DrawingDocumentError, DrawingDocumentLayout, ProjectDrawingDocument,
+};

@@ -211,6 +211,7 @@ pub(crate) fn snapshot(
         })
         .collect();
     Snapshot {
+        drawing_documents: crate::document_rows::project(project),
         sheets: project.sheets().iter().map(Into::into).collect(),
         bridge_version: 1,
         next_input: "1".into(),

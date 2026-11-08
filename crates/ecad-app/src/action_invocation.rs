@@ -93,6 +93,8 @@ pub enum ActionParameters {
     SheetPreview(SheetPreview),
     /// Explicit sheet removal/reordering or programmatic paper edit.
     Sheet(SheetCommand),
+    /// Reviewed logical package/ownership command.
+    DrawingDocument(DrawingDocumentCommand),
 }
 /// A single request shared by all action surfaces, with original targets and input identity.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -113,6 +115,8 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Open the logical drawing-document editor.
+    DrawingDocuments,
     /// Open the sheet and paper manager.
     Sheets,
     /// Native host should choose and open a project, protecting dirty state.

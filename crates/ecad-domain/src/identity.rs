@@ -128,6 +128,11 @@ identity!(
     "Identity of a paper-space drawing sheet, separate from numbering and views."
 );
 
+identity!(
+    DrawingDocumentId,
+    "Identity of a logical drawing package, not an application session."
+);
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,7 +1,7 @@
 //! Project-owned ordered sheets; view references never imply ownership of electrical objects.
 use crate::*;
 impl Project {
-    /// Sheets in the initial drawing set's explicit order.
+    /// Sheets flattened in document order and then owner-local sheet order.
     pub fn sheets(&self) -> &[DrawingSheet] {
         &self.sheets
     }
@@ -25,18 +25,44 @@ impl Project {
         }
         Ok(())
     }
-    /// Insert a sheet at an explicit ordinal; validation failure leaves the set unchanged.
+    /// Compatibility insertion at a flattened ordinal. At a document boundary, use the
+    /// preceding sheet's owner, or the first document at index zero. Prefer explicit-owner
+    /// insertion for new workflows. Validation failure leaves the project unchanged.
     /// # Errors
     /// Rejects duplicate identity/number, invalid paper/scale/view and out-of-range order.
     pub fn insert_sheet(&mut self, value: DrawingSheet, index: usize) -> Result<(), SheetError> {
-        if self.sheet(value.id).is_some() {
-            return Err(SheetError::Duplicate(value.id));
-        }
         if index > self.sheets.len() {
             return Err(SheetError::Order);
         }
+        let document = if index == 0 {
+            self.drawing_documents[0].id
+        } else {
+            self.sheet_document(self.sheets[index - 1].id)
+                .expect("owned sheet")
+        };
+        let start = self.document_sheet_range(document)?.start;
+        self.insert_sheet_in_document(value, document, index - start)
+    }
+    /// Insert at an explicit owner-local position. New UI/commands should use this rather than
+    /// the compatibility flattened-index insertion method.
+    /// # Errors
+    /// Invalid/duplicate sheet data, unknown document or an out-of-range index is rejected.
+    pub fn insert_sheet_in_document(
+        &mut self,
+        value: DrawingSheet,
+        document: DrawingDocumentId,
+        index: usize,
+    ) -> Result<(), SheetError> {
+        if self.sheet(value.id).is_some() {
+            return Err(SheetError::Duplicate(value.id));
+        }
+        let range = self.document_sheet_range(document)?;
+        if index > range.len() {
+            return Err(SheetError::Order);
+        }
         self.check_sheet(&value)?;
-        self.sheets.insert(index, value);
+        self.sheet_owners.insert(value.id, document);
+        self.sheets.insert(range.start + index, value);
         Ok(())
     }
     /// Replace one sheet without changing its order or any view geometry.
@@ -60,22 +86,25 @@ impl Project {
             .iter()
             .position(|s| s.id == id)
             .ok_or(SheetError::Missing(id))?;
+        self.sheet_owners.remove(&id);
         Ok((self.sheets.remove(index), index))
     }
-    /// Move a sheet within the initial drawing set without renumbering it.
+    /// Compatibility move within the same owner, using a flattened final ordinal.
+    /// Moving across a document boundary requires explicit move_sheet_to_document.
     /// # Errors
     /// Rejects unknown sheets or an out-of-range final position.
     pub fn move_sheet(&mut self, id: SheetId, index: usize) -> Result<usize, SheetError> {
-        if index >= self.sheets.len() {
+        let owner = self.sheet_document(id).ok_or(SheetError::Missing(id))?;
+        let range = self.document_sheet_range(owner)?;
+        if !range.contains(&index) {
             return Err(SheetError::Order);
         }
         let old = self
             .sheets
             .iter()
             .position(|s| s.id == id)
-            .ok_or(SheetError::Missing(id))?;
-        let value = self.sheets.remove(old);
-        self.sheets.insert(index, value);
+            .expect("owned sheet");
+        self.move_sheet_to_document(id, owner, index - range.start)?;
         Ok(old)
     }
     pub(crate) fn check_sheet_views(&self, drawing: &DrawingDocument) -> Result<(), DrawingError> {

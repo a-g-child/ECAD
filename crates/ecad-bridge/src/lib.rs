@@ -3,6 +3,7 @@
 mod annotation;
 mod controller;
 mod defaults;
+mod document_rows;
 mod dto;
 mod layout_tool;
 mod metadata;

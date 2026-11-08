@@ -76,7 +76,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await save(p);
     const saved = JSON.parse(await readFile(project(), 'utf8')),
       sheet = saved.sheets[0];
-    assert.equal(saved.schema_version, 8);
+    assert.equal(saved.schema_version, 9);
     assert.deepEqual(sheet.paper, {
       width_um: 297000,
       height_um: 420000,
@@ -86,6 +86,7 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     assert.deepEqual(sheet.placement.paper_origin_um, [30000, 70000]);
     assert.deepEqual(sheet.placement.view_origin_um, [10000, -5000]);
     saved.sheets = [];
+    saved.drawing_documents = original.drawing_documents;
     assert.deepEqual(saved, original);
     await display(p).selectOption(sheet.id);
     await p.getByRole('img', { name: 'Paper sheet preview' }).waitFor();
@@ -145,7 +146,10 @@ export function registerSheetTests({ page, button, until, bounds, root, project,
     await control(p, 'Move up').click();
     await dialog(p).waitFor({ state: 'hidden' });
     await save(p);
-    sheets = JSON.parse(await readFile(project(), 'utf8')).sheets;
+    const reordered = JSON.parse(await readFile(project(), 'utf8'));
+    sheets = reordered.drawing_documents.flatMap((d) =>
+      d.sheets.map((id) => reordered.sheets.find((s) => s.id === id)),
+    );
     assert.deepEqual(
       sheets.map((s) => s.number),
       ['1', 'DWG-001'],

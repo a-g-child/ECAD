@@ -37,7 +37,15 @@ export interface ActionRow {
   reason: string | null;
   shortcuts: string[];
 }
+export interface DrawingDocumentRow {
+  id: string;
+  number: string;
+  title: string;
+  revision: string;
+  sheets: string[];
+}
 export interface Snapshot {
+  drawing_documents: DrawingDocumentRow[];
   sheets: SheetRow[];
   bridge_version: 1;
   next_input: string;
@@ -170,6 +178,7 @@ export function validateReply(value: unknown): Reply {
       s.bridge_version !== 1 ||
       typeof s.revision?.epoch !== 'string' ||
       typeof s.revision?.sequence !== 'string' ||
+      !Array.isArray(s.drawing_documents) ||
       !Array.isArray(s.sheets) ||
       !Array.isArray(s.objects) ||
       !Array.isArray(s.scene) ||

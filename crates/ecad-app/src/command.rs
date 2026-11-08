@@ -10,6 +10,8 @@ use std::sync::Arc;
 /// A committed document edit, independent of UI tool activation or transport DTOs.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
+    /// Logical drawing package metadata and sheet ownership with exact inverses.
+    DrawingDocument(crate::DrawingDocumentCommand),
     /// Paper-sheet layout with exact localized history.
     Sheet(crate::SheetCommand),
     /// Replace portable project metadata with an exact localized inverse.
@@ -109,6 +111,9 @@ impl Command {
     /// Apply one validated edit, returning its inverse or `None` for a no-op.
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::DrawingDocument(command) => {
+                return Ok(command.apply(project)?.map(Self::DrawingDocument));
+            }
             Self::Sheet(command) => return Ok(command.apply(project)?.map(Self::Sheet)),
             Self::ProjectMetadata(value) => {
                 let previous = project.replace_metadata(value.clone());

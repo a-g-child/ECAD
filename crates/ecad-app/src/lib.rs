@@ -30,6 +30,7 @@ mod connection_report;
 mod document;
 mod document_error;
 mod drawing_command;
+mod drawing_document_command;
 mod error;
 mod input_router;
 mod instantiation;
@@ -133,3 +134,5 @@ pub use project_workspace::{
     CloseProjectPolicy, OpenProject, ProjectWorkspace, WorkspaceProjectId,
 };
 pub use workspace_error::WorkspaceError;
+
+pub use drawing_document_command::DrawingDocumentCommand;

@@ -250,6 +250,16 @@ impl ActionDispatcher {
             (ActionHandler::CreatePolyline, ActionParameters::None) => {
                 request(ActionRequestKind::PolylinePlacement, None)
             }
+            (ActionHandler::DrawingDocuments, ActionParameters::None) => {
+                request(ActionRequestKind::DrawingDocuments, None)
+            }
+            (ActionHandler::DrawingDocuments, ActionParameters::DrawingDocument(command)) => {
+                ActionOutcome::Edited(
+                    document
+                        .execute(revision, Command::DrawingDocument(command))
+                        .map_err(ActionDispatchError::Edit)?,
+                )
+            }
             (ActionHandler::Sheets, ActionParameters::None) => {
                 request(ActionRequestKind::Sheets, None)
             }

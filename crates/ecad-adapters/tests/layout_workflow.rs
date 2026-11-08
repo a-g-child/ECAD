@@ -287,7 +287,7 @@ fn layout_save_reopen_and_exact_undo_track_saved_checkpoints_without_schema_chan
     assert_eq!(Document::open(store).unwrap().session().project(), &after);
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&encode_project(&after).unwrap()).unwrap()["schema_version"],
-        8
+        9
     );
     document.undo(document.session().revision()).unwrap();
     assert_eq!(document.session().project(), &before);

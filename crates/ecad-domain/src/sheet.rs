@@ -97,6 +97,8 @@ impl DrawingSheet {
 /// Sheet validation failed without changing existing content.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SheetError {
+    /// Invalid drawing-document metadata or sheet ownership.
+    Document(crate::DrawingDocumentError),
     /// Paper dimensions must be positive.
     Paper,
     /// Margins must leave a positive interior.
@@ -121,6 +123,7 @@ pub enum SheetError {
 impl fmt::Display for SheetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Document(error) => error.fmt(f),
             Self::Paper => f.write_str("Paper width and height must be positive"),
             Self::Margins => f.write_str("Margins must leave a positive paper interior"),
             Self::Scale => f.write_str("Both view scale terms must be positive"),
@@ -137,3 +140,9 @@ impl fmt::Display for SheetError {
     }
 }
 impl Error for SheetError {}
+
+impl From<crate::DrawingDocumentError> for SheetError {
+    fn from(error: crate::DrawingDocumentError) -> Self {
+        Self::Document(error)
+    }
+}

@@ -168,3 +168,9 @@ impl From<crate::SheetError> for ModelError {
         Self::Sheet(error)
     }
 }
+
+impl From<crate::DrawingDocumentError> for ModelError {
+    fn from(error: crate::DrawingDocumentError) -> Self {
+        Self::Sheet(error.into())
+    }
+}

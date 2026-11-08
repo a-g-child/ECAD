@@ -188,8 +188,10 @@ Follow the ordered [workspace and sheet task list](workspace-and-sheet-implement
 
 Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents.md): Project → Documents → Sheets, with direct template-backed sheet editing for every actual project drawing. Current v8 Model view/read-only paper behavior remains implemented but is not the intended final workflow.
 
-- [ ] Introduce logical drawing documents with stable identity, ordered sheet ownership, metadata and default templates.
-- [ ] Migrate legacy free views and paper placements without geometry/style/electrical loss, implicit renumbering or silent changes to shared views.
+- [x] Add logical drawing-document IDs, metadata, ordered ownership, transfer/rename/reorder commands and deterministic v9 ownership upgrade.
+- [ ] Add document default templates with the basic frame and unified sheet editor.
+- [x] Preserve legacy sheets, source records and shared/unplaced views in a deterministic initial drawing document without renumbering or copying.
+- [ ] Migrate unplaced views into template-backed sheets and expose shared-view editing behavior when the frame/editor is implemented.
 - [ ] Replace the prototype Model view/read-only paper split with one editable template-backed sheet workspace and validated coordinate input.
 - [ ] Supply a basic standard frame/drawing-info template for every drawing sheet; expand custom table/template editing afterward.
 - [ ] Make pages/sheets the default Project explorer, retaining electrical structure as an alternate mode.

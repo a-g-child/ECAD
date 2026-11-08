@@ -11,6 +11,15 @@ pub enum SheetCommand {
         /// Zero-based final position.
         index: usize,
     },
+    /// Insert exact sheet state into an explicit owner; used by ownership-safe undo.
+    InsertInDocument {
+        /// Validated sheet state.
+        sheet: DrawingSheet,
+        /// Existing owner.
+        document: DrawingDocumentId,
+        /// Owner-local ordinal.
+        index: usize,
+    },
     /// Replace sheet properties without reordering.
     Replace(DrawingSheet),
     /// Remove only a paper sheet, retaining its source view.
@@ -30,6 +39,14 @@ impl SheetCommand {
                 project.insert_sheet(sheet.clone(), *index)?;
                 Self::Remove(sheet.id)
             }
+            Self::InsertInDocument {
+                sheet,
+                document,
+                index,
+            } => {
+                project.insert_sheet_in_document(sheet.clone(), *document, *index)?;
+                Self::Remove(sheet.id)
+            }
             Self::Replace(sheet) => {
                 let old = project.replace_sheet(sheet.clone())?;
                 if old == *sheet {
@@ -38,8 +55,13 @@ impl SheetCommand {
                 Self::Replace(old)
             }
             Self::Remove(id) => {
-                let (sheet, index) = project.remove_sheet(*id)?;
-                Self::Insert { sheet, index }
+                let (document, index) = project.document_sheet_position(*id)?;
+                let (sheet, _) = project.remove_sheet(*id)?;
+                Self::InsertInDocument {
+                    sheet,
+                    document,
+                    index,
+                }
             }
             Self::Move { id, index } => {
                 let old = project.move_sheet(*id, *index)?;

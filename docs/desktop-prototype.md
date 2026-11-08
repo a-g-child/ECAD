@@ -2,7 +2,7 @@
 
 Status: a working Tauri 2 desktop prototype backed by the real Rust document engine. Native macOS/aarch64 build and launch are verified. Chromium workflows test the same bridge and actual temporary project files. Linux/Windows execution, comprehensive native interaction automation, packaging, and large-document rendering validation remain pending.
 
-The headless multi-project session owner is implemented, but this desktop still opens one project at a time. [The implementation task list](workspace-and-sheet-implementation.md) tracks host/bridge/explorer integration and its rework dependencies.
+The headless multi-project session owner and logical drawing-document ownership are implemented, but this desktop still opens one project at a time. [The implementation task list](workspace-and-sheet-implementation.md) tracks host/bridge/explorer integration and its rework dependencies.
 
 Target architecture has since been corrected to Project → Documents → Sheets, with editing directly on template-backed drawing sheets. The Model view/read-only paper behavior documented below remains the current prototype and is scheduled for replacement. Definition editors will be separate workspaces. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
@@ -50,6 +50,8 @@ It is written under `src-tauri/target/debug/` and runs without a Vite server. Th
 
 An untouched loaded project is clean. Actual edits change its core history/checkpoint, and undo/redo can return to a saved state. A report or selection change does not dirty the document. Exact IDs, revisions, and editor values cross the bridge as strings; only scene display coordinates use floating-point millimetres.
 
+Logical document metadata and ordered sheet IDs are exposed by the bridge, but package creation/rename/transfer controls are not yet in the desktop. The current flat sheet manager preserves owners on property edits/removal undo and rejects cross-document flattened moves. Document templates, wrapping unplaced views and the direct sheet editor are subsequent slices.
+
 ## Local verification
 
 Install the pinned browser test runtime once:
@@ -77,4 +79,4 @@ The browser workflows also cover cursor-centred zoom, modifier pan axes, directi
 
 This is a bounded interaction prototype. Wire/symbol placement, sub-element selection, font measurement/export parity, library/default editors, full native menu integration, pane layout preferences, and coherent cable overview/detailed sheet navigation remain planned. SVG terminal captions are derived view feedback; they are not persisted live connection-label templates. The SVG scene is currently a complete projection and has no virtualization or large-view capacity claim. A different renderer/framework can replace it behind the bridge as measured workloads justify.
 
-Project schema v8 adds ordered paper sheets to v7 metadata; v2–v7 files load without invented sheets and upgrade only on an explicit save. User selection, viewport, pane state, bridge input IDs, and transient messages are not written to project files. See [decision 0017](decisions/0017-first-desktop-slice.md), [move proposal lifecycle](decisions/0018-desktop-move-proposals.md), [pointer controls](decisions/0019-cad-pointer-controls.md), [orthogonal transforms](decisions/0020-desktop-orthogonal-transforms.md), [annotation placement](decisions/0021-desktop-annotation-placement.md), [unified multiline text](decisions/0022-unified-multiline-text.md), [retained graphical path placement](decisions/0023-retained-graphical-path-placement.md), and [fixed ribbons](decisions/0024-fixed-tool-ribbons.md).
+Project schema v9 adds logical drawing-document metadata and membership over v8 paper sheets; v2–v8 load with a deterministic Drawings package and preserve existing source records, upgrading only on explicit save. User selection, viewport, pane state, bridge input IDs, and transient messages are not written to project files. See [decision 0017](decisions/0017-first-desktop-slice.md), [move proposal lifecycle](decisions/0018-desktop-move-proposals.md), [pointer controls](decisions/0019-cad-pointer-controls.md), [orthogonal transforms](decisions/0020-desktop-orthogonal-transforms.md), [annotation placement](decisions/0021-desktop-annotation-placement.md), [unified multiline text](decisions/0022-unified-multiline-text.md), [retained graphical path placement](decisions/0023-retained-graphical-path-placement.md), and [fixed ribbons](decisions/0024-fixed-tool-ribbons.md).

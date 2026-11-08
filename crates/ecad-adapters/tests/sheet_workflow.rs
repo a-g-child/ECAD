@@ -54,8 +54,9 @@ fn reviewed_sheet_creation_saves_and_undoes_without_changing_any_source_record()
     let before: Value = serde_json::from_str(&encode_project(&original).unwrap()).unwrap();
     let mut saved: Value =
         serde_json::from_str(&std::fs::read_to_string(file.path()).unwrap()).unwrap();
-    assert_eq!(saved["schema_version"], 8);
+    assert_eq!(saved["schema_version"], 9);
     saved["sheets"] = json!([]);
+    saved["drawing_documents"] = before["drawing_documents"].clone();
     assert_eq!(saved, before);
     d.undo(d.session().revision()).unwrap();
     assert_eq!(d.session().project(), &original);

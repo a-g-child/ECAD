@@ -1,6 +1,6 @@
 # Multi-project workspace and sheet-first implementation tasks
 
-Status: implementation started with a headless ProjectWorkspace owning independent project controllers. The desktop still has one DesktopBridge/project and the v8 Model view/paper split. Checked items are executable foundations; UI migration is not yet complete.
+Status: implementation started with a headless ProjectWorkspace owning independent project controllers. Logical drawing-document ownership and schema-v9 upgrades are also implemented. The desktop still has one DesktopBridge/project and the prototype Model view/paper split. Checked items are executable foundations; UI migration is not yet complete.
 
 ## Target and boundaries
 
@@ -46,11 +46,14 @@ Every actual drawing is edited directly on a CAD-template sheet. Cover, generate
 
 ### 2. Logical drawing documents and migration
 
-- [ ] Add stable logical drawing-document IDs, metadata, ordered sheet ownership and undoable moves/renames.
-- [ ] Define number uniqueness without changing legacy drawing identification implicitly.
-- [ ] Introduce versioned persistence and reviewed deterministic migration for v8 and older files.
-- [ ] Preserve/reconcile legacy shared views explicitly; never silently duplicate electrical objects.
-- [ ] Test migration round trips, identity maps, rollback, source geometry and template references.
+- [x] Add stable logical drawing-document IDs, metadata, ordered sheet ownership and undoable moves/renames.
+- [x] Keep document numbers unique per project and preserve the existing project-wide sheet-number rule without renumbering.
+- [x] Add strict v9 ownership persistence and deterministic default-package upgrades for v2–v8; v1 remains explicit.
+- [ ] Add reviewed migration of unplaced views into template-backed sheets when the frame/editor is ready.
+- [x] Preserve shared and unplaced view references unchanged during ownership upgrade, without electrical copies.
+- [ ] Expose shared-view editing implications in the unified sheet workspace before any explicit materialization policy.
+- [x] Test ownership migration round trips, stable IDs, rollback, source geometry and strict membership validation.
+- [ ] Add document default-template references and their migration/validation with the actual frame implementation.
 
 ### 3. Template-backed sheet editor
 

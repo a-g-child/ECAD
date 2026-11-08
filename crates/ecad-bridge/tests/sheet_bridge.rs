@@ -68,6 +68,7 @@ fn paper_preview_commit_save_and_history_preserve_source_geometry_and_exact_edit
     assert_eq!(snap(&loaded)["sheets"], snap(&b)["sheets"]);
     let mut saved: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
     saved["sheets"] = json!([]);
+    saved["drawing_documents"] = original["drawing_documents"].clone();
     assert_eq!(saved, original);
     action(&mut b, "document.undo");
     assert_eq!(snap(&b)["sheets"], json!([]));

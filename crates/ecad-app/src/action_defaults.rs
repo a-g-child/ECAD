@@ -27,6 +27,16 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "drawing.documents.edit",
+                "Drawing documents",
+                "Drawing",
+                "Manage logical document metadata and sheet ownership",
+                Handler::DrawingDocuments,
+                Scope::Document,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "drawing.sheets.edit",
                 "Sheets and paper",
                 "Drawing",

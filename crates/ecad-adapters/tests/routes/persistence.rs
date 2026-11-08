@@ -34,7 +34,7 @@ fn route_layout_roundtrips_and_exact_undo_tracks_saved_checkpoints() {
 #[test]
 fn malformed_references_geometry_duplicates_and_wrong_electrical_continuity_are_rejected() {
     let text = encode_project(setup().project()).unwrap();
-    assert_eq!(text, include_str!("../fixtures/routed-conveyor-v8.json"));
+    assert_eq!(text, include_str!("../fixtures/routed-conveyor-v9.json"));
     let data: Value = serde_json::from_str(&text).unwrap();
     for (pointer, value) in [
         (

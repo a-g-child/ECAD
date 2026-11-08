@@ -27,7 +27,7 @@ struct PlacementData {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct SheetData {
+pub(crate) struct SheetData {
     id: String,
     number: String,
     title: String,
@@ -96,19 +96,19 @@ impl TryFrom<SheetData> for DrawingSheet {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct SheetProjectData {
-    schema_version: u32,
-    project_id: String,
-    metadata: MetadataData,
-    sheets: Vec<SheetData>,
-    subsystems: Vec<SubsystemData>,
-    devices: Vec<DeviceData>,
-    ports: Vec<PortData>,
-    conductors: Vec<ConductorData>,
-    cables: Vec<CableData>,
-    definitions: Vec<DefinitionData>,
-    instances: Vec<InstanceData>,
-    local_origins: Vec<InstanceData>,
-    drawing: RoutedDrawingData,
+    pub(crate) schema_version: u32,
+    pub(crate) project_id: String,
+    pub(crate) metadata: MetadataData,
+    pub(crate) sheets: Vec<SheetData>,
+    pub(crate) subsystems: Vec<SubsystemData>,
+    pub(crate) devices: Vec<DeviceData>,
+    pub(crate) ports: Vec<PortData>,
+    pub(crate) conductors: Vec<ConductorData>,
+    pub(crate) cables: Vec<CableData>,
+    pub(crate) definitions: Vec<DefinitionData>,
+    pub(crate) instances: Vec<InstanceData>,
+    pub(crate) local_origins: Vec<InstanceData>,
+    pub(crate) drawing: RoutedDrawingData,
 }
 impl From<&Project> for SheetProjectData {
     fn from(project: &Project) -> Self {
