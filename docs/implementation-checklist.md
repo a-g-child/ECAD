@@ -234,3 +234,13 @@ Editable sheets: [decision 0034](decisions/0034-editable-sheet-workspace.md), [s
 Explorer slice: [decision 0035](decisions/0035-project-page-and-electrical-explorers.md), [bridge contracts](../crates/ecad-bridge/tests/explorer_bridge.rs) and [browser workflows](../apps/desktop/tests/explorer.mjs). One desktop project/root is supported; multi-project host integration, document management and page tabs remain pending.
 
 Project-page creation: [decision 0036](decisions/0036-project-template-defaults-and-typed-pages.md), [project/default/list workflows](../crates/ecad-adapters/tests/project_pages.rs), [typed bridge contracts](../crates/ecad-bridge/tests/project_creation_bridge.rs) and [project-menu browser workflows](../apps/desktop/tests/project-pages.mjs). Project schema v11 preserves v2–v10 input; actual PDF generation, annotations/outlines, custom template authoring and native Windows/Linux execution remain pending.
+
+## Consolidated template library/editor plan
+
+See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [requirements/task sequence](template-editor-plan.md). These are planned changes, not working features.
+
+- [ ] Move paper/profile/margin/title-block structure ownership into saved template variants.
+- [ ] Add Libraries access, a separate template editor view, contextual ribbon and template/table/cell properties.
+- [ ] Add ISO/ANSI paper/profile presets with verified edition-specific layout rules and Custom provenance.
+- [ ] Add structured unequal-row tables, coherent sizing/split/merge and stable field bindings.
+- [ ] Implement saved-only sheet assignment with deterministic legacy preservation, project bundling and explicit revision adoption.

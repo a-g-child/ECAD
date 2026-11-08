@@ -39,6 +39,8 @@ Copy profile values into a project explicitly; never resolve issued drawings aga
 
 ## Table and template editing
 
+The [consolidated library editor plan](template-editor-plan.md) and [decision 0037](decisions/0037-library-template-editor-workspace.md) define the next ownership/workflow change: templates are authored in a separate editor view through the Libraries ribbon, with contextual tools and template properties. New sheets select saved variants only. Paper/margins and title-block structure move out of sheet creation/settings after a preservation migration. This is planned; the current v11 controls remain implemented until that migration lands.
+
 Use structured tables with stable cell and field identities. Support row insertion/removal, different cell counts per row, cell split/merge, exact/drag sizing, captions and values within a cell, padding, alignment, borders and shared formatting. Users should not need to construct tables from loose lines or calculate a fine underlying grid. All text supports multiple lines. Bulk cell properties use the common inspector and shared action system.
 
 Cell contents may be fixed text, a typed binding selected from a grouped field catalog, a sheet-specific entry or a simple literal/field combination. Custom field definitions declare identity, label, type, default and required status. Preserve missing bindings as diagnostics; do not guess unknown fields. Show local overrides and provide reset-to-linked-value. Arbitrary executable formulas are outside the first slice.

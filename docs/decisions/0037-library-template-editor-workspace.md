@@ -1,0 +1,17 @@
+# 0037: Saved sheet templates authored in a dedicated library workspace
+
+Status: planned; supersedes the inline-layout-authoring direction of the v11 sheet editor. No runtime behavior is changed by this decision. See the [detailed requirements and implementation sequence](../template-editor-plan.md).
+
+Drawing templates and reusable title blocks are library definitions, edited through Libraries → Drawing templates in a separate editor view. The active workspace kind selects a contextual Template ribbon and template/table/cell properties while keeping File/Libraries accessible. Template drafts own independent undo/redo, save state and close protection, even when an electrical project is also open. They do not create project sheets or participate in project undo.
+
+Saved sheet-template variants own paper dimensions/orientation, an edition-labelled margin/border profile, title-block structure/bindings/styles and explicit schematic/generated-content regions. A reusable title-block revision can be pinned by multiple templates. Standard paper sizes and drawing-layout profiles are separate concepts; exact normative margins and exceptions are verified against their selected standard editions before shipping them as verified profiles.
+
+New sheets select only exact saved template/variant revisions. Project Properties chooses saved per-role defaults; sheet creation collects number/title/owner and sheet-owned values. Paper, margins and cell structure are not edited inline during creation or normal sheet-value editing. A new size/orientation/layout is saved in the library first. Existing pages change only through explicit reviewed reassignment/adoption.
+
+Use structured rectangular cell partitions with stable identities, coherent table commands and derived shared borders. This supports different columns per row and rectangular merge/spans without returning to disconnected loose lines. Typed field identity remains distinct from cell identity, caption and displayed text. Preserve applicable shared properties, literal multiline content and explicit overflow policy.
+
+Library saves produce immutable saved bodies; drafts never enter assignment catalogues. Projects pin and bundle complete template/block bodies for offline reopening. Recommendations, project defaults and adoption are distinct operations. Library writes stay outside project undo and use real storage/concurrent-writer contracts. Template bodies remain separate from electrical subsystem reuse.
+
+Migration must first preserve current enum-based frames and every distinct per-sheet paper/margin layout as deterministic saved project-bundled variants. Keep existing template inheritance/override intent, style inheritance, roles, source geometry, electrical identity, sheet ordering and shared views. Retain diagnostic legacy bodies for existing assignments where new authoring validation would reject old layouts; do not silently normalise margins or require immediate restyling. Only then remove the current free paper/margin controls from sheet creation/properties.
+
+The detailed plan covers initial ISO A0–A4/ANSI A–E presets, profile verification, contextual tools/properties, bindings, list regions, revision/value mapping, persistence boundaries and local acceptance tests. First delivery starts with headless definitions, storage and migration, followed by the actual editor and saved picker. Custom assets and PDF output parity remain separate later work.
