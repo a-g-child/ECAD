@@ -149,7 +149,7 @@ Paths keep their ordered vertices through numeric properties, whole-object movem
 
 ### Shared appearance choices
 
-Template artwork properties, schematic drawing properties and Drawing defaults share generic font-family choices and a named colour palette. Keep using the adjacent exact field for custom fonts or #rrggbb colours. **Custom** retains the existing value; it does not reset inheritance. Font requests support multiple lines. Font availability and metrics depend on the host system.
+Template artwork properties, schematic drawing properties and Drawing defaults share generic font-family choices and native visual colour pickers. Click the colour swatch to choose visually; the exact field below remains available for #rrggbb colours. Custom font requests are also retained. **Custom** retains the existing value; it does not reset inheritance. Font requests support multiple lines. Font availability and metrics depend on the host system.
 
 Template choices use contextual completion, schematic choices apply through the existing property command, and defaults wait for **Apply defaults**. Mixed schematic properties retain their applicable-subset behavior; undo restores inherited versus explicit values. Moving from a template's exact field to its preset selector keeps the field editable without an early blur commit. See [decision 0051](decisions/0051-shared-appearance-controls.md).
 
@@ -161,3 +161,5 @@ Template cell Merge defaults to the first (top-left, reading-order) cell’s cap
 Use the arrow in either pane header to collapse it; use the labelled **Explorer** or **Properties** edge tab to reopen it. View → **Toggle explorer pane** / **Toggle properties pane** and the command palette use the same actions. The two panes collapse independently, freeing space for the drawing. Buttons work with keyboard focus and Enter/Space.
 
 Visibility is shared across project and template views for the current app session. Collapsing preserves mounted controls, selection, scroll and uncommitted schematic fields; it does not edit files or history. Explicit Properties and explorer-mode commands reveal their panes. Finish/cancel active tools and apply/revert pending template fields before toggling. Restart persistence, dragging pane widths and docking are not included. See [decision 0052](decisions/0052-collapsible-workspace-panes.md).
+
+Colour pickers stage native `input` events and send accepted `change` values through the existing property workflow. Mixed or invalid exact values show a labelled unset swatch without assigning a fallback colour to the document. Template picker controls retain native keyboard/focus ownership; default colours remain staged until Apply defaults. Native chooser appearance varies by webview/OS. Browser tests cover DOM event integration, not automation of the OS chooser.

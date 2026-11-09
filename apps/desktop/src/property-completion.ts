@@ -34,6 +34,8 @@ export class PropertyCompletion {
     });
     root.addEventListener('focusout', (e) => {
       if (!field(e.target) || !this.enabled() || this.busy() || !this.pending()) return;
+      // Native picker dialogs may take focus; accepted colour changes own completion.
+      if (e.target instanceof HTMLInputElement && e.target.type === 'color') return;
       // Moving between an exact field and its choices is one composite field edit.
       if (
         e.relatedTarget instanceof Node &&
@@ -52,7 +54,7 @@ export class PropertyCompletion {
     root.addEventListener('change', (e) => {
       if (
         e.target instanceof HTMLSelectElement ||
-        (e.target instanceof HTMLInputElement && e.target.type === 'checkbox')
+        (e.target instanceof HTMLInputElement && ['checkbox', 'color'].includes(e.target.type))
       ) {
         const next = this.address(e.target);
         queueMicrotask(() => void this.finish(next));
@@ -61,6 +63,7 @@ export class PropertyCompletion {
     root.addEventListener('keydown', (e) => {
       if (!field(e.target) || !this.enabled() || e.isComposing || this.composing || this.busy())
         return;
+      if (e.target instanceof HTMLInputElement && e.target.type === 'color') return;
       if (e.key === 'Escape' && this.pending()) {
         e.preventDefault();
         e.stopPropagation();

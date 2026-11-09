@@ -1,19 +1,11 @@
 /** Optional appearance choices preserve exact custom values; owners retain validation and history. */
 import { element } from './ui';
+import { colourPicker } from './colour-picker';
 export type AppearanceKind = 'font' | 'colour';
 const fonts = [
   ['sans-serif', 'Sans serif'],
   ['serif', 'Serif'],
   ['monospace', 'Monospace'],
-] as const;
-const colours = [
-  ['#000000', 'Black'],
-  ['#ffffff', 'White'],
-  ['#808080', 'Grey'],
-  ['#ff0000', 'Red'],
-  ['#008000', 'Green'],
-  ['#0000ff', 'Blue'],
-  ['#ffff00', 'Yellow'],
 ] as const;
 /** Choices emit normal input/change intent, never mutate documents or infer style ownership. */
 export function appearanceControl(
@@ -22,18 +14,22 @@ export function appearanceControl(
   chosen?: () => void,
 ) {
   const root = element('div', 'appearance-control');
+  if (kind === 'colour') {
+    root.append(colourPicker(input, chosen), input);
+    return root;
+  }
   const select = element('select', 'property-input');
   select.setAttribute('aria-label', `${input.getAttribute('aria-label')} preset`);
   const custom = element('option', '', input.placeholder === 'Mixed' ? 'Mixed / custom' : 'Custom');
   custom.value = '';
   select.append(custom);
-  for (const [value, name] of kind === 'font' ? fonts : colours) {
+  for (const [value, name] of fonts) {
     const option = element('option', '', name);
     option.value = value;
     select.append(option);
   }
   const sync = () => {
-    const value = kind === 'colour' ? input.value.toLowerCase() : input.value;
+    const value = input.value;
     select.value = Array.from(select.options).some((o) => o.value === value) ? value : '';
   };
   input.addEventListener('input', sync);

@@ -98,3 +98,30 @@
   min-width: 0;
   width: 100%;
 }
+
+.colour-picker {
+  position: relative;
+  min-width: 0;
+  height: 24px;
+}
+.colour-picker input[type='color'] {
+  padding: 2px;
+  cursor: pointer;
+}
+.colour-picker-hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  font-size: 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--panel);
+}
+.colour-picker-hint[hidden] {
+  display: none;
+}
+.colour-unset:focus-within .colour-picker-hint {
+  outline: 1px solid var(--accent);
+}

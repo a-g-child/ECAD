@@ -19,10 +19,23 @@ export function registerAppearanceTests({ page, button, until, bounds, pressActi
     await p.locator(`.tree-item[data-object="${route}"]`).click({ modifiers: ['Shift'] });
     const colour = p.locator('[data-property="drawing_colour"]');
     await until(
-      async () => (await colour.locator('input').getAttribute('placeholder')) === 'Mixed',
+      async () =>
+        (await colour.locator('input:not([type="color"])').getAttribute('placeholder')) === 'Mixed',
     );
-    assert.equal(await colour.locator('input').getAttribute('placeholder'), 'Mixed');
-    await colour.locator('select').selectOption('#0000ff');
+    assert.equal(
+      await colour.locator('input:not([type="color"])').getAttribute('placeholder'),
+      'Mixed',
+    );
+    const picker = colour.locator('input[type="color"]');
+    await picker.evaluate((n) => {
+      n.value = '#123456';
+      n.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    assert.equal(await colour.locator('input:not([type="color"])').inputValue(), '');
+    await picker.evaluate((n) => {
+      n.value = '#0000ff';
+      n.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await until(
       async () =>
         (await p.locator(`svg [data-object="${route}"] .ink`).getAttribute('stroke')) === '#0000ff',
@@ -33,7 +46,10 @@ export function registerAppearanceTests({ page, button, until, bounds, pressActi
     ])
       assert.equal(await p.locator(`svg [data-object="${id}"] .ink`).getAttribute(attr), '#0000ff');
     await pressAction(p, 'Undo', 'Undo complete');
-    assert.equal(await colour.locator('input').getAttribute('placeholder'), 'Mixed');
+    assert.equal(
+      await colour.locator('input:not([type="color"])').getAttribute('placeholder'),
+      'Mixed',
+    );
     await button(p, 'Drawing defaults and styles').click();
     const dialog = p.getByRole('dialog', { name: 'Drawing defaults', exact: true });
     const exact = dialog.getByRole('textbox', { name: 'Default font family', exact: true });
@@ -46,6 +62,18 @@ export function registerAppearanceTests({ page, button, until, bounds, pressActi
       .getByRole('combobox', { name: 'Default font family preset' })
       .selectOption('serif');
     assert.equal(await exact.inputValue(), 'serif');
+    const defaultColour = dialog.getByRole('textbox', {
+      name: 'Default output colour',
+      exact: true,
+    });
+    const defaultPicker = dialog.getByLabel('Default output colour picker', { exact: true });
+    await defaultColour.fill('#aBcD12');
+    assert.equal(await defaultPicker.inputValue(), '#abcd12');
+    await defaultPicker.evaluate((n) => {
+      n.value = '#654321';
+      n.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    assert.equal(await defaultColour.inputValue(), '#654321');
     await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
     assert.equal(await button(p, 'Redo').isDisabled(), false);
     assert.deepEqual(await bounds(p), before);
@@ -85,13 +113,16 @@ export function registerTemplateAppearanceTests({ page, button, until }) {
     await editor.getByRole('button', { name: 'Place text', exact: true }).click();
     await ready();
     const exact = editor.getByRole('textbox', { name: 'Artwork colour', exact: true });
-    const preset = editor.getByRole('combobox', { name: 'Artwork colour preset', exact: true });
+    const preset = editor.getByLabel('Artwork colour picker', { exact: true });
     const original = await exact.inputValue();
     const pane = await editor.locator('.template-canvas').boundingBox();
     await exact.fill('invalid');
     await preset.focus(); // No blur commit inside the composite field.
     assert.equal(await exact.inputValue(), 'invalid');
-    await preset.selectOption('#ff0000');
+    await preset.evaluate((n) => {
+      n.value = '#ff0000';
+      n.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await ready();
     await until(async () => (await exact.inputValue()) === '#ff0000');
     await command('Undo');

@@ -1,6 +1,6 @@
 # 0051 — Shared appearance controls
 
-Status: implemented for existing font-family and colour fields.
+Status: implemented for existing font-family and colour fields. The initial named colour palette described below has since been replaced by shared native colour pickers; exact hex entry and owner-specific write semantics remain unchanged.
 
 ## Decision
 

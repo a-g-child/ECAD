@@ -139,7 +139,8 @@ async function page({ electrical = true } = {}) {
   return page;
 }
 const tree = (p, target) => p.locator(`.tree-item[data-object="${target}"]`);
-const input = (p, key) => p.locator(`[data-property="${key}"] :is(input,textarea)`);
+const input = (p, key) =>
+  p.locator(`[data-property="${key}"] :is(input:not([type="color"]),textarea)`);
 const button = (p, name) => p.getByRole('button', { name, exact: true });
 async function changed(p, fn) {
   await fn();

@@ -437,3 +437,8 @@ Property-spacing validation: `cargo xtask full`, `cargo xtask ui` (64 workflows)
 See [decision 0052](decisions/0052-collapsible-workspace-panes.md). Session visibility is implemented; persistent preferences, adjustable widths and docking remain pending.
 
 Pane validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (66 browser workflows), and `cargo xtask desktop` passed. The both-collapsed workspace screenshot was visually reviewed. Desktop checks cover host build/lint; native interaction automation and Windows/Linux runtime validation remain pending.
+
+
+- [x] Replace named colour preset menus with shared native visual pickers for template artwork, schematic drawing properties and drawing defaults. Retain optional exact hex entry, distinguish mixed/invalid values and route accepted changes through existing history/validation. Browser coverage exercises staged versus accepted events, mixed-selection undo, invalid-field repair, hex synchronization and default cancellation. Native OS chooser interaction remains a separate manual validation item.
+
+Colour-picker validation: `cargo xtask full`, `cargo xtask ui` (66 browser workflows), and `cargo xtask desktop` passed on macOS/aarch64. Defaults swatch layout was visually reviewed at 960 × 640. Native chooser interaction and Windows/Linux runtime validation remain pending.
