@@ -281,7 +281,7 @@ async function apply(reply: Reply) {
   }
   if (reply.properties) {
     shell.panes.show('properties');
-    renderProperties(shell, reply.properties, selection.length, edit);
+    renderProperties(shell, reply.properties, selection.length, edit, editFonts);
   }
   if (reply.report) renderReport(shell, reply.report);
   if (reply.message) status(reply.message);
@@ -355,7 +355,7 @@ async function inspect() {
   const captured = context();
   const reply = await send({ type: 'inspect', context: captured });
   if (serial === selectionSequence && reply.properties)
-    renderProperties(shell, reply.properties, selection.length, edit);
+    renderProperties(shell, reply.properties, selection.length, edit, editFonts);
 }
 function choose(target: Target | null, add: boolean) {
   if (!snapshot || busy || toolActive()) return;
@@ -459,6 +459,16 @@ async function edit(property: string, value: string) {
   const captured = context();
   await run(async () => {
     const reply = await send({ type: 'edit', context: captured, property, value });
+    await apply(reply);
+    shell.canvas.focus();
+    status('Property updated · one undo operation');
+  });
+}
+async function editFonts(changes: Record<string, string | null>) {
+  if (!snapshot || toolActive()) return;
+  const captured = context();
+  await run(async () => {
+    const reply = await send({ type: 'edit_appearance', context: captured, changes });
     await apply(reply);
     shell.canvas.focus();
     status('Property updated · one undo operation');

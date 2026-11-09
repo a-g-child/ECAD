@@ -161,6 +161,38 @@ pub(crate) fn edit(
         .map(|plan| plan.commands)
         .map_err(|e| BridgeError::new("model", e))
 }
+/// Compound style assignments/defaults retain the normal union applicability and exact history.
+pub(crate) fn appearance(
+    project: &Project,
+    selection: impl IntoIterator<Item = ObjectRef>,
+    changes: BTreeMap<String, Option<String>>,
+) -> Result<Vec<Command>, BridgeError> {
+    let mut proposals = BTreeMap::new();
+    for (key, value) in changes {
+        let id = match key.as_str() {
+            "font_family" => PropertyId::FontFamily,
+            "text_height" => PropertyId::TextHeight,
+            _ => return Err(BridgeError::new("property", "Unsupported font property")),
+        };
+        let edit =
+            match value {
+                None => PropertyEdit::Reset,
+                Some(value) => PropertyEdit::Set(match id {
+                    PropertyId::FontFamily => PropertyValue::Text(value),
+                    _ => PropertyValue::Length(
+                        DrawingLength::new(value.parse().map_err(|_| {
+                            BridgeError::new("value", "Use a positive text height")
+                        })?)
+                        .map_err(|e| BridgeError::new("value", e))?,
+                    ),
+                }),
+            };
+        proposals.insert(id, edit);
+    }
+    property_patch_plan(project, selection, proposals)
+        .map(|p| p.commands)
+        .map_err(|e| BridgeError::new("model", e))
+}
 pub(crate) fn stroke(project: &Project, target: ObjectRef) -> (String, f64) {
     let colour = match project
         .property(target, PropertyId::DrawingColour)

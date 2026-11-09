@@ -214,7 +214,10 @@ export class TemplateProperties {
       this.focusArtwork(this.artworkId);
       return;
     }
-    if (this.blanket) this.root.querySelector<HTMLInputElement>('.font-palette input')?.focus();
+    if (this.blanket)
+      this.root
+        .querySelector<HTMLInputElement>('.font-palette textarea,.font-palette input')
+        ?.focus();
     else (this.selected ? this.caption : this.name).focus();
   }
 }

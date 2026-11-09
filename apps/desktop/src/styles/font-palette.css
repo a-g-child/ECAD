@@ -73,3 +73,36 @@
   text-decoration: underline;
   text-align: center;
 }
+.font-palette-family-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+.font-palette-basic {
+  display: flex;
+  align-items: end;
+}
+.font-palette-basic .font-palette-size {
+  flex: 1;
+}
+.font-palette-basic .font-palette-colour {
+  flex: 0 0 48px;
+}
+.font-palette-basic .font-reset {
+  width: 100%;
+}
+.font-palette-alignment:empty,
+.font-palette-tools:empty {
+  display: none;
+}
+.font-family-control.appearance-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 0;
+}
+.font-family-value {
+  resize: none;
+  overflow: auto;
+  white-space: pre;
+}
+.font-family-choices {
+  padding: 0;
+}

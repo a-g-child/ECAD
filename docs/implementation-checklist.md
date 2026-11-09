@@ -480,3 +480,12 @@ Palette validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (70 wor
 - [x] Use **Default** in interface text instead of **Inherited**; offer each palette property through **Default…**, and keep explicit Default choices available alongside mixed style/alignment states. Regression checks cover individual font/alignment defaults and exact undo without changing other formatting.
 
 Default-label validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. The table structural regression now waits for the new draft before capturing identities, rather than accepting the previous template’s identical cell count.
+
+### Shared font palette across editors
+
+- [x] One capability-aware palette and font-family list for table caption/content, template text artwork, schematic text properties and drawing-default fonts.
+- [x] Preserve custom/multiline families, exact physical heights, mixed selections and owner-specific commit/cancel behavior; hide unsupported formatting controls.
+- [x] Schematic font/height assignments and Default resets share a validated, revision-guarded batch with one undo step. Invalid changes fail atomically; inapplicable route properties are skipped.
+- [x] Keep drawing-wide colour/stroke controls outside the font-only adapter, and retain explicit artwork/default values where no parent default exists.
+
+Shared-palette validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. Bridge regression covers compound edits, Default resets, mixed applicability, stale/invalid rejection and exact undo/redo. Native Windows/Linux interaction remains unverified.

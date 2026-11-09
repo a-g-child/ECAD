@@ -2,6 +2,7 @@
 import { dimension, dimensionSummary, readDimension, writeDimension } from './dimensions';
 import type { PropertyRow } from './types';
 import { element } from './ui';
+import { schematicFonts } from './schematic-font-properties';
 import { appearanceControl } from './appearance-controls';
 import type { Shell } from './shell';
 import { textEditor, applyTextKey } from './text';
@@ -10,6 +11,7 @@ export function renderProperties(
   rows: PropertyRow[],
   count: number,
   edit: (key: string, value: string) => Promise<void>,
+  editFonts: (changes: Record<string, string | null>) => Promise<void>,
 ) {
   const scroll = shell.inspector.scrollTop;
   shell.inspector.replaceChildren();
@@ -33,7 +35,10 @@ export function renderProperties(
     'inspector-summary',
   );
   shell.inspector.append(summary);
+  const fonts = schematicFonts(rows, editFonts);
+  if (fonts) shell.inspector.append(fonts.root);
   for (const row of rows) {
+    if (fonts?.keys.includes(row.key)) continue;
     const group = element('div', 'property-row');
     group.dataset.property = row.key;
     const label = element('label', 'property-label', row.label);
@@ -81,8 +86,8 @@ export function renderProperties(
       });
       const editor = element('div', 'property-editor');
       editor.append(
-        row.key === 'font_family' || row.kind === 'colour'
-          ? appearanceControl(input, row.kind === 'colour' ? 'colour' : 'font', () => {
+        row.kind === 'colour'
+          ? appearanceControl(input, 'colour', () => {
               void edit(row.key, readDimension(input));
             })
           : input,

@@ -330,6 +330,18 @@ impl DesktopBridge {
                     .map_err(|e| BridgeError::new("edit", e))?;
                 Ok(self.snapshot())
             }
+            Request::EditAppearance { context, changes } => {
+                let context = self.context(context)?;
+                let commands = properties::appearance(
+                    self.document.session().project(),
+                    context.selection,
+                    changes,
+                )?;
+                self.document
+                    .execute_batch(context.revision.expect("validated"), commands)
+                    .map_err(|e| BridgeError::new("edit", e))?;
+                Ok(self.snapshot())
+            }
             Request::Action {
                 context,
                 action,

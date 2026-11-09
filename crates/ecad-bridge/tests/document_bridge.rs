@@ -198,3 +198,80 @@ fn exact_i64_properties_and_u128_identities_never_cross_the_bridge_as_lossy_js_n
         .unwrap();
     assert_eq!(position["value"], format!("{}, {}", i64::MAX, i64::MIN));
 }
+
+#[test]
+fn compound_font_edits_and_defaults_are_atomic_and_restore_exact_properties() {
+    let mut bridge = DesktopBridge::demo().unwrap();
+    let selection = json!([target("label", 1), target("route", 1)]);
+    let inspect = |bridge: &mut DesktopBridge| {
+        let ctx = context(bridge, selection.clone());
+        request(bridge, json!({"type":"inspect","context":ctx})).unwrap()["properties"].clone()
+    };
+    let original = inspect(&mut bridge);
+    let ctx = context(&bridge, selection.clone());
+    request(
+        &mut bridge,
+        json!({"type":"edit_appearance","context":ctx,
+        "changes":{"font_family":"Custom\nFamily","text_height":"4200"}}),
+    )
+    .unwrap();
+    let explicit = inspect(&mut bridge);
+    for (key, value) in [("font_family", "Custom\nFamily"), ("text_height", "4200")] {
+        let row = explicit
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["key"] == key)
+            .unwrap();
+        assert_eq!(row["value"], value);
+        assert_eq!(row["applicable"], 1);
+        assert_eq!(row["unsupported"], 1);
+    }
+    assert_eq!(
+        request(
+            &mut bridge,
+            json!({"type":"edit_appearance","context":ctx,
+        "changes":{"font_family":null}})
+        )
+        .unwrap_err()
+        .code,
+        "stale"
+    );
+    let ctx = context(&bridge, selection.clone());
+    let before = snapshot(&bridge);
+    for changes in [
+        json!({"font_family":"Arial","text_height":"0"}),
+        json!({"drawing_colour":null}),
+    ] {
+        assert!(
+            request(
+                &mut bridge,
+                json!({"type":"edit_appearance","context":ctx,"changes":changes})
+            )
+            .is_err()
+        );
+        assert_eq!(snapshot(&bridge), before);
+    }
+    request(
+        &mut bridge,
+        json!({"type":"edit_appearance","context":ctx,
+        "changes":{"font_family":null,"text_height":null}}),
+    )
+    .unwrap();
+    let defaults = inspect(&mut bridge);
+    for key in ["font_family", "text_height"] {
+        let row = defaults
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["key"] == key)
+            .unwrap();
+        assert_eq!(row["origin"], "Project defaults");
+    }
+    action(&mut bridge, "document.undo", "1").unwrap();
+    assert_eq!(inspect(&mut bridge), explicit);
+    action(&mut bridge, "document.undo", "2").unwrap();
+    assert_eq!(inspect(&mut bridge), original);
+    action(&mut bridge, "document.redo", "3").unwrap();
+    assert_eq!(inspect(&mut bridge), explicit);
+}

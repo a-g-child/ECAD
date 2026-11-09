@@ -63,8 +63,7 @@ export function registerTableTextUnits({ page, button, until }) {
       if (name === 'Close template editor') await editor.waitFor({ state: 'hidden' });
       else await ready();
     };
-    const field = (name) =>
-      editor.getByRole(name.endsWith(' font') ? 'combobox' : 'textbox', { name, exact: true });
+    const field = (name) => editor.getByRole('textbox', { name, exact: true });
     const edit = async (name, value) => {
       await field(name).fill(value);
       await field(name).press('Control+Enter');

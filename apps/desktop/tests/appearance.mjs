@@ -14,6 +14,14 @@ export function registerAppearanceTests({ page, button, until, bounds, pressActi
       (await font.locator('textarea').getAttribute('title')).includes('Object override'),
     );
     assert.match(await font.locator('textarea').getAttribute('title'), /Object override/);
+    await p
+      .getByRole('combobox', { name: 'Use default text formatting', exact: true })
+      .selectOption('font');
+    await until(async () =>
+      (await font.locator('textarea').getAttribute('title')).includes('Project defaults'),
+    );
+    await pressAction(p, 'Undo', 'Undo complete');
+    assert.match(await font.locator('textarea').getAttribute('title'), /Object override/);
     await pressAction(p, 'Undo', 'Undo complete');
     assert.match(await font.locator('textarea').getAttribute('title'), /Project defaults/);
     await p.locator(`.tree-item[data-object="${route}"]`).click({ modifiers: ['Shift'] });
@@ -55,11 +63,11 @@ export function registerAppearanceTests({ page, button, until, bounds, pressActi
     const exact = dialog.getByRole('textbox', { name: 'Default font family', exact: true });
     await exact.fill('Custom\nFamily');
     assert.equal(
-      await dialog.getByRole('combobox', { name: 'Default font family preset' }).inputValue(),
+      await dialog.getByRole('combobox', { name: 'Default font family choices' }).inputValue(),
       '',
     );
     await dialog
-      .getByRole('combobox', { name: 'Default font family preset' })
+      .getByRole('combobox', { name: 'Default font family choices' })
       .selectOption('serif');
     assert.equal(await exact.inputValue(), 'serif');
     const defaultColour = dialog.getByRole('textbox', {
@@ -112,29 +120,39 @@ export function registerTemplateAppearanceTests({ page, button, until }) {
       .fill('Appearance');
     await editor.getByRole('button', { name: 'Place text', exact: true }).click();
     await ready();
-    const exact = editor.getByRole('textbox', { name: 'Artwork colour', exact: true });
+    const ink = editor.locator('[data-template-graphic] text');
     const preset = editor.getByLabel('Artwork colour picker', { exact: true });
-    const original = await exact.inputValue();
+    const original = await ink.getAttribute('fill');
     const pane = await editor.locator('.template-canvas').boundingBox();
-    await exact.fill('invalid');
-    await preset.focus(); // No blur commit inside the composite field.
-    assert.equal(await exact.inputValue(), 'invalid');
+    await preset.evaluate((n) => {
+      n.value = '#abcdef';
+      n.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    assert.equal(await ink.getAttribute('fill'), original);
     await preset.evaluate((n) => {
       n.value = '#ff0000';
       n.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await ready();
-    await until(async () => (await exact.inputValue()) === '#ff0000');
+    await until(async () => (await ink.getAttribute('fill')) === '#ff0000');
     await command('Undo');
     await ready();
-    assert.equal(await exact.inputValue(), original);
+    assert.equal(await ink.getAttribute('fill'), original);
     const font = editor.getByRole('textbox', { name: 'Artwork font', exact: true });
+    const choices = editor.getByRole('combobox', { name: 'Artwork font choices', exact: true });
+    await font.fill('');
+    await choices.focus();
+    assert.equal(await font.inputValue(), '');
+    await choices.selectOption('serif');
+    await ready();
+    assert.equal(await font.inputValue(), 'serif');
+
     await font.fill('Custom\nFamily');
     await font.press('Control+Enter');
     await ready();
     assert.equal(await font.inputValue(), 'Custom\nFamily');
     await editor
-      .getByRole('combobox', { name: 'Artwork font preset', exact: true })
+      .getByRole('combobox', { name: 'Artwork font choices', exact: true })
       .selectOption('monospace');
     await ready();
     await command('Undo');

@@ -5,7 +5,9 @@ import type { Context, DrawingDefaults, Reply } from './types';
 import type { Shell } from './shell';
 import { element } from './ui';
 import { appearanceControl } from './appearance-controls';
-import { textEditor, applyTextKey } from './text';
+import { applyTextKey } from './text';
+import { FontPalette } from './font-palette';
+import type { FontProperties } from './font-properties';
 import { send, inputId, errorText } from './transport';
 export class DefaultsDialog {
   private dialog = element('dialog', 'settings-dialog');
@@ -14,6 +16,8 @@ export class DefaultsDialog {
   private applyButton = element('button', 'plain', 'Apply defaults');
   private cancel = element('button', 'plain', 'Cancel');
   private fields = new Map<keyof DrawingDefaults, HTMLInputElement | HTMLTextAreaElement>();
+  private fontHost = element('div');
+  private fontValues: FontProperties = {};
   private captured: Context | null = null;
   private pending = false;
   get active() {
@@ -35,24 +39,20 @@ export class DefaultsDialog {
         'Project defaults update drawing properties that use the default. Object, view and named-style overrides take precedence.',
       ),
     );
+    this.form.append(this.fontHost);
     const definitions: [keyof DrawingDefaults, string][] = [
-      ['font', 'Default font family'],
-      ['text_height', 'Default text height (µm)'],
       ['stroke_width', 'Default stroke width (µm)'],
       ['colour', 'Default output colour'],
     ];
     for (const [key, caption] of definitions) {
       const label = element('label', 'settings-field');
-      const field =
-        key === 'font'
-          ? textEditor('property-input property-text', 2)
-          : element('input', 'property-input');
+      const field = element('input', 'property-input');
       field.setAttribute('aria-label', caption);
       if (key === 'text_height' || key === 'stroke_width') field.inputMode = 'numeric';
       this.fields.set(key, field);
       label.append(
         element('span', '', caption),
-        key === 'font' || key === 'colour' ? appearanceControl(field, key) : field,
+        key === 'colour' ? appearanceControl(field, key) : field,
       );
       this.form.append(label);
       if (key === 'text_height' || key === 'stroke_width')
@@ -98,8 +98,29 @@ export class DefaultsDialog {
       writeDimension(field, values[key]);
       field.dispatchEvent(new Event('input'));
     }
+    this.fontValues = { font: values.font, height: values.text_height };
+    const palette = new FontPalette(
+      [this.fontValues],
+      'Default',
+      () => {},
+      () => {},
+      {
+        defaults: [],
+        labels: { font: 'Default font family', height: 'Default text height (µm)' },
+      },
+    );
+    palette.root.addEventListener('keydown', (e) => {
+      if (
+        e.key === 'Enter' &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !(e.target instanceof HTMLTextAreaElement)
+      )
+        e.preventDefault();
+    });
+    this.fontHost.replaceChildren(palette.root);
     this.dialog.showModal();
-    this.fields.get('font')!.focus();
+    palette.root.querySelector('textarea')!.focus();
   }
   private close() {
     this.dialog.close();
@@ -117,6 +138,8 @@ export class DefaultsDialog {
       const defaults = Object.fromEntries(
         [...this.fields].map(([key, field]) => [key, readDimension(field)]),
       );
+      defaults.font = this.fontValues.font ?? '';
+      defaults.text_height = this.fontValues.height ?? '';
       const reply = await send({
         type: 'update_defaults',
         context: this.captured,

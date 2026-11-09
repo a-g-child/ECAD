@@ -4,6 +4,7 @@ import type { TemplateGraphic, TemplateVariant } from './types';
 import { element } from './ui';
 import { appearanceControl, type AppearanceKind } from './appearance-controls';
 import { textEditor } from './text';
+import { FontPalette } from './font-palette';
 import { TemplateRuns } from './template-runs';
 export class TemplateArtwork {
   readonly root = element('section', 'template-artwork');
@@ -94,12 +95,25 @@ export class TemplateArtwork {
       (g.kind === 'text' ? ['X', 'Y'] : ['X', 'Y', 'Width', 'Height']).forEach((label, n) =>
         this.field(details, `Artwork ${label} (µm)`, g.bounds[n], (v) => (g.bounds[n] = v)),
       );
-      this.field(details, 'Artwork colour', g.colour, (v) => (g.colour = v), false, 'colour');
       if (g.kind === 'text') {
-        this.field(details, 'Artwork font', g.font, (v) => (g.font = v), true, 'font');
-        this.field(details, 'Artwork text height (µm)', g.text_height, (v) => (g.text_height = v));
+        const style = { font: g.font, height: g.text_height, colour: g.colour };
+        details.append(
+          new FontPalette(
+            [style],
+            'Artwork',
+            () => {
+              g.font = style.font;
+              g.text_height = style.height;
+              g.colour = style.colour;
+              this.changed();
+            },
+            () => {},
+            { defaults: [], labels: { height: 'Artwork text height (µm)' } },
+          ).root,
+        );
         details.append(new TemplateRuns(g.contents, this.changed).runFields);
       } else {
+        this.field(details, 'Artwork colour', g.colour, (v) => (g.colour = v), false, 'colour');
         this.field(details, 'Artwork line width (µm)', g.stroke_width, (v) => (g.stroke_width = v));
       }
       if (g.kind === 'polyline') {

@@ -1,9 +1,9 @@
 /** Compact font controls over explicit style references; the owner validates and commits edits. */
-import type { TemplateTextStyle } from './types';
+import type { FontProperties, FontProperty, FontPaletteOptions } from './font-properties';
 import { element } from './ui';
 import { dimension, readDimension } from './dimensions';
+import { textEditor } from './text';
 import { colourPicker } from './colour-picker';
-let fontListId = 0;
 const fontNames = [
   'Arial',
   'Calibri',
@@ -16,68 +16,122 @@ const fontNames = [
   'serif',
   'monospace',
 ];
-type Key = keyof TemplateTextStyle;
+type Key = FontProperty;
 export class FontPalette {
   readonly root = element('section', 'font-palette');
   constructor(
-    private styles: TemplateTextStyle[],
+    private styles: FontProperties[],
     private title: string,
-    private changed: () => void,
+    private changed: (key: Key) => void,
     private complete: () => void,
+    private options: FontPaletteOptions = {},
   ) {
     this.root.setAttribute('aria-label', `${title} formatting`);
     this.root.append(element('h4', 'font-palette-heading', `${title} formatting`));
     const familyRow = element('div', 'font-palette-family');
     const family = this.input('font', `${title} font`);
-    family.title = 'Choose a font family or type its name. Availability depends on this computer.';
-    const list = element('datalist');
-    list.id = `font-families-${++fontListId}`;
-    for (const name of fontNames) {
-      const option = element('option');
-      option.value = name;
-      list.append(option);
+    family.title +=
+      '\nChoose a font family or type its name. Availability depends on this computer.';
+    const familyControl = element('div', 'font-family-control appearance-control');
+    const choices = element('select', 'property-input font-family-choices');
+    choices.setAttribute('aria-label', `${family.getAttribute('aria-label')} choices`);
+    choices.title = 'Choose font family';
+    const custom = element('option', '', 'Custom');
+    custom.value = '';
+    choices.append(custom);
+    if (this.defaultKeys().includes('font')) {
+      const option = element('option', '', 'Default');
+      option.value = '@default';
+      choices.append(option);
     }
-    family.setAttribute('list', list.id);
-    familyRow.append(family, list, this.style());
+    for (const name of fontNames) {
+      const option = element('option', '', name);
+      option.value = name;
+      choices.append(option);
+    }
+    const sync = () => {
+      choices.value = fontNames.includes(family.value) ? family.value : '';
+    };
+    family.addEventListener('input', sync);
+    choices.addEventListener('change', () => {
+      if (!choices.value) return;
+      family.value = choices.value === '@default' ? '' : choices.value;
+      family.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    sync();
+    familyControl.append(family, choices);
+    familyRow.append(familyControl);
+    if (this.supports('bold') && this.supports('italic')) familyRow.append(this.style());
+    else familyRow.classList.add('font-palette-family-only');
     const tools = element('div', 'font-palette-tools');
-    const height = this.input('height', `${title} height (µm)`);
-    const size = element('label', 'font-palette-size');
-    const sizeLabel = element('span', '', 'Height (µm)');
-    dimension(height, `${title} height (µm)`, sizeLabel);
-    // The control's accessible name follows units; a visible label uses the same shared conversion.
-    size.append(sizeLabel, height);
-    tools.append(size, this.toggle('bold', 'B'), this.toggle('italic', 'I'));
-    const colour = this.input('colour', `${title} colour`);
-    colour.type = 'hidden';
-    const picker = colourPicker(colour);
-    picker.classList.add('font-palette-colour');
-    picker.querySelector('.colour-picker-hint')!.textContent = 'A';
-    tools.append(picker, colour);
+    if (this.supports('height')) {
+      const height = this.input('height', `${title} height (µm)`);
+      const size = element('label', 'font-palette-size');
+      const sizeLabel = element('span', '', 'Height (µm)');
+      dimension(height, height.getAttribute('aria-label')!, sizeLabel);
+      size.append(sizeLabel, height);
+      tools.append(size);
+    }
+    for (const [key, glyph] of [
+      ['bold', 'B'],
+      ['italic', 'I'],
+    ] as const)
+      if (this.supports(key)) tools.append(this.toggle(key, glyph));
+    if (this.supports('colour')) {
+      const colour = this.input('colour', `${title} colour`);
+      colour.type = 'hidden';
+      const picker = colourPicker(colour);
+      picker.classList.add('font-palette-colour');
+      picker.querySelector('.colour-picker-hint')!.textContent = 'A';
+      tools.append(picker, colour);
+    }
     const alignment = element('div', 'font-palette-alignment');
-    alignment.append(
-      this.choice('horizontal', 'horizontal alignment', ['left', 'center', 'right']),
-      this.choice('vertical', 'vertical alignment', ['top', 'middle', 'bottom']),
-      this.defaults(),
-    );
+    if (this.supports('horizontal'))
+      alignment.append(
+        this.choice('horizontal', 'horizontal alignment', ['left', 'center', 'right']),
+      );
+    if (this.supports('vertical'))
+      alignment.append(this.choice('vertical', 'vertical alignment', ['top', 'middle', 'bottom']));
+    if (this.defaultKeys().length) alignment.append(this.defaults());
+    if (!this.supports('bold')) tools.classList.add('font-palette-basic');
+    if (!this.supports('horizontal')) alignment.classList.add('font-palette-basic');
     this.root.append(familyRow, tools, alignment);
   }
+  private supports(key: Key) {
+    return this.styles.some((s) => key in s);
+  }
+  private defaultKeys() {
+    return (this.options.defaults ?? (Object.keys(this.styles[0]) as Key[])).filter((key) =>
+      this.supports(key),
+    );
+  }
   private state(key: Key) {
-    const values = this.styles.map((s) => s[key]);
-    return { value: values[0], mixed: values.some((v) => v !== values[0]) };
+    const values = this.styles.filter((s) => key in s).map((s) => s[key]);
+    return {
+      value: values[0],
+      mixed: this.options.mixed?.includes(key) || values.some((v) => v !== values[0]),
+    };
   }
   private set(key: Key, value: string | boolean | null) {
-    for (const style of this.styles) (style as Record<Key, unknown>)[key] = value;
-    this.changed();
+    for (const style of this.styles) if (key in style) (style as Record<Key, unknown>)[key] = value;
+    this.options.mixed = this.options.mixed?.filter((k) => k !== key);
+    this.changed(key);
   }
+  private input(key: 'font', name: string): HTMLTextAreaElement;
+  private input(key: 'height' | 'colour', name: string): HTMLInputElement;
   private input(key: 'font' | 'height' | 'colour', name: string) {
-    const field = element('input', 'property-input');
+    const field =
+      key === 'font'
+        ? textEditor('property-input font-family-value', 1)
+        : element('input', 'property-input');
     const state = this.state(key);
     field.value = state.mixed || state.value == null ? '' : String(state.value);
-    field.placeholder = state.mixed ? 'Mixed' : 'Default';
-    field.setAttribute('aria-label', name);
+    field.placeholder = state.mixed ? 'Mixed' : this.defaultKeys().includes(key) ? 'Default' : '';
+    field.setAttribute('aria-label', this.options.labels?.[key] ?? name);
+    this.options.field?.(key, field);
     field.addEventListener('input', () => {
       const value = key === 'height' ? readDimension(field) : field.value;
-      this.set(key, value === '' ? null : value);
+      this.set(key, value === '' && this.defaultKeys().includes(key) ? null : value);
     });
     return field;
   }
@@ -173,16 +227,14 @@ export class FontPalette {
       ['horizontal', 'Horizontal alignment'],
       ['vertical', 'Vertical alignment'],
     ]) {
+      if (value !== 'all' && !this.defaultKeys().includes(value as Key)) continue;
       const option = element('option', '', label);
       option.value = value;
       select.append(option);
     }
     select.addEventListener('change', () => {
       if (!select.value) return;
-      const keys: Key[] =
-        select.value === 'all'
-          ? ['font', 'height', 'bold', 'italic', 'colour', 'horizontal', 'vertical']
-          : [select.value as Key];
+      const keys: Key[] = select.value === 'all' ? this.defaultKeys() : [select.value as Key];
       for (const key of keys) this.set(key, null);
     });
     return select;

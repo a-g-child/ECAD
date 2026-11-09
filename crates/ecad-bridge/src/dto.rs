@@ -176,6 +176,13 @@ pub enum Request {
         /// Literal editable value, never an inferred identity.
         value: String,
     },
+    /// Apply supported graphical appearance overrides/defaults in one guarded undo operation.
+    EditAppearance {
+        /// Captured original selection/revision.
+        context: serde_json::Value,
+        /// Stable property keys; null removes an override instead of copying a default value.
+        changes: std::collections::BTreeMap<String, Option<String>>,
+    },
     /// Prepare initial values for a new, uncommitted paper sheet.
     NewSheet {
         /// Optional typed creation flow; absent retains the existing sheet-manager draft behavior.
