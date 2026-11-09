@@ -1,3 +1,4 @@
+import { insertVariable } from './template-variable-helpers.mjs';
 /** Real Rust table partitions, exact history and local immutable publication through Chromium. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -91,17 +92,17 @@ export function registerTemplateTableTests({ page, button, until, project, root 
     await editor(p)
       .getByRole('textbox', { name: 'Cell caption', exact: true })
       .fill('Custom field');
-    await editor(p).getByRole('button', { name: 'Add text content', exact: true }).click();
+    await editor(p).getByRole('button', { name: 'Apply properties', exact: true }).click();
+    await until(
+      async () =>
+        !(await ribbon(p)
+          .getByRole('button', { name: 'Draw template text', exact: true })
+          .isDisabled()),
+    );
     await editor(p)
-      .getByRole('textbox', { name: 'Content 1 text', exact: true })
+      .getByRole('textbox', { name: 'Text and variables', exact: true })
       .fill('New cell\nMultiline text');
-    await editor(p).getByRole('button', { name: 'Add text content', exact: true }).click();
-    await editor(p)
-      .getByRole('combobox', { name: 'Content 2 type', exact: true })
-      .selectOption('field');
-    await editor(p)
-      .getByRole('combobox', { name: 'Content 2 variable', exact: true })
-      .selectOption('sheet.title');
+    await insertVariable(editor(p), 'sheet.title');
     await editor(p).getByRole('button', { name: 'Apply properties', exact: true }).click();
     await until(
       async () =>

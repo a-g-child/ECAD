@@ -1,3 +1,4 @@
+import { insertVariable } from './template-variable-helpers.mjs';
 /** Inline typed text stays transient until one closed creation commit. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -32,7 +33,7 @@ export function registerTemplateInlineText({ page, button, until }) {
       await p.mouse.click(q.x, q.y);
       await inline.waitFor();
     };
-    const text = () => inline.getByRole('textbox', { name: 'Content 1 text', exact: true });
+    const text = () => inline.getByRole('textbox', { name: 'Text and variables', exact: true });
     await p.getByRole('tab', { name: 'Library', exact: true }).click();
     await button(p, 'Drawing templates').click();
     await editor.waitFor();
@@ -63,13 +64,7 @@ export function registerTemplateInlineText({ page, button, until }) {
     assert.equal(await text().inputValue(), 'Office\nw');
     assert.equal(commits, 0);
     await text().fill('Office\n  Site\n');
-    await inline.getByRole('button', { name: 'Add text content', exact: true }).click();
-    await inline
-      .getByRole('combobox', { name: 'Content 2 type', exact: true })
-      .selectOption('field');
-    await inline
-      .getByRole('combobox', { name: 'Content 2 variable', exact: true })
-      .selectOption('project.title');
+    await insertVariable(inline, 'project.title');
     await text().dispatchEvent('compositionstart');
     await text().press('Control+Enter');
     assert.equal(commits, 0);
@@ -83,12 +78,8 @@ export function registerTemplateInlineText({ page, button, until }) {
     assert.equal(await art.count(), 1);
     const id = await art.getAttribute('data-template-graphic');
     assert.equal(
-      await editor.getByRole('textbox', { name: 'Content 1 text', exact: true }).inputValue(),
-      'Office\n  Site\n',
-    );
-    assert.equal(
-      await editor.getByRole('combobox', { name: 'Content 2 variable', exact: true }).inputValue(),
-      'project.title',
+      await editor.getByRole('textbox', { name: 'Text and variables', exact: true }).inputValue(),
+      'Office\n  Site\n{{project.title}}',
     );
     await command('Undo');
     await ready();
@@ -106,9 +97,8 @@ export function registerTemplateInlineText({ page, button, until }) {
         .evaluate((node) => node === document.activeElement),
       true,
     );
-    await inline
-      .getByRole('combobox', { name: 'Content 1 type', exact: true })
-      .selectOption('field');
+    await text().fill('');
+    await insertVariable(inline, 'company.name');
     await until(async () => (await art.count()) === 1);
     await p.setViewportSize({ width: 960, height: 640 });
     // ResizeObserver clamps the overlay on the next rendering frame.
@@ -130,7 +120,7 @@ export function registerTemplateInlineText({ page, button, until }) {
         overlay.x + overlay.width <= canvas.x + canvas.width + 1 &&
         overlay.y + overlay.height <= canvas.y + canvas.height + 1,
     );
-    await inline.getByRole('combobox', { name: 'Content 1 variable', exact: true }).press('Escape');
+    await text().press('Escape');
     await inline.waitFor({ state: 'hidden' });
     await ready();
     assert.equal(await art.count(), 0);
@@ -151,12 +141,8 @@ export function registerTemplateInlineText({ page, button, until }) {
     await ready();
     await editor.locator('[data-template-artwork]').click();
     assert.equal(
-      await editor.getByRole('textbox', { name: 'Content 1 text', exact: true }).inputValue(),
-      'Office\n  Site\n',
-    );
-    assert.equal(
-      await editor.getByRole('combobox', { name: 'Content 2 variable', exact: true }).inputValue(),
-      'project.title',
+      await editor.getByRole('textbox', { name: 'Text and variables', exact: true }).inputValue(),
+      'Office\n  Site\n{{project.title}}',
     );
     await command('Close template editor');
     await editor.waitFor({ state: 'hidden' });

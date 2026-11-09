@@ -135,7 +135,7 @@ Template gestures and schematic annotations now share preview scheduling. A sche
 
 ### Inline template text creation
 
-Choose **Draw template text**, then click the starting point. A canvas-local editor opens with multiline literal/variable controls; use **Add text content** to append runs and choose **Variable** for a typed placeholder. **Place text** or Ctrl/Cmd+Enter creates the complete object once; Enter inserts newlines, and Escape/**Cancel text** leaves no object or undo entry. Invalid text remains editable. The existing IME protections apply.
+Choose **Draw template text**, then click the starting point. A canvas-local editor opens with one multiline **Text and variables** field. Use **Insert variable** or right-click the field to choose a grouped variable and insert it at the caret. **Place text** or Ctrl/Cmd+Enter creates the complete object once; Enter inserts newlines, and Escape/**Cancel text** leaves no object or undo entry. Invalid text remains editable. The existing IME protections apply.
 
 Click placement starts with a 60 × 20 mm box limited by the remaining paper. Drag a box instead when a specific extent is needed; both workflows edit contents before committing. The floating editor stays inside the canvas at smaller window sizes. Text appearance and exact box dimensions remain available in the contextual inspector after placement. Overflow uses the existing clipping/marker policy. Library previews show placeholders; sheet values resolve only in their project context. See [decision 0049](decisions/0049-inline-template-text-placement.md).
 
@@ -163,3 +163,10 @@ Use the arrow in either pane header to collapse it; use the labelled **Explorer*
 Visibility is shared across project and template views for the current app session. Collapsing preserves mounted controls, selection, scroll and uncommitted schematic fields; it does not edit files or history. Explicit Properties and explorer-mode commands reveal their panes. Finish/cancel active tools and apply/revert pending template fields before toggling. Restart persistence, dragging pane widths and docking are not included. See [decision 0052](decisions/0052-collapsible-workspace-panes.md).
 
 Colour pickers stage native `input` events and send accepted `change` values through the existing property workflow. Mixed or invalid exact values show a labelled unset swatch without assigning a fallback colour to the document. Template picker controls retain native keyboard/focus ownership; default colours remain staged until Apply defaults. Native chooser appearance varies by webview/OS. Browser tests cover DOM event integration, not automation of the OS chooser.
+
+
+### Inline text variables
+
+Template cell contents, free text properties and new canvas text share one **Text and variables** editor. Write ordinary multiline text, put the cursor where the variable belongs, then use **Insert variable** or right-click the field. Expand a category and choose its field; it appears inline as `{{project.title}}`. A selected text range is replaced. Escape/Cancel closes only the picker and restores your selection.
+
+The textarea retains local text undo/redo; field completion and drawing placement keep their existing commit rules. Templates still save typed variables separately from literal text. To display literal `{{` characters use `\{{`; literal backslashes display escaped as `\\`. An unknown complete variable is rejected until corrected or escaped. See [decision 0053](decisions/0053-inline-template-variable-editing.md).

@@ -39,7 +39,7 @@ export class PropertyCompletion {
       // Moving between an exact field and its choices is one composite field edit.
       if (
         e.relatedTarget instanceof Node &&
-        e.target.closest('.appearance-control')?.contains(e.relatedTarget)
+        e.target.closest('.appearance-control,[data-variable-editor]')?.contains(e.relatedTarget)
       )
         return;
       // Buttons own explicit commands/structural edits; do not race their click handlers.

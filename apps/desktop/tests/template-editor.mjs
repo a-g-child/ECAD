@@ -56,10 +56,8 @@ export function registerTemplateEditorTests({ page, button, until, project, root
     const first = editor(p).locator('[data-template-cell]').first();
     await first.click({ button: 'right' });
     await field(p, 'Cell caption').fill('Organization\nOffice');
-    await editor(p)
-      .getByRole('combobox', { name: 'Content 1 type', exact: true })
-      .selectOption('literal');
-    await field(p, 'Content 1 text').fill('Literal company\nSecond line');
+    await apply(p);
+    await field(p, 'Text and variables').fill('Literal company\nSecond line');
     await apply(p);
     assert.equal(
       await editor(p)

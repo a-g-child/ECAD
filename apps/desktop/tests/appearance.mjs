@@ -108,7 +108,7 @@ export function registerTemplateAppearanceTests({ page, button, until }) {
     await p.mouse.click(q.x, q.y);
     await editor
       .getByRole('region', { name: 'Place template text', exact: true })
-      .getByRole('textbox', { name: 'Content 1 text', exact: true })
+      .getByRole('textbox', { name: 'Text and variables', exact: true })
       .fill('Appearance');
     await editor.getByRole('button', { name: 'Place text', exact: true }).click();
     await ready();
@@ -141,6 +141,8 @@ export function registerTemplateAppearanceTests({ page, button, until }) {
     await ready();
     assert.equal(await font.inputValue(), 'Custom\nFamily');
     assert.deepEqual(await editor.locator('.template-canvas').boundingBox(), pane);
+    await command('Discard template draft');
+    await editor.waitFor({ state: 'hidden' });
     assert.deepEqual(p.errors, []);
     await p.close();
   });

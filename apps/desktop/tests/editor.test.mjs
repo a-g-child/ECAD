@@ -1,3 +1,4 @@
+import { registerInlineVariables } from './inline-variables.mjs';
 import { registerWorkspacePaneTests } from './workspace-panes.mjs';
 import { registerAppearanceTests, registerTemplateAppearanceTests } from './appearance.mjs';
 import { registerTemplatePaths } from './template-paths.mjs';
@@ -574,3 +575,5 @@ registerTemplateInlineText({ page, button, until });
 registerTemplatePaths({ page, button, until });
 
 registerTemplateAppearanceTests({ page, button, until });
+
+registerInlineVariables({ page, button, until, root });

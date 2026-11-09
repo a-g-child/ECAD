@@ -442,3 +442,15 @@ Pane validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (66 browse
 - [x] Replace named colour preset menus with shared native visual pickers for template artwork, schematic drawing properties and drawing defaults. Retain optional exact hex entry, distinguish mixed/invalid values and route accepted changes through existing history/validation. Browser coverage exercises staged versus accepted events, mixed-selection undo, invalid-field repair, hex synchronization and default cancellation. Native OS chooser interaction remains a separate manual validation item.
 
 Colour-picker validation: `cargo xtask full`, `cargo xtask ui` (66 browser workflows), and `cargo xtask desktop` passed on macOS/aarch64. Defaults swatch layout was visually reviewed at 960 × 640. Native chooser interaction and Windows/Linux runtime validation remain pending.
+
+
+### Inline template variables
+
+- [x] Replace stacked content rows with one multiline text/variable field in template cells, artwork properties and canvas text creation.
+- [x] Shared button/right-click grouped variable picker with captured caret/range, cancellation, focus restoration and isolated keyboard handling.
+- [x] Reversible placeholder notation preserves literal lookalikes and unchanged legacy runs; typed bindings remain core-validated with unchanged persistence.
+- [x] Cover native textarea insertion undo/redo, IME, invalid bindings, literal escaping, exact proposal runs, coherent creation and existing save/reopen workflows.
+
+See [decision 0053](decisions/0053-inline-template-variable-editing.md). Rich-text chips, new variable scopes and schematic typed annotations remain pending; native webview text-history parity requires platform validation.
+
+Inline-variable validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (68 browser workflows), and `cargo xtask desktop` passed. The grouped picker screenshot was visually reviewed. Native webview text-history/composition behavior and Windows/Linux runtime validation remain pending.

@@ -77,7 +77,7 @@ export class TemplateArtwork {
         });
         this.render();
         this.changed();
-        this.root.querySelector('details:last-of-type')?.setAttribute('open', '');
+        this.root.querySelector(':scope > details:last-of-type')?.setAttribute('open', '');
       });
       this.root.append(b);
     }

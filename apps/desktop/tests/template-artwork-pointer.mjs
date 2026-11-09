@@ -38,7 +38,7 @@ export function registerTemplateArtworkPointerTests({ page, button, until }) {
       await p.mouse.up();
       const inline = editor.getByRole('region', { name: 'Place template text', exact: true });
       if (await inline.count()) {
-        await inline.getByRole('textbox', { name: 'Content 1 text', exact: true }).fill('Text');
+        await inline.getByRole('textbox', { name: 'Text and variables', exact: true }).fill('Text');
         await inline.getByRole('button', { name: 'Place text', exact: true }).click();
       }
       await ready();

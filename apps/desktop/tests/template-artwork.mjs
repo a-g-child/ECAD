@@ -1,3 +1,4 @@
+import { insertVariable } from './template-variable-helpers.mjs';
 /** Template artwork runs through real Rust history, validation and library saves. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,15 +39,11 @@ export function registerTemplateArtworkTests({ page, button, until }) {
     await apply();
     await command('Template text and graphics');
     await editor.getByRole('button', { name: 'Add text', exact: true }).click();
-    let detail = editor.locator('.template-artwork details').first();
-    await detail.getByRole('textbox', { name: 'Content 1 text', exact: true }).fill('Company\n');
-    await detail.getByRole('button', { name: 'Add text content', exact: true }).click();
+    let detail = editor.locator('.template-artwork > details').first();
     await detail
-      .getByRole('combobox', { name: 'Content 2 type', exact: true })
-      .selectOption('field');
-    await detail
-      .getByRole('combobox', { name: 'Content 2 variable', exact: true })
-      .selectOption('company.name');
+      .getByRole('textbox', { name: 'Text and variables', exact: true })
+      .fill('Company\n');
+    await insertVariable(detail, 'company.name');
     await apply();
     const art = editor.locator('[data-template-graphic]');
     assert.equal(await art.count(), 1);
@@ -63,15 +60,15 @@ export function registerTemplateArtworkTests({ page, button, until }) {
     assert.equal(await art.count(), 4);
     assert.equal(await art.locator('ellipse').count(), 1);
     assert.equal(await art.locator('polyline').count(), 1);
-    detail = editor.locator('.template-artwork details').last();
-    await detail.locator('summary').click();
+    detail = editor.locator('.template-artwork > details').last();
+    await detail.locator(':scope > summary').click();
     await detail
       .getByRole('textbox', { name: 'Local points (x,y per line)', exact: true })
       .fill('0,0\n40000,0\n40000,15000');
     await apply();
     assert.equal(await art.locator('polyline').getAttribute('points'), '10,10 50,10 50,25');
-    detail = editor.locator('.template-artwork details').first();
-    await detail.locator('summary').click();
+    detail = editor.locator('.template-artwork > details').first();
+    await detail.locator(':scope > summary').click();
     await detail
       .getByRole('textbox', { name: 'Artwork Width (µm)', exact: true })
       .fill('999999999');
