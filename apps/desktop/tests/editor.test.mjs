@@ -1,3 +1,4 @@
+import { registerTemplatePaths } from './template-paths.mjs';
 import { registerTemplateInlineText } from './template-inline-text.mjs';
 import { registerTemplateClickPlacement } from './template-click-placement.mjs';
 import { registerTemplateContextualTools } from './template-contextual-tools.mjs';
@@ -562,3 +563,5 @@ registerTemplateContextualTools({ page, button, until });
 registerTemplateClickPlacement({ page, button, until });
 
 registerTemplateInlineText({ page, button, until });
+
+registerTemplatePaths({ page, button, until });

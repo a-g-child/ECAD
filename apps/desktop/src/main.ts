@@ -280,6 +280,7 @@ async function apply(reply: Reply) {
   const artworkTools = {
     template_draw_text: 'text',
     template_draw_line: 'line',
+    template_draw_polyline: 'polyline',
     template_draw_rectangle: 'rectangle',
     template_draw_ellipse: 'ellipse',
     template_artwork_move: 'move',
@@ -494,7 +495,8 @@ document.addEventListener('keydown', (event) => {
     return;
   if (templateEditor.gestureActive) {
     event.preventDefault();
-    if (event.key === 'Escape') void templateEditor.cancelGesture();
+    if (!templateEditor.gestureKey(event) && event.key === 'Escape')
+      void templateEditor.cancelGesture();
     return;
   }
   if (event.key === 'Escape' && drawing.cancelGesture()) {

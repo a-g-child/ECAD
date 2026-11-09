@@ -176,3 +176,57 @@ fn inline_text_contents_remain_transient_validate_strictly_and_commit_one_comple
     action(&mut b, "placement.cancel").unwrap();
     assert_eq!(variant(&b), created);
 }
+
+#[test]
+fn complete_path_proposals_keep_vertices_and_reject_mixed_invalid_or_obsolete_commits() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut b = bridge(&dir);
+    assert_eq!(
+        action(&mut b, "template.draw.polyline").unwrap()["request"],
+        "template_draw_polyline"
+    );
+    let original = variant(&b);
+    let edit =
+        json!({"points":[["50000","40000"],["10000","40000"],["10000","20000"],["50000","40000"]]});
+    let valid = preview(&mut b, "template.draw.polyline", ID, edit.clone()).unwrap();
+    assert_eq!(variant(&b), original);
+    assert!(action(&mut b, "document.save").is_err());
+    for invalid in [
+        json!({"points":[]}),
+        json!({"points":[["0","0"],["-1","0"]]}),
+        json!({"points":[["0","0"],["0","0"]]}),
+        json!({"points":[["0","0"],["10","10"]],"start":["0","0"]}),
+        json!({"points":[["0","0"],["10","10"]],"contents":[]}),
+    ] {
+        assert!(preview(&mut b, "template.draw.polyline", ID, invalid).is_err());
+        assert!(commit(&mut b, valid["token"].clone()).is_err());
+        assert_eq!(variant(&b), original);
+    }
+    let valid = preview(&mut b, "template.draw.polyline", ID, edit.clone()).unwrap();
+    commit(&mut b, valid["token"].clone()).unwrap();
+    let created = variant(&b);
+    assert_eq!(
+        created["graphics"][0]["points"],
+        json!([
+            ["40000", "20000"],
+            ["0", "20000"],
+            ["0", "0"],
+            ["40000", "20000"]
+        ])
+    );
+    action(&mut b, "document.undo").unwrap();
+    assert_eq!(variant(&b), original);
+    preview(
+        &mut b,
+        "template.draw.polyline",
+        ID,
+        json!({"start":null,"end":null}),
+    )
+    .unwrap();
+    action(&mut b, "placement.cancel").unwrap();
+    action(&mut b, "document.redo").unwrap();
+    assert_eq!(variant(&b), created);
+    assert!(preview(&mut b, "template.artwork.move", ID, edit).is_err());
+    action(&mut b, "placement.cancel").unwrap();
+    assert_eq!(variant(&b), created);
+}

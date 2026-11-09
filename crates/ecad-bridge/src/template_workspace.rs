@@ -205,6 +205,7 @@ impl DesktopBridge {
                     match kind {
                         Some(TemplatePrimitive::Text) => "template_draw_text",
                         Some(TemplatePrimitive::Line) => "template_draw_line",
+                        Some(TemplatePrimitive::Polyline) => "template_draw_polyline",
                         Some(TemplatePrimitive::Rectangle) => "template_draw_rectangle",
                         Some(TemplatePrimitive::Ellipse) => "template_draw_ellipse",
                         None => "template_artwork_move",

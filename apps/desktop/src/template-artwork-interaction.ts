@@ -1,11 +1,12 @@
 /** One-shot pointer artwork tools; authoritative previews and closed commits stay in Rust. */
 import type { Context, Reply, TemplateGraphic, TemplateVariant } from './types';
 import { TemplatePreview } from './template-preview';
+import { TemplatePathPlacement } from './template-path-placement';
 import { TemplateTextPlacement } from './template-text-placement';
 import { TemplateGesture } from './template-gesture';
 import { paperPoint } from './template-table-selection';
 type Point = { x: number; y: number };
-type Kind = 'text' | 'line' | 'rectangle' | 'ellipse' | 'move';
+type Kind = 'text' | 'polyline' | 'line' | 'rectangle' | 'ellipse' | 'move';
 export class TemplateArtworkInteraction {
   private model: TemplateVariant | null = null;
 
@@ -13,6 +14,7 @@ export class TemplateArtworkInteraction {
   private drag: { start: Point; pointer: number | null; screen: Point; second: boolean } | null =
     null;
   private ending = false;
+  private path: TemplatePathPlacement | null = null;
   private textPlacement: TemplateTextPlacement | null = null;
   private gesture: TemplateGesture;
   get active() {
@@ -35,6 +37,7 @@ export class TemplateArtworkInteraction {
           this.preview.render({ ...this.model, graphics: graphics ?? this.model.graphics }, false);
         this.preview.svg.classList.toggle('artwork-invalid', invalid);
         this.paintAnchor();
+        this.path?.paint();
       },
       apply,
       () => {
@@ -63,6 +66,11 @@ export class TemplateArtworkInteraction {
     svg.addEventListener(
       'pointermove',
       (e) => {
+        if (this.path && !this.ending) {
+          const p = paperPoint(svg, e);
+          if (p) this.path.hover(p);
+          return;
+        }
         if (
           this.drag &&
           !this.ending &&
@@ -95,6 +103,21 @@ export class TemplateArtworkInteraction {
     const id = original?.id ?? crypto.randomUUID().replaceAll('-', '');
     this.arm(kind, id, original);
     this.gesture.propose({ start: null, end: null });
+    if (kind === 'polyline') {
+      this.path = new TemplatePathPlacement(
+        this.preview.svg,
+        (edit) => this.gesture.propose(edit),
+        async () => {
+          if (!(await this.gesture.ready())) return false;
+          await this.finish(true);
+          return true;
+        },
+        () => this.cancel(),
+        this.status,
+      );
+      this.preview.svg.focus();
+      return;
+    }
     this.status(
       kind === 'move'
         ? 'Drag the selected artwork · Escape cancels'
@@ -126,6 +149,13 @@ export class TemplateArtworkInteraction {
       return;
     const p = paperPoint(this.preview.svg, e);
     if (!p) return;
+    if (this.path) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      this.preview.svg.focus();
+      this.path.add(p);
+      return;
+    }
     const hit = (e.target as Element).closest<SVGElement>('[data-template-graphic]')?.dataset
       .templateGraphic;
     if (!this.tool) {
@@ -258,6 +288,11 @@ export class TemplateArtworkInteraction {
     anchor.setAttribute('pointer-events', 'none');
     svg.append(anchor);
   }
+  key(event: KeyboardEvent) {
+    if (!this.path) return false;
+    this.path.key(event);
+    return true;
+  }
   async cancel() {
     if (this.active && !this.ending) await this.finish(false);
   }
@@ -268,6 +303,8 @@ export class TemplateArtworkInteraction {
       await this.gesture.finish(commit);
     } finally {
       const pointer = this.drag?.pointer;
+      this.path?.close();
+      this.path = null;
       this.textPlacement?.close();
       this.textPlacement = null;
       this.drag = null;

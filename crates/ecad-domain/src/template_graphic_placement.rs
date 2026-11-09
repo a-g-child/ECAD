@@ -1,4 +1,4 @@
-//! Checked two-point artwork placement; source vertices and variable runs survive translation.
+//! Checked two-point and multi-vertex artwork placement; source vertices and variable runs survive translation.
 use crate::{
     FrameRect, SheetPaper, TemplateError, TemplateGraphic, TemplateGraphicId, TemplateGraphicShape,
     TemplateTextRun,
@@ -10,12 +10,53 @@ pub enum TemplatePrimitive {
     Text,
     /// Ordered line endpoints, including horizontal and vertical lines.
     Line,
+    /// Ordered multi-point graphical path, retained as one polyline.
+    Polyline,
     /// Rectangular outline.
     Rectangle,
     /// Ellipse bounded by the two corners.
     Ellipse,
 }
 impl TemplateGraphic {
+    /// Build one ordered paper path, retaining closing and nonconsecutive repeated vertices.
+    /// Bounds and local vertices are exact integer micrometres; appearance uses creation defaults.
+    /// # Errors
+    /// Rejects fewer than two or more than 4096 points, consecutive duplicates, negative,
+    /// overflowing or out-of-paper coordinates. No electrical connection is created.
+    pub fn from_vertices(
+        id: TemplateGraphicId,
+        points: &[[i64; 2]],
+        paper: &SheetPaper,
+    ) -> Result<Self, TemplateError> {
+        if !(2..=4096).contains(&points.len()) {
+            return Err(TemplateError::Graphic);
+        }
+        let points = points
+            .iter()
+            .map(|p| {
+                Ok([
+                    u32::try_from(p[0]).map_err(|_| TemplateError::Graphic)?,
+                    u32::try_from(p[1]).map_err(|_| TemplateError::Graphic)?,
+                ])
+            })
+            .collect::<Result<Vec<_>, TemplateError>>()?;
+        let x = points.iter().map(|p| p[0]).min().expect("nonempty path");
+        let y = points.iter().map(|p| p[1]).min().expect("nonempty path");
+        let right = points.iter().map(|p| p[0]).max().expect("nonempty path");
+        let bottom = points.iter().map(|p| p[1]).max().expect("nonempty path");
+        let mut graphic = Self::between(
+            id,
+            TemplatePrimitive::Line,
+            [i64::from(x), i64::from(y)],
+            [i64::from(right), i64::from(bottom)],
+            paper,
+        )?;
+        graphic.shape = TemplateGraphicShape::Polyline(
+            points.into_iter().map(|p| [p[0] - x, p[1] - y]).collect(),
+        );
+        graphic.validate(paper)?;
+        Ok(graphic)
+    }
     /// Create artwork between two signed paper points, in micrometres.
     /// Reverse drags normalize bounds while retaining line endpoint order.
     /// # Errors
@@ -47,7 +88,7 @@ impl TemplateGraphic {
             TemplatePrimitive::Text => {
                 TemplateGraphicShape::Text(vec![TemplateTextRun::Literal("Text".into())])
             }
-            TemplatePrimitive::Line => {
+            TemplatePrimitive::Line | TemplatePrimitive::Polyline => {
                 TemplateGraphicShape::Polyline(vec![[a[0] - x, a[1] - y], [b[0] - x, b[1] - y]])
             }
             TemplatePrimitive::Rectangle => TemplateGraphicShape::Rectangle,

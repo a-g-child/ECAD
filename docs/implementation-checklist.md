@@ -372,7 +372,8 @@ Contextual-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui`
 - [x] Accept schematic text finish while a preview is loading; validate the final text/position and retain invalid input for correction.
 - [x] Regression workflows for delayed canvas clicks, delayed numeric/text finish, invalid final proposals, cancellation, exact history and anchor cleanup.
 - [x] Inline template text/variable placement.
-- [ ] Successive-vertex template paths, shared appearance controls and further tool extraction.
+- [x] Successive-vertex template paths.
+- [ ] Shared appearance controls and further tool extraction.
 
 See [decision 0048](decisions/0048-shared-preview-queue-and-click-placement.md). Ordered schematic path intents remain separate from replaceable pointer previews. Persistence and electrical connectivity are unchanged.
 
@@ -390,3 +391,16 @@ Shared-preview validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` 
 See [decision 0049](decisions/0049-inline-template-text-placement.md). New text defaults to a bounded 60 × 20 mm box; appearance and exact box editing remain contextual properties. Persistence, template pins and electrical geometry are unchanged.
 
 Inline-text validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (61 browser workflows), and `cargo xtask desktop` passed. A final focused inline workflow and frontend build also passed after refining focus restoration on invalid placement. Desktop checks are host build/lint, not native interaction automation; Windows/Linux runtime validation remains pending.
+
+
+### Multi-point template paths
+
+- [x] Registered ribbon/palette Path action; successive clicks, Backspace revision, Enter finish and Escape cancellation.
+- [x] Shared schematic/template path key policy with composition and repeat protection.
+- [x] Complete ordered vertex previews preserve rapid clicks across delayed responses; hover remains a visual guide.
+- [x] Checked signed paper coordinates, closed outlines, 2–4096 vertex bounds, invalid-preview token rejection and recoverable invalid drafts.
+- [x] Whole-object movement, numeric vertex editing, exact single-step history and saved-library reopen using existing polyline persistence.
+
+See [decision 0050](decisions/0050-template-multi-point-paths.md). Template snapping, numeric placement, orthogonal constraints and pointer vertex handles remain pending; these paths do not affect electrical topology.
+
+Path validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (62 browser workflows), and `cargo xtask desktop` passed. Desktop checks cover host build/lint; native interaction automation and Windows/Linux runtime validation remain pending.

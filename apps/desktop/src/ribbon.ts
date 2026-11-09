@@ -166,6 +166,7 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
         commands: [
           command('Text', 'Draw template text', 'properties', 'template.draw.text'),
           command('Line', 'Draw template line', 'move', 'template.draw.line'),
+          command('Path', 'Draw template path', 'move', 'template.draw.polyline'),
           command('Rectangle', 'Draw template rectangle', 'blocks', 'template.draw.rectangle'),
           command('Ellipse', 'Draw template ellipse', 'blocks', 'template.draw.ellipse'),
         ],

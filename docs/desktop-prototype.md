@@ -138,3 +138,10 @@ Template gestures and schematic annotations now share preview scheduling. A sche
 Choose **Draw template text**, then click the starting point. A canvas-local editor opens with multiline literal/variable controls; use **Add text content** to append runs and choose **Variable** for a typed placeholder. **Place text** or Ctrl/Cmd+Enter creates the complete object once; Enter inserts newlines, and Escape/**Cancel text** leaves no object or undo entry. Invalid text remains editable. The existing IME protections apply.
 
 Click placement starts with a 60 × 20 mm box limited by the remaining paper. Drag a box instead when a specific extent is needed; both workflows edit contents before committing. The floating editor stays inside the canvas at smaller window sizes. Text appearance and exact box dimensions remain available in the contextual inspector after placement. Overflow uses the existing clipping/marker policy. Library previews show placeholders; sheet values resolve only in their project context. See [decision 0049](decisions/0049-inline-template-text-placement.md).
+
+
+### Template paths
+
+Choose **Path** in the Template ribbon (also **Draw template path** in command search). Click each vertex, use **Backspace** to revise, then **Enter** to create the whole path in one undo step. The hovering segment is only a guide. Click the initial point again to close an outline. **Escape** cancels without changing the template or redo history; invalid geometry stays in the draft for correction.
+
+Paths keep their ordered vertices through numeric properties, whole-object movement, undo/redo and library save/reopen. The limit is 4096 vertices. These are graphical paper-space paths; schematic snapping, orthogonal constraints and electrical connections are not implied. See [decision 0050](decisions/0050-template-multi-point-paths.md).

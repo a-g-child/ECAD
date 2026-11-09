@@ -73,3 +73,52 @@ fn collapsed_negative_extreme_and_outside_geometry_reject_without_clamping() {
     assert!(g.placed_at([280000, 200000], &paper).is_err());
     assert_eq!(g.bounds.x, 0);
 }
+
+#[test]
+fn multi_vertex_paths_preserve_order_closure_zero_extent_axes_and_checked_limits() {
+    let paper = SheetPaper::default();
+    let id = TemplateGraphicId::new(1).unwrap();
+    let points = [
+        [50000, 40000],
+        [10000, 40000],
+        [10000, 20000],
+        [50000, 40000],
+    ];
+    let g = TemplateGraphic::from_vertices(id, &points, &paper).unwrap();
+    assert_eq!(
+        g.bounds,
+        FrameRect {
+            x: 10000,
+            y: 20000,
+            width: 40000,
+            height: 20000
+        }
+    );
+    assert_eq!(
+        g.shape,
+        TemplateGraphicShape::Polyline(vec![[40000, 20000], [0, 20000], [0, 0], [40000, 20000]])
+    );
+    assert_eq!(g.placed_at([0, 0], &paper).unwrap().shape, g.shape);
+    assert_eq!(
+        TemplateGraphic::from_vertices(id, &[[0, 0], [0, 100], [0, 200]], &paper)
+            .unwrap()
+            .bounds
+            .width,
+        0
+    );
+    for points in [
+        vec![],
+        vec![[0, 0]],
+        vec![[0, 0], [0, 0]],
+        vec![[-1, 0], [1, 0]],
+        vec![[0, 0], [i64::MAX, 0]],
+        vec![[0, 0], [300000, 0]],
+    ] {
+        assert!(TemplateGraphic::from_vertices(id, &points, &paper).is_err());
+    }
+    let points: Vec<_> = (0..4096).map(|i| [i, 0]).collect();
+    assert!(TemplateGraphic::from_vertices(id, &points, &paper).is_ok());
+    let mut oversized = points;
+    oversized.push([4096, 0]);
+    assert!(TemplateGraphic::from_vertices(id, &oversized, &paper).is_err());
+}

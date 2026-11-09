@@ -2,6 +2,7 @@
 import type { Context, PathRow, Reply, Target } from './types';
 import type { Shell } from './shell';
 import type { DrawingCanvas } from './canvas';
+import { pathCommand } from './path-keys';
 import { element } from './ui';
 import { send, inputId, errorText } from './transport';
 interface Placement {
@@ -290,18 +291,10 @@ export class PathTool {
       event.preventDefault();
       return true;
     }
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      this.cancelAction();
-    }
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      this.finish();
-    }
-    if (event.key === 'Backspace') {
-      event.preventDefault();
-      this.back();
-    }
+    const command = pathCommand(event);
+    if (command === 'cancel') this.cancelAction();
+    if (command === 'finish') this.finish();
+    if (command === 'back') this.back();
     if (event.key === 'Tab' && this.pointer) {
       event.preventDefault();
       if (this.valid && this.row?.candidates) {

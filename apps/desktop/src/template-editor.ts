@@ -45,6 +45,9 @@ export class TemplateEditor {
   get gestureActive() {
     return (this.interaction?.active ?? false) || (this.artworkInteraction?.active ?? false);
   }
+  gestureKey(event: KeyboardEvent) {
+    return this.artworkInteraction.key(event);
+  }
   cancelGesture() {
     return this.artworkInteraction.active
       ? this.artworkInteraction.cancel()
@@ -461,7 +464,7 @@ export class TemplateEditor {
       if (this.active) this.form.focus();
     }, 0);
   }
-  draw(kind: 'text' | 'line' | 'rectangle' | 'ellipse' | 'move') {
+  draw(kind: 'text' | 'line' | 'polyline' | 'rectangle' | 'ellipse' | 'move') {
     this.artworkInteraction.start(kind);
   }
   artwork() {

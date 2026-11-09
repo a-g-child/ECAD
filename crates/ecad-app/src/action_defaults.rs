@@ -513,6 +513,11 @@ impl ActionRegistry {
                 Some(ecad_domain::TemplatePrimitive::Line),
             ),
             (
+                "template.draw.polyline",
+                "Draw template path",
+                Some(ecad_domain::TemplatePrimitive::Polyline),
+            ),
+            (
                 "template.draw.rectangle",
                 "Draw template rectangle",
                 Some(ecad_domain::TemplatePrimitive::Rectangle),
