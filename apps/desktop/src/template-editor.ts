@@ -71,6 +71,7 @@ export class TemplateEditor {
     return { ...this.selected, variant: this.variant.id };
   }
   actionEnabled(id: string, fallback: boolean) {
+    if (id.startsWith('workspace.panes.') && this.fieldsPending) return false;
     return this.actionState.enabled(id, fallback);
   }
   private refreshActions() {
@@ -107,6 +108,7 @@ export class TemplateEditor {
     const lh = element('div', 'pane-header');
     lh.append(element('strong', '', 'Drawing templates'));
     left.append(lh);
+    shell.panes.attach('explorer', left, lh);
     this.catalog.setAttribute('aria-label', 'Saved template variants');
     left.append(this.catalog);
     const open = element('button', 'plain', 'Open selected template');
@@ -126,6 +128,7 @@ export class TemplateEditor {
     const rh = element('div', 'pane-header');
     rh.append(element('strong', '', 'Template properties'));
     right.append(rh);
+    shell.panes.attach('properties', right, rh);
     this.form = new TemplateProperties(
       () => this.changed(),
       () => void this.work(() => this.commitProperties()),
@@ -283,7 +286,7 @@ export class TemplateEditor {
     this.interaction.update(this.variant, null);
     this.renderProperties();
     this.paintSelection();
-    if (focus) this.form.focus();
+    if (focus) this.focusProperties();
   }
   private clearSelection() {
     if (this.fieldsPending) {
@@ -323,7 +326,7 @@ export class TemplateEditor {
   private select(table: TemplateTable, cell: TemplateCell) {
     if (!this.selectGroup(table, [cell])) return;
     this.interaction.selection(table, [cell]);
-    this.form.focus();
+    this.focusProperties();
   }
   update(view: TemplateView | null) {
     const previous = this.model;
@@ -368,7 +371,7 @@ export class TemplateEditor {
     const props = element('button', 'tree-item', 'Template properties');
     props.dataset.templatePaper = '';
     props.addEventListener('click', () => {
-      if (this.clearSelection()) this.form.focus();
+      if (this.clearSelection()) this.focusProperties();
     });
     this.structure.append(props);
     for (const table of this.variant.tables) {
@@ -459,9 +462,13 @@ export class TemplateEditor {
   focus() {
     this.preview.svg.focus();
   }
+  private focusProperties() {
+    this.shell.panes.show('properties');
+    this.form.focus();
+  }
   properties() {
     setTimeout(() => {
-      if (this.active) this.form.focus();
+      if (this.active) this.focusProperties();
     }, 0);
   }
   draw(kind: 'text' | 'line' | 'polyline' | 'rectangle' | 'ellipse' | 'move') {
@@ -473,6 +480,7 @@ export class TemplateEditor {
     this.interaction.update(this.variant!, null);
     this.renderProperties();
     this.paintSelection();
+    this.shell.panes.show('properties');
     this.form.focusArtwork();
   }
   tables(operation: string) {

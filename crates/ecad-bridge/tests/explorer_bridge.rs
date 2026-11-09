@@ -12,12 +12,22 @@ fn context(s: &Value) -> Value {
 fn modes_share_the_dispatcher_preserve_document_history_and_reject_replayed_or_stale_requests() {
     let mut b = DesktopBridge::demo().unwrap();
     let before = snapshot(&b);
-    for (mode, request) in [
-        ("pages", "explorer_pages"),
-        ("electrical", "explorer_electrical"),
+    for (action, request) in [
+        ("workspace.explorer.pages", "explorer_pages"),
+        ("workspace.explorer.electrical", "explorer_electrical"),
+        ("workspace.panes.explorer", "toggle_explorer"),
+        ("workspace.panes.properties", "toggle_properties"),
     ] {
         let s = snapshot(&b);
-        let value = json!({"type":"action","action":format!("workspace.explorer.{mode}"),"context":context(&s),"input":s["next_input"]});
+        assert!(
+            s["actions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|a| a["id"] == action && a["enabled"] == true)
+        );
+        let value =
+            json!({"type":"action","action":action,"context":context(&s),"input":s["next_input"]});
         let reply = serde_json::to_value(
             b.handle(serde_json::from_value::<Request>(value.clone()).unwrap())
                 .unwrap(),

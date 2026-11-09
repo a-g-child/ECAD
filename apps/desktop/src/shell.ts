@@ -1,4 +1,5 @@
 /** The shell owns every pane boundary. Content scrolls inside its own grid cell. */
+import { WorkspacePanes } from './workspace-panes';
 import { element, icon } from './ui';
 import { createQuickAccess, createRibbon } from './ribbon';
 export function createShell(action: (id: string) => void) {
@@ -41,6 +42,8 @@ export function createShell(action: (id: string) => void) {
       'View',
       [
         ['Fit drawing', 'drawing.view.fit'],
+        ['Toggle explorer pane', 'workspace.panes.explorer'],
+        ['Toggle properties pane', 'workspace.panes.properties'],
         ['Project pages', 'workspace.explorer.pages'],
         ['Electrical explorer', 'workspace.explorer.electrical'],
         ['Command palette', 'workspace.palette'],
@@ -68,6 +71,7 @@ export function createShell(action: (id: string) => void) {
   menu.append(title);
   const ribbon = createRibbon(action, () => canvas.focus());
   const workspace = element('main', 'workspace');
+  const panes = new WorkspacePanes(workspace, action);
   const left = element('aside', 'pane project-pane');
   left.dataset.focus = 'tree';
   left.setAttribute('aria-label', 'Project explorer');
@@ -122,6 +126,8 @@ export function createShell(action: (id: string) => void) {
   inspectorHeader.append(element('strong', '', 'Properties'), inspectorCount);
   const inspector = element('div', 'inspector');
   right.append(inspectorHeader, inspector);
+  panes.attach('explorer', left, leftHeader);
+  panes.attach('properties', right, inspectorHeader);
   workspace.append(left, center, right);
   const status = element('footer', 'statusbar');
   const statusText = element('span', 'status-message', 'Connecting to the document engine…');
@@ -141,6 +147,7 @@ export function createShell(action: (id: string) => void) {
   return {
     app,
     workspace,
+    panes,
     ribbon,
     title,
     tree,

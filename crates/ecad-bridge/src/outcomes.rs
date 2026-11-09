@@ -20,6 +20,8 @@ impl DesktopBridge {
                             ecad_domain::SheetKind::Cover => "new_cover",
                             ecad_domain::SheetKind::DrawingList => "new_drawing_list",
                         },
+                        ActionRequestKind::ToggleExplorer => "toggle_explorer",
+                        ActionRequestKind::ToggleProperties => "toggle_properties",
                         ActionRequestKind::ExplorerPages => "explorer_pages",
                         ActionRequestKind::ExplorerElectrical => "explorer_electrical",
                         ActionRequestKind::Sheets => "sheets",

@@ -93,6 +93,12 @@ impl ActionDispatcher {
             .revision
             .expect("document availability checked revision");
         let outcome = match (handler, invocation.parameters) {
+            (ActionHandler::ToggleExplorer, ActionParameters::None) => {
+                request(ActionRequestKind::ToggleExplorer, None)
+            }
+            (ActionHandler::ToggleProperties, ActionParameters::None) => {
+                request(ActionRequestKind::ToggleProperties, None)
+            }
             (ActionHandler::ExplorerPages, ActionParameters::None) => {
                 request(ActionRequestKind::ExplorerPages, None)
             }

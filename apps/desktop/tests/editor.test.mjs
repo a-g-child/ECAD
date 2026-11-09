@@ -1,3 +1,4 @@
+import { registerWorkspacePaneTests } from './workspace-panes.mjs';
 import { registerAppearanceTests, registerTemplateAppearanceTests } from './appearance.mjs';
 import { registerTemplatePaths } from './template-paths.mjs';
 import { registerTemplateInlineText } from './template-inline-text.mjs';
@@ -494,6 +495,8 @@ registerArrangementTests({
   root,
   project: () => project,
 });
+
+registerWorkspacePaneTests({ page, button, until, bounds, root });
 
 registerAppearanceTests({ page, button, until, bounds, pressAction });
 

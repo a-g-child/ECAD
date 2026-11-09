@@ -365,6 +365,18 @@ impl DesktopBridge {
                 response.request = Some("template_properties".into());
                 return Ok(response);
             }
+            TemplateActionOutcome::ToggleExplorer | TemplateActionOutcome::ToggleProperties => {
+                let mut response = self.snapshot();
+                response.request = Some(
+                    if handler == ActionHandler::ToggleExplorer {
+                        "toggle_explorer"
+                    } else {
+                        "toggle_properties"
+                    }
+                    .into(),
+                );
+                return Ok(response);
+            }
             TemplateActionOutcome::Palette => {
                 let mut response = self.snapshot();
                 response.request = Some("palette".into());

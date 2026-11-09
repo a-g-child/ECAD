@@ -12,6 +12,10 @@ pub enum ActionHandler {
     Template(crate::TemplateOperation),
     /// Review creation of a new typed sheet (and a fresh view for schematics).
     NewSheet(ecad_domain::SheetKind),
+    /// Toggle the host explorer pane without editing document data.
+    ToggleExplorer,
+    /// Toggle the host properties pane without editing document data.
+    ToggleProperties,
     /// Show project pages and logical drawing packages in the host explorer.
     ExplorerPages,
     /// Show the selected project's electrical structure in the host explorer.
@@ -242,6 +246,8 @@ impl ActionRegistry {
                     | ActionHandler::Redo
                     | ActionHandler::Properties
                     | ActionHandler::FitDrawing
+                    | ActionHandler::ToggleExplorer
+                    | ActionHandler::ToggleProperties
             ) {
                 None
             } else {

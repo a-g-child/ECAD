@@ -57,6 +57,10 @@ pub enum TemplateActionOutcome {
     Fit,
     /// Focus the current template properties.
     Properties,
+    /// Toggle the host explorer pane without changing template history.
+    ToggleExplorer,
+    /// Toggle the host properties pane without changing template history.
+    ToggleProperties,
     /// Open registry-generated command search.
     Palette,
 }
@@ -200,6 +204,8 @@ impl ActionDispatcher {
             }
             (H::FitDrawing, ActionParameters::None) => Ok(O::Fit),
             (H::Properties, ActionParameters::None) => Ok(O::Properties),
+            (H::ToggleExplorer, ActionParameters::None) => Ok(O::ToggleExplorer),
+            (H::ToggleProperties, ActionParameters::None) => Ok(O::ToggleProperties),
             (H::Palette, ActionParameters::None) => Ok(O::Palette),
             (H::TemplateLibrary, ActionParameters::None) => Ok(O::Changed),
             _ => Err(TemplateDispatchError::Parameters),

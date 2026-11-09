@@ -169,6 +169,8 @@ pub(crate) fn snapshot(
                 ActionHandler::Sheets
                     | ActionHandler::TemplateLibrary
                     | ActionHandler::NewSheet(_)
+                    | ActionHandler::ToggleExplorer
+                    | ActionHandler::ToggleProperties
                     | ActionHandler::ExplorerPages
                     | ActionHandler::ExplorerElectrical
                     | ActionHandler::OpenProject

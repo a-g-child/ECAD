@@ -137,6 +137,10 @@ pub enum ActionRequestKind {
     TemplateLibrary,
     /// Request a typed sheet draft with captured project context.
     NewSheet(ecad_domain::SheetKind),
+    /// Toggle the host explorer pane without editing document data.
+    ToggleExplorer,
+    /// Toggle the host properties pane without editing document data.
+    ToggleProperties,
     /// Switch the host explorer to project documents/pages without editing the project.
     ExplorerPages,
     /// Switch the host explorer to project electrical structure without editing the project.

@@ -1,0 +1,31 @@
+/* Collapsed rails retain a keyboard-accessible reopening control; content stays mounted. */
+.workspace[data-explorer-collapsed='true'] {
+  --explorer-width: 28px;
+}
+.workspace[data-properties-collapsed='true'] {
+  --properties-width: 28px;
+}
+.pane-toggle {
+  width: 22px;
+  height: 24px;
+  flex: 0 0 22px;
+  margin-left: 5px;
+  padding: 0;
+  font-size: 18px;
+}
+.pane-rail {
+  display: none;
+}
+.pane-collapsed > :not(.pane-rail) {
+  display: none;
+}
+.pane-collapsed > .pane-rail {
+  display: block;
+  writing-mode: vertical-rl;
+  align-self: stretch;
+  padding: 12px 4px;
+  border: 0;
+  border-radius: 0;
+  min-height: 90px;
+  background: var(--panel);
+}

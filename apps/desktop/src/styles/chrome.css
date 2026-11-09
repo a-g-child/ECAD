@@ -137,7 +137,7 @@ button .icon {
 }
 .workspace {
   display: grid;
-  grid-template-columns: 236px minmax(0, 1fr) 304px;
+  grid-template-columns: var(--explorer-width, 236px) minmax(0, 1fr) var(--properties-width, 304px);
   min-height: 0;
   min-width: 0;
 }

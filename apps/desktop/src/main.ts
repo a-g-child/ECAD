@@ -212,6 +212,25 @@ function buttons() {
   }
 }
 async function apply(reply: Reply) {
+  const pane =
+    reply.request === 'toggle_explorer'
+      ? 'explorer'
+      : reply.request === 'toggle_properties'
+        ? 'properties'
+        : null;
+  if (
+    pane &&
+    reply.snapshot &&
+    snapshot &&
+    JSON.stringify([snapshot.revision, snapshot.template_editor?.revision]) ===
+      JSON.stringify([reply.snapshot.revision, reply.snapshot.template_editor?.revision])
+  ) {
+    // Visibility requests retain mounted controls, uncommitted text and scroll/selection state.
+    snapshot = reply.snapshot;
+    syncInput(snapshot.next_input);
+    shell.panes.toggle(pane);
+    return;
+  }
   if (reply.snapshot) {
     const next = reply.snapshot;
     const changed =
@@ -260,7 +279,10 @@ async function apply(reply: Reply) {
     buttons();
     await inspect();
   }
-  if (reply.properties) renderProperties(shell, reply.properties, selection.length, edit);
+  if (reply.properties) {
+    shell.panes.show('properties');
+    renderProperties(shell, reply.properties, selection.length, edit);
+  }
   if (reply.report) renderReport(shell, reply.report);
   if (reply.message) status(reply.message);
   if (reply.request === 'path') await path?.begin(context());
@@ -307,6 +329,14 @@ async function apply(reply: Reply) {
   const newKind = sheetKindForRequest(reply.request);
   if (newKind && snapshot) await sheets.open(context(), snapshot, '', newKind);
   if (reply.request === 'sheets' && snapshot) await sheets.open(context(), snapshot, paper.id);
+  if (reply.request === 'toggle_explorer') shell.panes.toggle('explorer');
+  if (reply.request === 'toggle_properties') shell.panes.toggle('properties');
+  if (
+    reply.request === 'explorer_pages' ||
+    reply.request === 'explorer_electrical' ||
+    reply.request === 'template_library_focus'
+  )
+    shell.panes.show('explorer');
   if (reply.request === 'explorer_pages') explorer.show('pages');
   if (reply.request === 'explorer_electrical') explorer.show('electrical');
   if (reply.request === 'palette') openPalette();

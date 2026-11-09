@@ -425,3 +425,15 @@ Merge-default validation: `cargo xtask full`, `cargo xtask ui` (64 workflows), a
 - [x] Inset template properties by 12 px and give schematic property rows consistent 12 px side padding with more vertical spacing, without changing pane tracks.
 
 Property-spacing validation: `cargo xtask full`, `cargo xtask ui` (64 workflows), and `cargo xtask desktop` passed on macOS/aarch64; the template properties screenshot was visually reviewed at 960 × 640.
+
+
+### Collapsible workspace panes
+
+- [x] Shared independent explorer/properties collapse state across project and template editors; accessible header buttons and labelled reopening rails.
+- [x] Registered View/menu/palette actions, revision/replay guards and separate workspace state without document edits.
+- [x] Preserve mounted draft controls and scroll, reveal explicitly requested properties/explorers, and protect active tools and pending template fields.
+- [x] Bridge and browser coverage for action availability, no-history behavior, keyboard reopening, retained drafts and template/small-window layouts.
+
+See [decision 0052](decisions/0052-collapsible-workspace-panes.md). Session visibility is implemented; persistent preferences, adjustable widths and docking remain pending.
+
+Pane validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (66 browser workflows), and `cargo xtask desktop` passed. The both-collapsed workspace screenshot was visually reviewed. Desktop checks cover host build/lint; native interaction automation and Windows/Linux runtime validation remain pending.

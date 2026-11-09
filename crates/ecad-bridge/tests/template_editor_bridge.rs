@@ -50,6 +50,15 @@ fn template_edit_save_and_project_import_have_separate_history_pins_and_native_d
     assert!(!library.exists());
     assert!(!library.parent().unwrap().exists());
     assert!(!b.is_dirty());
+    for (id, request) in [
+        ("workspace.panes.explorer", "toggle_explorer"),
+        ("workspace.panes.properties", "toggle_properties"),
+    ] {
+        assert_eq!(action(&mut b, id).unwrap()["request"], request);
+        assert_eq!(snapshot(&b)["template_editor"], opened["template_editor"]);
+        assert_eq!(snapshot(&b)["revision"], before["revision"]);
+        assert!(!b.is_dirty());
+    }
     let old = context(&b);
     let mut edited = proposal(&b);
     edited["name"] = "Edited\nTitle block".into();

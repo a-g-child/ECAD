@@ -154,3 +154,10 @@ Template artwork properties, schematic drawing properties and Drawing defaults s
 Template choices use contextual completion, schematic choices apply through the existing property command, and defaults wait for **Apply defaults**. Mixed schematic properties retain their applicable-subset behavior; undo restores inherited versus explicit values. Moving from a template's exact field to its preset selector keeps the field editable without an early blur commit. See [decision 0051](decisions/0051-shared-appearance-controls.md).
 
 Template cell Merge defaults to the first (top-left, reading-order) cell’s caption and contents, including an empty first cell. Combining all contents remains an explicit choice when other cells contain data. Selection drag direction does not change the survivor; Undo restores all original cells and contents.
+
+
+### Collapsible explorer and properties panes
+
+Use the arrow in either pane header to collapse it; use the labelled **Explorer** or **Properties** edge tab to reopen it. View → **Toggle explorer pane** / **Toggle properties pane** and the command palette use the same actions. The two panes collapse independently, freeing space for the drawing. Buttons work with keyboard focus and Enter/Space.
+
+Visibility is shared across project and template views for the current app session. Collapsing preserves mounted controls, selection, scroll and uncommitted schematic fields; it does not edit files or history. Explicit Properties and explorer-mode commands reveal their panes. Finish/cancel active tools and apply/revert pending template fields before toggling. Restart persistence, dragging pane widths and docking are not included. See [decision 0052](decisions/0052-collapsible-workspace-panes.md).
