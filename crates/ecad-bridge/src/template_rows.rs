@@ -1,5 +1,6 @@
 //! Exact template-editor DTOs and property proposal conversion, separate from persistence.
 use crate::dto::{BridgeError, Token};
+use crate::template_text_styles::StylesRow;
 use ecad_app::*;
 use ecad_domain::*;
 use serde::{Deserialize, Serialize};
@@ -23,6 +24,7 @@ pub(crate) struct VariantRow {
     pub content: [String; 4],
     pub tables: Vec<TableRow>,
     pub graphics: Vec<crate::template_graphic_rows::GraphicRow>,
+    pub text_defaults: StylesRow,
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct TableRow {
@@ -36,6 +38,7 @@ pub(crate) struct CellRow {
     pub caption: String,
     pub bounds: [String; 4],
     pub contents: Vec<RunRow>,
+    pub text_styles: StylesRow,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -52,6 +55,10 @@ pub(crate) struct TemplateEditRow {
     content: [String; 4],
     cell: Option<CellEdit>,
     #[serde(default)]
+    text_defaults: Option<StylesRow>,
+    #[serde(default)]
+    cell_styles: Vec<CellStyleEdit>,
+    #[serde(default)]
     fit_margins: bool,
     #[serde(default)]
     graphics: Option<Vec<crate::template_graphic_rows::GraphicRow>>,
@@ -63,6 +70,12 @@ struct CellEdit {
     id: String,
     caption: String,
     contents: Vec<RunRow>,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CellStyleEdit {
+    id: String,
+    styles: StylesRow,
 }
 fn strings(r: FrameRect) -> [String; 4] {
     [r.x, r.y, r.width, r.height].map(|v| v.to_string())
@@ -92,6 +105,7 @@ impl TemplateView {
                     VariantRow {
                         id: id.to_string(),
                         name: v.name().into(),
+                        text_defaults: v.layout().text_defaults().into(),
                         paper: [p.width, p.height, p.left, p.right, p.top, p.bottom]
                             .map(|v| v.to_string()),
                         content: strings(v.layout().content()),
@@ -164,6 +178,33 @@ impl TemplateEditRow {
             *table = TemplateTable::new(table.id(), table.bounds(), cells)
                 .map_err(|e| BridgeError::new("template", e))?;
         }
+        let mut seen = std::collections::BTreeSet::new();
+        for edit in self.cell_styles {
+            let id = edit
+                .id
+                .parse::<TemplateCellId>()
+                .map_err(|e| BridgeError::new("template", e))?;
+            if !seen.insert(id) {
+                return Err(BridgeError::new("template", "Repeated style target"));
+            }
+            let table = tables
+                .iter_mut()
+                .find(|t| t.cells().iter().any(|c| c.id == id))
+                .ok_or_else(|| BridgeError::new("template", "Selected cell is unavailable"))?;
+            let mut cells = table.cells().to_vec();
+            cells
+                .iter_mut()
+                .find(|c| c.id == id)
+                .expect("checked cell")
+                .text_styles = edit.styles.try_into()?;
+            *table = TemplateTable::new(table.id(), table.bounds(), cells)
+                .map_err(|e| BridgeError::new("template", e))?;
+        }
+        let defaults = self
+            .text_defaults
+            .map(TemplateTextStyles::try_from)
+            .transpose()?
+            .unwrap_or_else(|| old.layout().text_defaults().clone());
         let build = if self.fit_margins {
             TemplateLayout::fit_inside_margins
         } else {
@@ -195,7 +236,8 @@ impl TemplateEditRow {
             None => old.layout().graphics().to_vec(),
         };
         let layout = layout
-            .with_graphics(graphics)
+            .with_text_defaults(defaults)
+            .and_then(|l| l.with_graphics(graphics))
             .map_err(|e| BridgeError::new("template", e))?;
         Ok(ActionParameters::TemplateEdit {
             variant: id,
@@ -216,6 +258,7 @@ impl TableRow {
                 .map(|c| CellRow {
                     id: c.id.to_string(),
                     caption: c.caption.clone(),
+                    text_styles: (&c.text_styles).into(),
                     bounds: strings(c.bounds),
                     contents: c
                         .contents

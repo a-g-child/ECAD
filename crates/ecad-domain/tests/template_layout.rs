@@ -10,6 +10,7 @@ fn bounds(x: u32, y: u32, width: u32, height: u32) -> FrameRect {
 }
 fn cell(id: u128, b: FrameRect) -> TemplateCell {
     TemplateCell {
+        text_styles: Default::default(),
         id: TemplateCellId::new(id).unwrap(),
         bounds: b,
         caption: "Caption\nsecond line".into(),

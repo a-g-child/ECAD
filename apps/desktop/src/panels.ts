@@ -1,4 +1,5 @@
 /** Shared property rows and report tables stay inside shell-owned bounds. */
+import { dimension, dimensionSummary, readDimension, writeDimension } from './dimensions';
 import type { PropertyRow } from './types';
 import { element } from './ui';
 import { appearanceControl } from './appearance-controls';
@@ -26,7 +27,11 @@ export function renderProperties(
     shell.inspector.append(note);
     return;
   }
-  const summary = element('div', 'inspector-summary', `${rows.length} properties · values in µm`);
+  const summary = dimensionSummary(
+    [],
+    `${rows.length} properties · lengths in`,
+    'inspector-summary',
+  );
   shell.inspector.append(summary);
   for (const row of rows) {
     const group = element('div', 'property-row');
@@ -47,7 +52,10 @@ export function renderProperties(
       input.dataset.original = input.value;
       input.setAttribute('aria-label', row.label);
       label.htmlFor = input.id;
-      if (row.kind === 'length') input.inputMode = 'numeric';
+      if (row.kind === 'length') {
+        dimension(input);
+        input.dataset.original = input.value;
+      }
       input.title = [
         row.origin,
         multiline
@@ -62,11 +70,11 @@ export function renderProperties(
         if (multiline ? applyTextKey(event) : event.key === 'Enter') {
           event.preventDefault();
           event.stopPropagation();
-          void edit(row.key, input.value);
+          void edit(row.key, readDimension(input));
         }
         if (event.key === 'Escape') {
           event.stopPropagation();
-          input.value = input.dataset.original ?? '';
+          writeDimension(input, row.value ?? '');
           input.dispatchEvent(new Event('input'));
           input.blur();
         }
@@ -75,14 +83,14 @@ export function renderProperties(
       editor.append(
         row.key === 'font_family' || row.kind === 'colour'
           ? appearanceControl(input, row.kind === 'colour' ? 'colour' : 'font', () => {
-              void edit(row.key, input.value);
+              void edit(row.key, readDimension(input));
             })
           : input,
       );
       if (multiline) {
         const apply = element('button', 'plain property-apply', 'Apply');
         apply.setAttribute('aria-label', `Apply ${row.label}`);
-        apply.addEventListener('click', () => void edit(row.key, input.value));
+        apply.addEventListener('click', () => void edit(row.key, readDimension(input)));
         editor.append(apply);
       }
       group.append(label, editor);

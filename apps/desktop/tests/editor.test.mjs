@@ -1,3 +1,4 @@
+import { registerTableTextUnits } from './table-text-units.mjs';
 import { registerInlineVariables } from './inline-variables.mjs';
 import { registerWorkspacePaneTests } from './workspace-panes.mjs';
 import { registerAppearanceTests, registerTemplateAppearanceTests } from './appearance.mjs';
@@ -116,12 +117,14 @@ after(async () => {
   if (directory) await rm(directory, { recursive: true, force: true });
 });
 // Object-editing suites explicitly choose Electrical; explorer suites exercise the default Pages mode.
-async function page({ electrical = true } = {}) {
+async function page({ electrical = true, units = 'um' } = {}) {
   const page = await browser.newPage({ viewport: { width: 1360, height: 880 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.errors = errors;
   page.setDefaultTimeout(10000);
+  if (units)
+    await page.addInitScript((unit) => localStorage.setItem('ecad.length-unit', unit), units);
   await page.goto('http://127.0.0.1:1421');
   await page.waitForFunction(() =>
     document.querySelector('.status-message')?.textContent?.startsWith('Ready'),
@@ -577,3 +580,5 @@ registerTemplatePaths({ page, button, until });
 registerTemplateAppearanceTests({ page, button, until });
 
 registerInlineVariables({ page, button, until, root });
+
+registerTableTextUnits({ page, button, until });

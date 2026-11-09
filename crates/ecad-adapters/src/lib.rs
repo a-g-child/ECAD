@@ -73,3 +73,5 @@ pub use template_assignment_migration::{
 };
 
 mod schema_template_assignments;
+
+mod template_text_style_data;

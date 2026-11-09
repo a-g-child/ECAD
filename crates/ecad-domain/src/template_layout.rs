@@ -23,6 +23,7 @@ pub struct TemplateLayout {
     content: FrameRect,
     tables: Vec<TemplateTable>,
     graphics: Vec<crate::TemplateGraphic>,
+    text_defaults: crate::TemplateTextStyles,
 }
 impl TemplateLayout {
     /// Construct a layout with explicit generated-content region and structured tables.
@@ -72,7 +73,23 @@ impl TemplateLayout {
             content,
             tables,
             graphics: Vec::new(),
+            text_defaults: Default::default(),
         })
+    }
+    /// Set separate caption/content defaults without changing cell overrides.
+    /// # Errors
+    /// Rejects invalid explicit text properties.
+    pub fn with_text_defaults(
+        mut self,
+        styles: crate::TemplateTextStyles,
+    ) -> Result<Self, TemplateError> {
+        styles.validate()?;
+        self.text_defaults = styles;
+        Ok(self)
+    }
+    /// Per-property defaults inherited by table cells.
+    pub fn text_defaults(&self) -> &crate::TemplateTextStyles {
+        &self.text_defaults
     }
     /// Replace artwork atomically, validating unique identities and paper-space bounds.
     /// Artwork may occupy margins; margins guide tables, not page decorations.

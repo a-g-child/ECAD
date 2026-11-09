@@ -1,4 +1,5 @@
 /** Reviewed exact layout; Rust owns pivots, alignment, spacing and proposed geometry. */
+import { dimension, readDimension, writeDimension } from './dimensions';
 import type { Context, Reply, TransformRow } from './types';
 import type { Shell } from './shell';
 import type { DrawingCanvas } from './canvas';
@@ -30,8 +31,8 @@ export class LayoutTool {
     private changed: () => void,
     private cancelAction: () => void,
   ) {
-    this.x.setAttribute('aria-label', 'Pivot X (µm)');
-    this.y.setAttribute('aria-label', 'Pivot Y (µm)');
+    dimension(this.x, 'Pivot X (µm)');
+    dimension(this.y, 'Pivot Y (µm)');
     this.operation.setAttribute('aria-label', 'Transform operation');
     for (const input of [this.x, this.y]) {
       input.inputMode = 'numeric';
@@ -116,19 +117,16 @@ export class LayoutTool {
           ? 'Distribution axis'
           : 'Transform operation',
     );
-    this.x.setAttribute(
-      'aria-label',
-      kind === 'align' ? 'Alignment coordinate (µm)' : 'Pivot X (µm)',
-    );
+    dimension(this.x, kind === 'align' ? 'Alignment coordinate (µm)' : 'Pivot X (µm)');
     this.xLabel.textContent = kind === 'align' ? 'At' : 'Pivot X';
     this.x.hidden = this.xLabel.hidden = kind === 'distribute';
     this.y.hidden = this.yLabel.hidden = arrange;
     this.note.textContent =
       kind === 'align'
-        ? 'µm · exact origin coordinate'
+        ? 'Exact origin coordinate'
         : kind === 'distribute'
           ? 'Equal origin spacing · extrema retained'
-          : 'µm · explicit pivot';
+          : 'Explicit pivot';
     this.operation.replaceChildren(
       ...options.map(([value, text]) => {
         const option = element('option', '', text);
@@ -161,8 +159,8 @@ export class LayoutTool {
     this.pending = {
       type: 'preview_transform',
       session: this.row.session,
-      x: this.x.value,
-      y: this.y.value,
+      x: readDimension(this.x),
+      y: readDimension(this.y),
       operation: this.operation.value,
     };
     this.controls();
@@ -197,8 +195,8 @@ export class LayoutTool {
     if (!reply.transform) throw new Error('Missing transform preview');
     this.row = reply.transform;
     this.valid = this.row.valid;
-    if (document.activeElement !== this.x) this.x.value = this.row.x;
-    if (document.activeElement !== this.y) this.y.value = this.row.y;
+    if (document.activeElement !== this.x) writeDimension(this.x, this.row.x);
+    if (document.activeElement !== this.y) writeDimension(this.y, this.row.y);
     const pivot = this.kind === 'rotate' || this.kind === 'mirror';
     this.drawing.preview(
       this.row.scene,

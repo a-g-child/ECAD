@@ -35,6 +35,7 @@ impl From<FrameRect> for RectRow {
 struct CellRow {
     key: String,
     caption: String,
+    text_styles: crate::template_text_styles::StylesRow,
     value: Option<String>,
     bounds: RectRow,
 }
@@ -58,6 +59,7 @@ impl FrameRow {
                         .map(|f| f.key().to_owned())
                         .unwrap_or_else(|| c.id.to_string()),
                     caption: c.caption.clone(),
+                    text_styles: (&c.text_styles).into(),
                     value: c.value.clone(),
                     bounds: c.bounds.into(),
                 })

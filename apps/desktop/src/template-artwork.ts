@@ -1,4 +1,5 @@
 /** Draft artwork properties: one Apply commits the complete validated template edit. */
+import { dimensionPoints, dimension, readDimension } from './dimensions';
 import type { TemplateGraphic, TemplateVariant } from './types';
 import { element } from './ui';
 import { appearanceControl, type AppearanceKind } from './appearance-controls';
@@ -34,8 +35,11 @@ export class TemplateArtwork {
       appearance ? appearanceControl(input, appearance) : input,
     );
     parent.append(label);
+    if (name.startsWith('Local points'))
+      dimensionPoints(input, name, label.firstElementChild as HTMLElement);
+    if (name.includes('(µm)')) dimension(input, name, label.firstElementChild as HTMLElement);
     input.addEventListener('input', () => {
-      set(input.value);
+      set(readDimension(input));
       this.changed();
     });
   }
@@ -46,7 +50,7 @@ export class TemplateArtwork {
         element(
           'p',
           'inspector-note',
-          'Paper coordinates in µm. Artwork may occupy margins. Apply properties commits changes.',
+          'Coordinates use the selected measurement units. Artwork may occupy margins. Apply properties commits changes.',
         ),
       );
     for (const kind of this.selectedId
@@ -101,7 +105,7 @@ export class TemplateArtwork {
       if (g.kind === 'polyline') {
         this.field(
           details,
-          'Local points (x,y per line)',
+          'Local points (µm, x,y per line)',
           g.points.map((p) => p.join(',')).join('\n'),
           (v) => {
             // Preserve invalid/unfinished input for Rust to reject at Apply, never drop a vertex.

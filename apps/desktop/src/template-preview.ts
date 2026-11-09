@@ -104,6 +104,20 @@ export class TemplatePreview {
         table.cells.map((cell) => ({
           key: cell.id,
           caption: cell.caption,
+          text_styles: {
+            caption: Object.fromEntries(
+              Object.entries(model.text_defaults.caption).map(([k, v]) => [
+                k,
+                cell.text_styles.caption[k as keyof typeof cell.text_styles.caption] ?? v,
+              ]),
+            ),
+            content: Object.fromEntries(
+              Object.entries(model.text_defaults.content).map(([k, v]) => [
+                k,
+                cell.text_styles.content[k as keyof typeof cell.text_styles.content] ?? v,
+              ]),
+            ),
+          } as import('./types').TemplateTextStyles,
           value: cell.contents
             .map((r) => (r.kind === 'literal' ? r.value : `{${r.value}}`))
             .join(''),

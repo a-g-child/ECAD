@@ -113,7 +113,7 @@ export function registerTemplateArtworkTests({ page, button, until }) {
     detail = editor.locator('.template-artwork > details').last();
     await detail.locator(':scope > summary').click();
     await detail
-      .getByRole('textbox', { name: 'Local points (x,y per line)', exact: true })
+      .getByRole('textbox', { name: 'Local points (µm, x,y per line)', exact: true })
       .fill('0,0\n40000,0\n40000,15000');
     await apply();
     assert.equal(await art.locator('polyline').getAttribute('points'), '10,10 50,10 50,25');

@@ -454,3 +454,14 @@ Colour-picker validation: `cargo xtask full`, `cargo xtask ui` (66 browser workf
 See [decision 0053](decisions/0053-inline-template-variable-editing.md). Rich-text chips, new variable scopes and schematic typed annotations remain pending; native webview text-history parity requires platform validation.
 
 Inline-variable validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (68 browser workflows), and `cargo xtask desktop` passed. The grouped picker screenshot was visually reviewed. Native webview text-history/composition behavior and Windows/Linux runtime validation remain pending.
+
+### Table text formatting and measurement units
+
+- [x] Independent caption/content font, physical height, bold/italic, colour and alignment; template defaults and per-cell overrides with reset.
+- [x] Shared-range formatting edits preserve other properties and use coherent undo; split copies formatting and merge keeps primary formatting.
+- [x] Versioned template v4 appearance with legacy unstyled canonical bodies retained and pinned revisions unchanged.
+- [x] Shared exact dimension fields default to mm; decimal inches and µm preferences, explicit unit suffixes, sub-resolution rejection and unchanged rounded-value preservation.
+- [x] Apply units to template/paper/table/artwork fields, drawing placement/property fields and defaults, independently of geometry/history and paper family.
+- [ ] Fractional inches/mils, portable font/output parity and native Windows/Linux runtime verification.
+
+See [decision 0055](decisions/0055-table-text-styles-and-measurement-units.md). Validation on macOS/aarch64: `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. Additional pinned-sheet persistence and bold/alignment assertions passed in focused adapter/browser runs; final all-target Clippy and formatting checks passed. Native Linux/Windows runtime and font/output parity remain unverified.

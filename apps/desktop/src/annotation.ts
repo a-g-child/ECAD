@@ -1,4 +1,5 @@
 /** Transient new-text placement; the bridge owns identity, validation, defaults and snapping. */
+import { dimension, readDimension, writeDimension } from './dimensions';
 import type { AnnotationRow, Context, Reply, Target } from './types';
 import type { Shell } from './shell';
 import type { DrawingCanvas } from './canvas';
@@ -42,8 +43,8 @@ export class AnnotationTool {
     );
     this.text.setAttribute('aria-label', 'Annotation text');
     this.text.placeholder = 'Annotation text';
-    this.x.setAttribute('aria-label', 'Annotation X (µm)');
-    this.y.setAttribute('aria-label', 'Annotation Y (µm)');
+    dimension(this.x, 'Annotation X (µm)');
+    dimension(this.y, 'Annotation Y (µm)');
     for (const input of [this.text, this.x, this.y]) {
       if (input !== this.text) input.inputMode = 'numeric';
       input.addEventListener('input', (e) => {
@@ -103,8 +104,8 @@ export class AnnotationTool {
     this.clear();
     this.active = true;
     this.text.value = '';
-    this.x.value = '0';
-    this.y.value = '0';
+    writeDimension(this.x, '0');
+    writeDimension(this.y, '0');
     const generation = this.generation;
     this.controls();
     try {
@@ -136,8 +137,8 @@ export class AnnotationTool {
       session: this.row.session,
       placement: {
         text: this.text.value,
-        x: this.pointer?.x ?? this.x.value,
-        y: this.pointer?.y ?? this.y.value,
+        x: this.pointer?.x ?? readDimension(this.x),
+        y: this.pointer?.y ?? readDimension(this.y),
         exact: !this.pointer,
         suppressed: this.suppressed,
         candidate,
@@ -150,8 +151,8 @@ export class AnnotationTool {
     if (!reply.annotation) throw new Error('Missing annotation proposal');
     this.row = reply.annotation;
     this.valid = this.row.valid;
-    if (document.activeElement !== this.x) this.x.value = this.row.x;
-    if (document.activeElement !== this.y) this.y.value = this.row.y;
+    if (document.activeElement !== this.x) writeDimension(this.x, this.row.x);
+    if (document.activeElement !== this.y) writeDimension(this.y, this.row.y);
     this.drawing.preview(
       this.row.scene,
       this.row.snap ? [Number(this.row.x) / 1000, Number(this.row.y) / 1000] : undefined,

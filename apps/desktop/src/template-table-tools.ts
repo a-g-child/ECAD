@@ -1,4 +1,5 @@
 /** Captured structural table edits; the Rust core owns geometry, identity allocation and history. */
+import { dimension, readDimension } from './dimensions';
 import type { Context, Reply, TemplateVariant, TemplateTable, TemplateCell } from './types';
 import { element } from './ui';
 import { send, inputId, errorText } from './transport';
@@ -111,7 +112,10 @@ export class TemplateTableTools {
     const input = element('input', 'property-input');
     input.inputMode = 'numeric';
     input.value = value;
-    return this.field(name, input);
+    const result = this.field(name, input);
+    if (name.includes('(µm)'))
+      dimension(input, name, input.closest('label')?.querySelector('span') ?? undefined);
+    return result;
   }
   private select(name: string, options: [string, string][], selected?: string) {
     const select = element('select', 'property-input');
@@ -227,7 +231,8 @@ export class TemplateTableTools {
     }).catch((e) => (this.note.textContent = errorText(e)));
   }
   private value(name: string) {
-    return this.controls.get(name)!.value;
+    const field = this.controls.get(name)!;
+    return field instanceof HTMLInputElement ? readDimension(field) : field.value;
   }
   private proposal() {
     const value = (name: string) => this.value(name);

@@ -170,3 +170,9 @@ Colour pickers stage native `input` events and send accepted `change` values thr
 Template cell contents, free text properties and new canvas text share one **Text and variables** editor. Write ordinary multiline text, put the cursor where the variable belongs, then use **Insert variable** or right-click the field. Expand a category and choose its field; it appears inline as `{{project.title}}`. A selected text range is replaced. Escape/Cancel closes only the picker and restores your selection.
 
 The textarea retains local text undo/redo; field completion and drawing placement keep their existing commit rules. Templates still save typed variables separately from literal text. To display literal `{{` characters use `\{{`; literal backslashes display escaped as `\\`. An unknown complete variable is rejected until corrected or escaped. See [decision 0053](decisions/0053-inline-template-variable-editing.md).
+
+### Table fonts and measurement units
+
+Select a table cell or drag a cell range to edit **Caption formatting** and **Content formatting** independently. Font, height, bold/italic, colour and alignment inherit template defaults unless overridden. **Reset** restores inheritance for that property. Multi-cell selections show **Mixed** values; formatting applies to the full selection while caption/content text edits affect the first cell. Template paper properties contain the corresponding defaults.
+
+Dimensions now default to **mm**. Choose **Measurement units** in template paper properties or Drawing defaults for decimal inches or µm. This user preference saves immediately, even if you cancel project-default edits. Explicit entries such as `0.125 in` or `2.5 mm` are accepted. Values finer than 0.001 mm are rejected; unchanged rounded inch displays retain their exact original geometry. Fractional inches and mils are not yet supported.

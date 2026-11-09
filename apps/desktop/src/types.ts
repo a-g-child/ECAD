@@ -177,7 +177,13 @@ export interface FrameRow {
   template: string;
   border: { x: number; y: number; width: number; height: number };
   graphics: TemplateGraphic[];
-  cells: { key: string; caption: string; value: string | null; bounds: FrameRow['border'] }[];
+  cells: {
+    key: string;
+    caption: string;
+    value: string | null;
+    bounds: FrameRow['border'];
+    text_styles?: TemplateTextStyles;
+  }[];
   title_block_too_small: boolean;
   font: string;
   text_height: number;
@@ -273,11 +279,25 @@ export interface TemplateRun {
   kind: 'literal' | 'field';
   value: string;
 }
+export interface TemplateTextStyle {
+  font: string | null;
+  height: string | null;
+  bold: boolean | null;
+  italic: boolean | null;
+  colour: string | null;
+  horizontal: string | null;
+  vertical: string | null;
+}
+export interface TemplateTextStyles {
+  caption: TemplateTextStyle;
+  content: TemplateTextStyle;
+}
 export interface TemplateCell {
   id: string;
   caption: string;
   bounds: string[];
   contents: TemplateRun[];
+  text_styles: TemplateTextStyles;
 }
 export interface TemplateTable {
   id: string;
@@ -302,6 +322,7 @@ export interface TemplateVariant {
   content: string[];
   tables: TemplateTable[];
   graphics: TemplateGraphic[];
+  text_defaults: TemplateTextStyles;
 }
 export interface TemplateView {
   revision: Revision;

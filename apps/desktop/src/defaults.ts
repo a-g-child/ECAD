@@ -1,4 +1,6 @@
 /** Project fallbacks are reviewed locally; Apply submits one guarded settings command. */
+import { unitPicker } from './unit-picker';
+import { dimension, readDimension, writeDimension } from './dimensions';
 import type { Context, DrawingDefaults, Reply } from './types';
 import type { Shell } from './shell';
 import { element } from './ui';
@@ -53,14 +55,17 @@ export class DefaultsDialog {
         key === 'font' || key === 'colour' ? appearanceControl(field, key) : field,
       );
       this.form.append(label);
+      if (key === 'text_height' || key === 'stroke_width')
+        dimension(field, caption, label.firstElementChild as HTMLElement);
     }
     this.form.append(
       element(
         'p',
         'settings-note',
-        'Lengths use positive integer micrometres; colour uses #rrggbb. Font availability depends on the system. Creation presets and named styles are retained; their editors are planned.',
+        'Lengths use the selected units (0.001 mm internal precision); colour uses #rrggbb. Font availability depends on the system. Creation presets and named styles are retained; their editors are planned.',
       ),
     );
+    this.form.append(unitPicker());
     this.error.setAttribute('role', 'alert');
     this.error.setAttribute('aria-live', 'polite');
     const actions = element('div', 'settings-actions');
@@ -90,7 +95,7 @@ export class DefaultsDialog {
     this.captured = context;
     this.error.textContent = '';
     for (const [key, field] of this.fields) {
-      field.value = values[key];
+      writeDimension(field, values[key]);
       field.dispatchEvent(new Event('input'));
     }
     this.dialog.showModal();
@@ -110,7 +115,7 @@ export class DefaultsDialog {
     this.applyButton.disabled = this.cancel.disabled = true;
     try {
       const defaults = Object.fromEntries(
-        [...this.fields].map(([key, field]) => [key, field.value]),
+        [...this.fields].map(([key, field]) => [key, readDimension(field)]),
       );
       const reply = await send({
         type: 'update_defaults',

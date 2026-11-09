@@ -95,6 +95,7 @@ impl TemplateTable {
                     source.clone()
                 } else {
                     TemplateCell {
+                        text_styles: source.text_styles.clone(),
                         id: *next.next().expect("validated fresh count"),
                         bounds: source.bounds,
                         caption: String::new(),

@@ -143,6 +143,8 @@ pub struct FrameCell {
     pub field: Option<FrameField>,
     /// Literal caption.
     pub caption: String,
+    /// Cell overrides resolved over template defaults; project fallbacks remain in appearance.
+    pub text_styles: crate::TemplateTextStyles,
     /// Exact literal multiline value; missing optional project metadata is None.
     pub value: Option<String>,
     /// Physical cell bounds.
@@ -203,6 +205,16 @@ impl Project {
                     id: cell.id,
                     field,
                     caption: cell.caption.clone(),
+                    text_styles: crate::TemplateTextStyles {
+                        caption: cell
+                            .text_styles
+                            .caption
+                            .over(&layout.text_defaults().caption),
+                        content: cell
+                            .text_styles
+                            .content
+                            .over(&layout.text_defaults().content),
+                    },
                     value: (resolved.missing.is_empty() || field.is_none())
                         .then_some(resolved.value),
                     bounds: FrameRect {

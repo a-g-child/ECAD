@@ -135,3 +135,6 @@ pub use template_assignment::{
 };
 
 mod template_cell_selection;
+
+mod template_text_style;
+pub use template_text_style::{TemplateTextStyle, TemplateTextStyles};

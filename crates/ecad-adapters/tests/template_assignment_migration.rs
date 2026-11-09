@@ -296,6 +296,7 @@ fn arbitrary_saved_cells_render_literal_and_composed_multiline_contents_without_
             height: 30_000,
         },
         vec![TemplateCell {
+            text_styles: Default::default(),
             id: TemplateCellId::new(91).unwrap(),
             bounds: FrameRect {
                 x: 0,

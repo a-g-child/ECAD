@@ -156,3 +156,9 @@ Template cells and free text now use a single multiline text field with inline `
 ### Content-sized free text
 
 Free template text uses a paper anchor, font, height and typed literal/variable runs. The shared renderer derives visible/hit bounds from resolved glyphs and semantic line boxes; it never persists font measurements. Text does not wrap or clip to legacy extents. Width/height controls are omitted for text; table geometry and cell overflow behavior remain separate. See [decision 0054](decisions/0054-content-sized-template-text.md).
+
+### Cell text formatting and units
+
+Caption and content formatting are independent. Each supports font, physical height, bold, italic, colour and alignment; cell overrides inherit template defaults per property. Selecting a range exposes mixed values and applies formatting across that range. Text editing still affects the first cell. Reset restores inheritance, split copies appearance and merge keeps the top-left appearance. Larger fonts do not resize tables or silently shrink. Styled layouts use template schema v4; existing published bodies remain unchanged.
+
+UI dimensions default to mm, with decimal inches and µm user preferences in drawing defaults/template paper properties. Explicit suffixes are accepted, and unchanged rounded displays preserve exact stored geometry. Internally all lengths remain integer µm. See [decision 0055](decisions/0055-table-text-styles-and-measurement-units.md).

@@ -357,6 +357,7 @@ impl TableEditRow {
             tables,
         )
         .and_then(|layout| layout.with_graphics(draft.layout().graphics().to_vec()))
+        .and_then(|layout| layout.with_text_defaults(draft.layout().text_defaults().clone()))
         .map_err(error)?;
         Ok((
             ActionParameters::TemplateEdit {

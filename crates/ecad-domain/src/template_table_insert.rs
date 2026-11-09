@@ -74,6 +74,7 @@ impl TemplateTable {
                 }
             }
             cells.push(TemplateCell {
+                text_styles: Default::default(),
                 id: *id,
                 bounds: rect,
                 caption: String::new(),

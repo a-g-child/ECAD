@@ -87,7 +87,7 @@ export function registerTemplatePaths({ page, button, until }) {
     const id = await art.getAttribute('data-template-graphic');
     const points = await art.locator('polyline').getAttribute('points');
     const local = await editor
-      .getByRole('textbox', { name: 'Local points (x,y per line)', exact: true })
+      .getByRole('textbox', { name: 'Local points (µm, x,y per line)', exact: true })
       .inputValue();
     const vertices = points
       .trim()
@@ -128,7 +128,7 @@ export function registerTemplatePaths({ page, button, until }) {
     assert.equal(await art.getAttribute('data-template-graphic'), id);
     assert.equal(
       await editor
-        .getByRole('textbox', { name: 'Local points (x,y per line)', exact: true })
+        .getByRole('textbox', { name: 'Local points (µm, x,y per line)', exact: true })
         .inputValue(),
       local,
     );

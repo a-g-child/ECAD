@@ -1,4 +1,5 @@
 /** Exact micrometre paper presets; selecting one never scales drawing contents. */
+import { readDimension, writeDimension } from './dimensions';
 import { element } from './ui';
 const sizes: Record<string, [string, string, string]> = {
   A0: ['ISO A', '841000', '1189000'],
@@ -39,14 +40,15 @@ export function paperPresets(
   };
   const matching = Object.entries(sizes).find(
     ([, [, w, h]]) =>
-      (paper[0].value === w && paper[1].value === h) ||
-      (paper[0].value === h && paper[1].value === w),
+      (readDimension(paper[0]) === w && readDimension(paper[1]) === h) ||
+      (readDimension(paper[0]) === h && readDimension(paper[1]) === w),
   );
   const family = select('Paper family', ['ISO A', 'US', 'Custom']);
   family.value = matching?.[1][0] ?? 'Custom';
   const preset = select('Paper size', []);
   const orientation = select('Orientation', ['Portrait', 'Landscape']);
-  orientation.value = BigInt(paper[0].value) > BigInt(paper[1].value) ? 'Landscape' : 'Portrait';
+  orientation.value =
+    BigInt(readDimension(paper[0])) > BigInt(readDimension(paper[1])) ? 'Landscape' : 'Portrait';
   const options = () => {
     preset.replaceChildren();
     for (const [key, [group]] of Object.entries(sizes))
@@ -74,7 +76,8 @@ export function paperPresets(
     const size = sizes[preset.value];
     if (size) {
       const [, w, h] = size;
-      [paper[0].value, paper[1].value] = orientation.value === 'Landscape' ? [h, w] : [w, h];
+      const dimensions = orientation.value === 'Landscape' ? [h, w] : [w, h];
+      dimensions.forEach((v, i) => writeDimension(paper[i], v));
       fit.checked = true;
       changed();
     }
@@ -94,14 +97,15 @@ export function paperPresets(
       apply();
       return;
     }
-    const [w, h] = paper.map((p) => p.value);
+    const [w, h] = paper.map(readDimension);
     if (![w, h].every((value) => /^\d+$/.test(value))) {
       changed();
       return;
     }
     const landscape = BigInt(w) > BigInt(h);
     if (landscape !== (orientation.value === 'Landscape')) {
-      [paper[0].value, paper[1].value] = [h, w];
+      writeDimension(paper[0], h);
+      writeDimension(paper[1], w);
       fit.checked = true;
       changed();
     }

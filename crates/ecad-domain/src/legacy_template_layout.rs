@@ -64,6 +64,7 @@ impl SheetTemplate {
                 .into_iter()
                 .enumerate()
                 .map(|(i, field)| TemplateCell {
+                    text_styles: Default::default(),
                     id: TemplateCellId::new(i as u128 + 1).expect("nonzero fixed cell ordinal"),
                     bounds: FrameRect {
                         x: (i as u32 % columns) * (180_000 / columns),

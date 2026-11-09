@@ -1,0 +1,15 @@
+# 0055 — Table text styles and user measurement units
+
+Caption and content use separate per-property overrides: font family, physical height, bold, italic, RGB colour, horizontal alignment and vertical alignment. Cells inherit template defaults, then the existing frame/project fallback. Null means inherited; explicit false and equal-valued overrides remain explicit. Variables share the content style. Inline rich text is outside this slice.
+
+The contextual inspector exposes both channels. A range edit changes only the selected property across all selected cells in one validated template transaction; text content editing remains on the first cell. Reset clears only the chosen override. Splits copy source appearance to new cells, merges preserve the primary/top-left style, and resizing keeps physical text sizes. Captions reserve a strip when explicitly styled; content aligns within the remaining area. Tables do not auto-resize or shrink fonts. Existing unstyled layouts retain their previous caption strip and cell overflow policy.
+
+Standalone template v4 carries appearance defaults/overrides. Unstyled v1–v3 bodies keep their canonical encoding; publication remains explicit and project consumers stay pinned. Layout replacement must carry defaults through paper and table edits. Bridge style DTOs are separate from persistence and carry exact height strings; renderer coordinates are display-only.
+
+A shared dimension control defaults to millimetres, supports decimal inches and retains micrometres as an advanced option. Explicit mm/in/µm/um suffixes and inch quotes are accepted. Decimal conversion uses integer arithmetic at the frontend boundary; Rust validates the complete canonical command. Sub-micrometre values are rejected, not rounded into document changes. Inches display to six decimals, while an unchanged field retains its exact original micrometres. Unit switching converts valid pending fields and rejects a switch while a connected field has invalid length input.
+
+Units are a user preference in local storage with session-only fallback, not project state or undo history. The existing defaults/properties action surfaces expose the setting. It saves immediately, independently of cancelling project defaults. ISO/US paper presets remain exact physical sizes and do not select a unit system. IDs, counts and scale ratios are not lengths. Geometry, persistence and bridge numeric contracts remain integer micrometres.
+
+Fractional inches, mils, point-size typography, per-project recommended units, portable font packaging and export/font parity are future work. Revisit browser-only local preference storage if a native settings store or multiple webview origins are introduced.
+
+Verification covers conversion/precision boundaries, unchanged rounded inch fields, preference reload, range styling/reset, independent channels, inheritance, split/merge, exact undo/redo, v4 round trips and legacy canonical bodies. Existing browser workflows explicitly select µm; new workflows exercise the default mm and inch modes. Linux/Windows runtime and native font parity require separate validation.

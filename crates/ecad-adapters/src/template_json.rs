@@ -1,4 +1,5 @@
 //! Standalone versioned template-variant bodies; no project-schema or filesystem side effects.
+use crate::template_text_style_data::StylesData;
 use ecad_domain::*;
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt};
@@ -68,6 +69,8 @@ pub(crate) struct VariantData {
     content_um: [u32; 4],
     tables: Vec<TableData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    text_defaults: Option<StylesData>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     graphics: Option<Vec<crate::template_graphic_data::GraphicData>>,
 }
 #[derive(Serialize, Deserialize)]
@@ -84,6 +87,8 @@ struct CellData {
     bounds_um: [u32; 4],
     caption: String,
     contents: Vec<RunData>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    text_styles: Option<StylesData>,
 }
 #[derive(Serialize, Deserialize)]
 #[serde(
@@ -120,8 +125,17 @@ impl From<&SavedTemplateVariant> for VariantData {
     fn from(value: &SavedTemplateVariant) -> Self {
         let paper = value.layout().paper();
         let pin = value.reference();
+        let styled = value.layout().text_defaults() != &TemplateTextStyles::default()
+            || value.layout().tables().iter().any(|t| {
+                t.cells()
+                    .iter()
+                    .any(|c| c.text_styles != TemplateTextStyles::default())
+            });
         Self {
-            schema_version: if !value.layout().graphics().is_empty() {
+            text_defaults: styled.then(|| value.layout().text_defaults().into()),
+            schema_version: if styled {
+                4
+            } else if !value.layout().graphics().is_empty() {
                 3
             } else if value.allows_new_assignments() {
                 1
@@ -152,6 +166,8 @@ impl From<&SavedTemplateVariant> for VariantData {
                             id: cell.id.to_string(),
                             bounds_um: coords(cell.bounds),
                             caption: cell.caption.clone(),
+                            text_styles: (cell.text_styles != TemplateTextStyles::default())
+                                .then(|| (&cell.text_styles).into()),
                             contents: cell
                                 .contents
                                 .iter()
@@ -178,7 +194,7 @@ impl From<&SavedTemplateVariant> for VariantData {
 /// Reading a body has no publication, project migration or filesystem side effects.
 pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, TemplateFileError> {
     let version: crate::schema::VersionEnvelope = serde_json::from_str(text)?;
-    if ![1, 2, 3].contains(&version.schema_version) {
+    if ![1, 2, 3, 4].contains(&version.schema_version) {
         return Err(TemplateFileError::Version(version.schema_version));
     }
     let data: VariantData = serde_json::from_str(text)?;
@@ -187,7 +203,7 @@ pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, Templ
 impl TryFrom<VariantData> for SavedTemplateVariant {
     type Error = TemplateFileError;
     fn try_from(data: VariantData) -> Result<Self, Self::Error> {
-        if ![1, 2, 3].contains(&data.schema_version) {
+        if ![1, 2, 3, 4].contains(&data.schema_version) {
             return Err(TemplateFileError::Version(data.schema_version));
         }
         if (data.schema_version == 1 && data.new_assignments.is_some())
@@ -201,6 +217,16 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
         }
         if (data.schema_version < 3 && data.graphics.is_some())
             || (data.schema_version == 3 && data.graphics.is_none())
+        {
+            return Err(TemplateFileError::Version(data.schema_version));
+        }
+        let has_styles = data.text_defaults.is_some()
+            || data
+                .tables
+                .iter()
+                .any(|t| t.cells.iter().any(|c| c.text_styles.is_some()));
+        if (data.schema_version < 4 && has_styles)
+            || (data.schema_version == 4 && data.text_defaults.is_none())
         {
             return Err(TemplateFileError::Version(data.schema_version));
         }
@@ -232,6 +258,7 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                             })
                             .collect::<Result<Vec<_>, _>>()?;
                         Ok::<_, TemplateFileError>(TemplateCell {
+                            text_styles: cell.text_styles.map(Into::into).unwrap_or_default(),
                             id: cell.id.parse()?,
                             bounds: rect(cell.bounds_um),
                             caption: cell.caption,
@@ -253,6 +280,8 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                 .map(TemplateGraphic::try_from)
                 .collect::<Result<_, _>>()?,
         )?;
+        let layout =
+            layout.with_text_defaults(data.text_defaults.map(Into::into).unwrap_or_default())?;
         if retained && !layout.tables().is_empty() {
             return Err(TemplateFileError::Json(
                 <serde_json::Error as serde::de::Error>::custom(

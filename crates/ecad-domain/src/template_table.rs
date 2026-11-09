@@ -21,6 +21,8 @@ pub struct TemplateCell {
     pub caption: String,
     /// Ordered value runs; empty content is a valid blank cell.
     pub contents: Vec<TemplateTextRun>,
+    /// Independent caption/content appearance, inherited per property.
+    pub text_styles: crate::TemplateTextStyles,
 }
 impl TemplateCell {
     /// Resolve with an explicit sample/real binding context. Missing fields remain
@@ -89,6 +91,7 @@ impl TemplateTable {
         let mut ids = BTreeSet::new();
         let mut area = 0u128;
         for (index, cell) in cells.iter().enumerate() {
+            cell.text_styles.validate()?;
             if !ids.insert(cell.id) {
                 return Err(TemplateError::DuplicateCell(cell.id));
             }

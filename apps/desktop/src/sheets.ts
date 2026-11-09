@@ -1,4 +1,5 @@
 /** Sheet drafts are local strings; Rust validates and retains the exact reviewed paper edit. */
+import { dimension, readDimension, writeDimension } from './dimensions';
 import type { Context, Reply, SheetRow, SheetPreview, Snapshot } from './types';
 import type { Shell } from './shell';
 import { element } from './ui';
@@ -152,7 +153,9 @@ export class SheetsDialog {
       this.edited();
     });
     this.fields.set(key, input);
-    this.body.append(this.label(caption, input));
+    const label = this.label(caption, input);
+    this.body.append(label);
+    if (caption.includes('(µm)')) dimension(input, caption, label.firstElementChild as HTMLElement);
   }
   private button(name: string, operation: () => Promise<void>) {
     this.controlsMap.get(name)!.addEventListener('click', () => void this.work(operation));
@@ -226,7 +229,7 @@ export class SheetsDialog {
       this.select.append(option);
     }
     this.dirty = false;
-    for (const [key, input] of this.fields) input.value = String(row[key] ?? '');
+    for (const [key, input] of this.fields) writeDimension(input, String(row[key] ?? ''));
     this.view.value = row.view ?? '';
     this.select.value = create ? '' : row.id;
     this.invalidate();
@@ -240,12 +243,12 @@ export class SheetsDialog {
     const variant = this.snapshot?.template_choices.find((v) => v.key === key);
     if (variant)
       for (const key of ['width', 'height', 'left', 'right', 'top', 'bottom'] as const)
-        this.fields.get(key)!.value = variant[key];
+        writeDimension(this.fields.get(key)!, variant[key]);
   }
   private draft(): SheetRow {
     return {
       ...this.row!,
-      ...Object.fromEntries([...this.fields].map(([key, input]) => [key, input.value])),
+      ...Object.fromEntries([...this.fields].map(([key, input]) => [key, readDimension(input)])),
       view: this.view.value || null,
       document: this.owner.value,
       template: this.template.value || null,

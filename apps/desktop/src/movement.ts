@@ -1,4 +1,5 @@
 /** Transient placement controls; the engine owns snapping, geometry and commit proposals. */
+import { dimension, readDimension, writeDimension } from './dimensions';
 import type { Context, MoveRow, Reply } from './types';
 import type { Shell } from './shell';
 import { DrawingCanvas } from './canvas';
@@ -38,8 +39,8 @@ export class MovementTool {
     private changed: () => void,
     private cancelAction: () => void,
   ) {
-    this.x.setAttribute('aria-label', 'Move X (µm)');
-    this.y.setAttribute('aria-label', 'Move Y (µm)');
+    dimension(this.x, 'Move X (µm)');
+    dimension(this.y, 'Move Y (µm)');
     this.reference.setAttribute('aria-label', 'Move reference');
     for (const input of [this.x, this.y]) {
       input.type = 'text';
@@ -47,8 +48,8 @@ export class MovementTool {
       input.addEventListener('input', () => {
         this.lastPointer = null;
         this.queue({
-          x: this.x.value,
-          y: this.y.value,
+          x: readDimension(this.x),
+          y: readDimension(this.y),
           exact: true,
           suppressed: false,
           candidate: null,
@@ -116,7 +117,8 @@ export class MovementTool {
         return option;
       }),
     );
-    this.note.textContent = 'Move · Exact X/Y in µm · Tab cycles snaps · Hold Alt to suppress';
+    this.note.textContent =
+      'Move · Exact X/Y in the displayed units · Tab cycles snaps · Hold Alt to suppress';
     this.controls();
     try {
       const reply = await send({
@@ -250,8 +252,8 @@ export class MovementTool {
     this.row = reply.movement;
     this.valid = true;
     // Preserve the user's raw exact input while typing, including large integers.
-    if (document.activeElement !== this.x) this.x.value = this.row.x;
-    if (document.activeElement !== this.y) this.y.value = this.row.y;
+    if (document.activeElement !== this.x) writeDimension(this.x, this.row.x);
+    if (document.activeElement !== this.y) writeDimension(this.y, this.row.y);
     this.drawing.preview(
       this.row.scene,
       this.row.snap ? [Number(this.row.x) / 1000, Number(this.row.y) / 1000] : undefined,

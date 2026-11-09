@@ -1,4 +1,5 @@
 /** Separate library workspace; project panes/camera stay mounted behind the bounded editor surface. */
+import { dimensionSummary } from './dimensions';
 import type {
   Context,
   Reply,
@@ -269,6 +270,7 @@ export class TemplateEditor {
         this.selection,
         this.selected.kind === 'artwork' ? this.selected.id : undefined,
         this.selected.kind === 'artwork-catalog',
+        this.selectedCells,
       );
   }
   private paintSelection() {
@@ -319,7 +321,7 @@ export class TemplateEditor {
     this.renderProperties();
     this.paintSelection();
     if (cells.length > 1)
-      this.note.textContent = `${cells.length} cells selected. Properties show the first cell; Merge reviews the complete selection.`;
+      this.note.textContent = `${cells.length} cells selected. Text editing shows the first cell; formatting applies to all selected cells.`;
     else this.note.textContent = '';
     return true;
   }
@@ -375,9 +377,7 @@ export class TemplateEditor {
     });
     this.structure.append(props);
     for (const table of this.variant.tables) {
-      this.structure.append(
-        element('p', 'inspector-note', `Table · ${table.bounds.join(', ')} µm`),
-      );
+      this.structure.append(dimensionSummary(table.bounds, 'Table · '));
       for (const cell of table.cells) {
         const b = element('button', 'tree-item', cell.caption || 'Blank cell');
         b.dataset.templateCell = cell.id;

@@ -17,6 +17,7 @@ fn base() -> TemplateTable {
         rect(100, 100, 100, 100),
         vec![
             TemplateCell {
+                text_styles: Default::default(),
                 id: id(1),
                 bounds: rect(0, 0, 50, 100),
                 caption: "Spanning\ncompany".into(),
@@ -25,12 +26,14 @@ fn base() -> TemplateTable {
                 )],
             },
             TemplateCell {
+                text_styles: Default::default(),
                 id: id(2),
                 bounds: rect(50, 0, 50, 50),
                 caption: "Upper".into(),
                 contents: vec![],
             },
             TemplateCell {
+                text_styles: Default::default(),
                 id: id(3),
                 bounds: rect(50, 50, 50, 50),
                 caption: "Lower".into(),

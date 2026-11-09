@@ -1,12 +1,17 @@
 /** Exact local fields form one closed property proposal; typing never edits a project. */
+import { unitPicker } from './unit-picker';
 import type { TemplateVariant, TemplateCell, TemplateTable, TemplateRun } from './types';
 import { element } from './ui';
+import { TemplateTextProperties } from './template-text-properties';
+import { dimension, dimensionSummary, readDimension, writeDimension } from './dimensions';
 import { textEditor } from './text';
 import { paperPresets } from './paper-presets';
 import { TemplateRuns } from './template-runs';
 import { TemplateArtwork } from './template-artwork';
 export class TemplateProperties {
   readonly root = element('form', 'template-properties inspector');
+  private textDefaults: TemplateTextProperties | null = null;
+  private cellStyles: { id: string; styles: import('./types').TemplateTextStyles }[] = [];
   private paperFields = element('div');
   private artworkId: string | undefined;
   private catalog = false;
@@ -23,7 +28,7 @@ export class TemplateProperties {
   private model: TemplateVariant | null = null;
   constructor(
     private changed: () => void,
-    apply: () => void,
+    private apply: () => void,
   ) {
     this.root.addEventListener('submit', (e) => e.preventDefault());
     this.root.addEventListener('keydown', (e) => {
@@ -41,6 +46,8 @@ export class TemplateProperties {
     input.setAttribute('aria-label', name);
     input.addEventListener('input', this.changed);
     input.addEventListener('change', this.changed);
+    if (name.includes('(µm)') && input instanceof HTMLInputElement)
+      dimension(input, name, label.firstElementChild as HTMLElement);
     return label;
   }
   private numbers(names: string[], values: string[]) {
@@ -57,6 +64,7 @@ export class TemplateProperties {
     selection: { table: TemplateTable; cell: TemplateCell } | null,
     artworkId?: string,
     catalog = false,
+    cells: TemplateCell[] = [],
   ) {
     this.model = model;
     this.selected = selection;
@@ -83,7 +91,7 @@ export class TemplateProperties {
     const syncGeneral = () => {
       const values = this.paper.slice(2).map((input) => input.value);
       const uniform = values.every((value) => value === values[0]);
-      this.generalMargin.value = uniform ? values[0] : '';
+      writeDimension(this.generalMargin, uniform ? readDimension(this.paper[2]) : '');
       this.generalMargin.placeholder = uniform ? '' : 'Mixed';
     };
     syncGeneral();
@@ -97,7 +105,8 @@ export class TemplateProperties {
       'Move tables only as needed and intersect the content region with the margins. Cell sizes stay unchanged.';
     this.label('Fit layout inside margins', this.fitMargins);
     this.generalMargin.addEventListener('input', () => {
-      for (const side of this.paper.slice(2)) side.value = this.generalMargin.value;
+      for (const side of this.paper.slice(2))
+        writeDimension(side, readDimension(this.generalMargin));
       this.fitMargins.checked = true;
     });
     this.content = this.numbers(
@@ -122,6 +131,14 @@ export class TemplateProperties {
         this.advancedPaper = open;
       },
     );
+    this.textDefaults = new TemplateTextProperties(
+      [structuredClone(model.text_defaults)],
+      this.changed,
+      true,
+      this.apply,
+    );
+    this.paperFields.append(this.textDefaults.root, unitPicker());
+    this.cellStyles = cells.map((c) => ({ id: c.id, styles: structuredClone(c.text_styles) }));
     this.artwork = new TemplateArtwork(model, this.changed, artworkId);
     if (artworkId || catalog) this.root.append(this.artwork.root);
     this.runs = [];
@@ -130,15 +147,21 @@ export class TemplateProperties {
       this.caption = textEditor('property-input property-text', 2);
       this.caption.value = selection.cell.caption;
       this.label('Cell caption', this.caption, this.root);
-      this.root.append(
-        element(
-          'p',
-          'inspector-note',
-          `Cell ${selection.cell.id} · bounds ${selection.cell.bounds.join(', ')} µm`,
-        ),
-      );
+      this.root.append(dimensionSummary(selection.cell.bounds, 'Cell bounds · '));
       this.runs = selection.cell.contents.map((r) => ({ ...r }));
       this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
+      if (!this.cellStyles.length)
+        this.cellStyles = [
+          { id: selection.cell.id, styles: structuredClone(selection.cell.text_styles) },
+        ];
+      this.root.append(
+        new TemplateTextProperties(
+          this.cellStyles.map((c) => c.styles),
+          this.changed,
+          false,
+          this.apply,
+        ).root,
+      );
     }
   }
 
@@ -147,9 +170,11 @@ export class TemplateProperties {
     return {
       variant: this.model.id,
       name: this.name.value,
-      paper: this.paper.map((v) => v.value),
+      paper: this.paper.map(readDimension),
+      text_defaults: this.textDefaults!.styles[0],
+      cell_styles: this.cellStyles,
       fit_margins: this.fitMargins.checked,
-      content: this.content.map((v) => v.value),
+      content: this.content.map(readDimension),
       graphics: this.artwork!.graphics,
       cell: this.selected
         ? {

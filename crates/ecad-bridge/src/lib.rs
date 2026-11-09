@@ -32,3 +32,5 @@ mod template_workspace;
 mod captured_context;
 
 mod template_selection;
+
+mod template_text_styles;

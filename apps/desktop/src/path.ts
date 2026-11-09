@@ -1,4 +1,5 @@
 /** Clicks are ordered draft intents; pointer-only previews coalesce without losing vertices. */
+import { dimension, readDimension, writeDimension } from './dimensions';
 import type { Context, PathRow, Reply, Target } from './types';
 import type { Shell } from './shell';
 import type { DrawingCanvas } from './canvas';
@@ -44,8 +45,8 @@ export class PathTool {
     private select: (target: Target) => void,
     private cancelAction: () => void,
   ) {
-    this.x.setAttribute('aria-label', 'Path X (µm)');
-    this.y.setAttribute('aria-label', 'Path Y (µm)');
+    dimension(this.x, 'Path X (µm)');
+    dimension(this.y, 'Path Y (µm)');
     this.addButton.setAttribute('aria-label', 'Add point');
     this.addButton.title = 'Add point · click canvas or press Enter in a coordinate field';
     this.backButton.setAttribute('aria-label', 'Remove last point');
@@ -109,8 +110,8 @@ export class PathTool {
   async begin(context: Context) {
     this.clear();
     this.active = true;
-    this.x.value = '0';
-    this.y.value = '0';
+    writeDimension(this.x, '0');
+    writeDimension(this.y, '0');
     const generation = this.generation;
     this.controls();
     try {
@@ -137,8 +138,8 @@ export class PathTool {
   }
   private placement(): Placement {
     return {
-      x: this.pointer?.x ?? this.x.value,
-      y: this.pointer?.y ?? this.y.value,
+      x: this.pointer?.x ?? readDimension(this.x),
+      y: this.pointer?.y ?? readDimension(this.y),
       exact: !this.pointer,
       suppressed: this.suppressed,
       candidate: this.choice,
@@ -271,8 +272,8 @@ export class PathTool {
     if (!reply.path) throw new Error('Missing path draft');
     this.row = reply.path;
     this.valid = true;
-    if (document.activeElement !== this.x) this.x.value = this.row.x;
-    if (document.activeElement !== this.y) this.y.value = this.row.y;
+    if (document.activeElement !== this.x) writeDimension(this.x, this.row.x);
+    if (document.activeElement !== this.y) writeDimension(this.y, this.row.y);
     this.drawing.pathPreview(
       this.row.scene,
       this.row.rubber,

@@ -172,3 +172,47 @@ fn failed_publication_retains_unsaved_draft_and_saved_library_reopens_independen
             .any(|r| r[1] == "Saved name")
     );
 }
+
+#[test]
+fn caption_and_content_range_styles_validate_atomically_and_undo_as_one_edit() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut b = DesktopBridge::demo().unwrap();
+    b.configure_template_store(dir.path().join("templates.json"))
+        .unwrap();
+    action(&mut b, "library.templates").unwrap();
+    action(&mut b, "template.new").unwrap();
+    let before = snapshot(&b)["template_editor"]["variants"][0].clone();
+    let cells = before["tables"][0]["cells"].as_array().unwrap();
+    let mut style = cells[0]["text_styles"].clone();
+    style["caption"]["bold"] = json!(true);
+    style["content"]["height"] = json!("3200");
+    let mut edit = proposal(&b);
+    edit["cell_styles"] = json!([
+        {"id": cells[0]["id"], "styles": style},
+        {"id": cells[1]["id"], "styles": style}
+    ]);
+    let mut invalid = edit.clone();
+    invalid["cell_styles"][1]["styles"]["content"]["height"] = json!("0");
+    assert!(apply(&mut b, invalid).is_err());
+    assert_eq!(snapshot(&b)["template_editor"]["variants"][0], before);
+    apply(&mut b, edit).unwrap();
+    let changed = snapshot(&b)["template_editor"]["variants"][0].clone();
+    for i in 0..2 {
+        assert_eq!(
+            changed["tables"][0]["cells"][i]["text_styles"]["caption"]["bold"],
+            true
+        );
+        assert_eq!(
+            changed["tables"][0]["cells"][i]["text_styles"]["content"]["height"],
+            "3200"
+        );
+        assert_eq!(
+            changed["tables"][0]["cells"][i]["contents"],
+            before["tables"][0]["cells"][i]["contents"]
+        );
+    }
+    action(&mut b, "document.undo").unwrap();
+    assert_eq!(snapshot(&b)["template_editor"]["variants"][0], before);
+    action(&mut b, "document.redo").unwrap();
+    assert_eq!(snapshot(&b)["template_editor"]["variants"][0], changed);
+}
