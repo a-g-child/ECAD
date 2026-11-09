@@ -421,3 +421,7 @@ Appearance validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (64 
 - [x] Merge defaults to retaining the top-left cell’s caption and contents, including blanks; combining other contents is opt-in. Browser regression covers the default, reverse selection, explicit combine and exact undo.
 
 Merge-default validation: `cargo xtask full`, `cargo xtask ui` (64 workflows), and `cargo xtask desktop` passed on macOS/aarch64.
+
+- [x] Inset template properties by 12 px and give schematic property rows consistent 12 px side padding with more vertical spacing, without changing pane tracks.
+
+Property-spacing validation: `cargo xtask full`, `cargo xtask ui` (64 workflows), and `cargo xtask desktop` passed on macOS/aarch64; the template properties screenshot was visually reviewed at 960 × 640.

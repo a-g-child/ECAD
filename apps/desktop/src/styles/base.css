@@ -15,6 +15,7 @@
   --muted: #697784;
   --panel: #f5f6f7;
   --ribbon-height: 96px;
+  --property-inset: 12px;
 }
 * {
   box-sizing: border-box;

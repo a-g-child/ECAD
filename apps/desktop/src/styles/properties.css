@@ -24,7 +24,7 @@
   min-height: 32px;
   border-bottom: 1px solid #e2e6e8;
   align-items: center;
-  padding: 4px 8px 4px 12px;
+  padding: 6px var(--property-inset);
   gap: 6px;
   min-width: 0;
 }

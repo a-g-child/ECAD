@@ -43,6 +43,7 @@
   stroke: var(--accent);
 }
 .template-properties {
+  padding: var(--property-inset);
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -64,7 +65,7 @@
   flex-wrap: wrap;
   flex-shrink: 0;
   gap: 6px;
-  padding: 8px;
+  padding: 8px var(--property-inset);
   border-top: 1px solid var(--line);
 }
 .template-workspace .settings-error {
