@@ -6,6 +6,9 @@ import { TemplateRuns } from './template-runs';
 import { TemplateArtwork } from './template-artwork';
 export class TemplateProperties {
   readonly root = element('form', 'template-properties inspector');
+  private paperFields = element('div');
+  private artworkId: string | undefined;
+  private catalog = false;
   private name = textEditor('property-input property-text', 2);
   private paper: HTMLInputElement[] = [];
   private content: HTMLInputElement[] = [];
@@ -29,7 +32,7 @@ export class TemplateProperties {
       }
     });
   }
-  private label(name: string, input: HTMLElement, parent: HTMLElement = this.root) {
+  private label(name: string, input: HTMLElement, parent: HTMLElement = this.paperFields) {
     const label = element('label', 'settings-field');
     label.append(element('span', '', name), input);
     parent.append(label);
@@ -47,10 +50,20 @@ export class TemplateProperties {
       return input;
     });
   }
-  render(model: TemplateVariant, selection: { table: TemplateTable; cell: TemplateCell } | null) {
+  render(
+    model: TemplateVariant,
+    selection: { table: TemplateTable; cell: TemplateCell } | null,
+    artworkId?: string,
+    catalog = false,
+  ) {
     this.model = model;
     this.selected = selection;
-    this.root.replaceChildren();
+    this.artworkId = artworkId;
+    this.catalog = catalog;
+    this.paperFields = element('div');
+    this.paperFields.hidden = !!selection || !!artworkId || catalog;
+    this.root.replaceChildren(this.paperFields);
+    this.root.scrollTop = 0;
     this.name = textEditor('property-input property-text', 2);
     this.name.value = model.name;
     this.label('Template name', this.name);
@@ -89,21 +102,21 @@ export class TemplateProperties {
       ['Content X (µm)', 'Content Y (µm)', 'Content width (µm)', 'Content height (µm)'],
       model.content,
     );
-    this.root.append(
+    this.paperFields.append(
       element(
         'p',
         'inspector-note',
         'Custom paper/layout · border standards and anchoring tools are pending. Preview uses placeholders, never personal or project values.',
       ),
     );
-    this.artwork = new TemplateArtwork(model, this.changed);
-    this.root.append(this.artwork.root);
+    this.artwork = new TemplateArtwork(model, this.changed, artworkId);
+    if (artworkId || catalog) this.root.append(this.artwork.root);
     this.runs = [];
     if (selection) {
       this.root.append(element('h3', '', 'Cell properties'));
       this.caption = textEditor('property-input property-text', 2);
       this.caption.value = selection.cell.caption;
-      this.label('Cell caption', this.caption);
+      this.label('Cell caption', this.caption, this.root);
       this.root.append(
         element(
           'p',
@@ -150,6 +163,10 @@ export class TemplateProperties {
     }
   }
   focus() {
+    if (this.artworkId || this.catalog) {
+      this.focusArtwork(this.artworkId);
+      return;
+    }
     (this.selected ? this.caption : this.name).focus();
   }
 }

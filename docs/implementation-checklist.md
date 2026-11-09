@@ -1,5 +1,7 @@
 # Implementation checklist
 
+Current UI rework follows the [contextual editor integration roadmap](contextual-editor-integration.md); earlier entries below record delivered historical slices, not competing future UI plans.
+
 Status: headless lifecycle plus project-local hierarchy, interfaces, and cable grouping implemented. Immutable reusable definitions, independent instances, and make-local ancestry are implemented. Explicit pinned-instance adoption and local shared-library publication/recommendations are implemented; explicit registered-file known-use discovery is implemented; durable registries and local-variant merging remain planned. Checked items describe executable behavior or completed checks, not the full intended CAD product.
 
 ## 1. Working foundation
@@ -319,3 +321,16 @@ Local verification for this slice: `cargo xtask full`, `cargo xtask ui` (52 brow
 See [decision 0046](decisions/0046-template-artwork-pointer-tools.md). Existing numeric properties and variable text editing remain available after placement.
 
 Pointer-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (53 browser workflows), and `cargo xtask desktop` passed. New coverage includes two domain regressions, two retained-gesture bridge workflows and a browser workflow covering every primitive, delayed movement release, click-only redo preservation, armed cancellation and invalid release. Desktop checks are host build/lint, not native interaction automation; Windows/Linux runtime validation remains pending.
+
+### Contextual template selection — first integration slice
+
+- [x] One typed editor selection for cell ranges, artwork and paper; gesture controllers consume projections or read the current selection.
+- [x] Automatic contextual inspector; selecting artwork clears table handles, selecting cells clears artwork highlight, blank paper/canvas Escape clears selection.
+- [x] Explicit full-cell template hit areas protect table selection over background artwork.
+- [x] Stable-ID reconciliation after undo/delete/reopen; pending property edits remain protected.
+- [ ] Replace Apply/Revert with shared field transactions and typed core selection/action eligibility.
+- [ ] Simplify Split/Merge and paper presets, extract shared drawing/text modules, then add table/border/image insertion with persistence support.
+
+The numeric artwork-management surface remains transitional. No document schema, library publication or project adoption semantics change in this slice.
+
+Contextual-selection validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (54 browser workflows), and `cargo xtask desktop` passed. The new browser reproducer covers cell interiors overlapping artwork, automatic inspector switching, explorer/right-click targeting, blank-paper/Escape deselection, pending-field protection and unchanged undo semantics. A final focused run also verified cancellation of a cell-range gesture restores the previous artwork selection. Native interaction automation and Windows/Linux runtime checks remain pending.

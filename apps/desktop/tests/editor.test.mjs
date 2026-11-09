@@ -1,3 +1,4 @@
+import { registerTemplateSelectionTests } from './template-selection.mjs';
 import { registerTemplateArtworkPointerTests } from './template-artwork-pointer.mjs';
 import { registerTemplateArtworkTests } from './template-artwork.mjs';
 /** Local integration tests: real Rust controller + Vite + Chromium, no mocked electrical model. */
@@ -547,3 +548,5 @@ registerTemplateMarginTests({ page, button, until, project: () => project, root 
 registerTemplateArtworkTests({ page, button, until });
 
 registerTemplateArtworkPointerTests({ page, button, until });
+
+registerTemplateSelectionTests({ page, button, until });

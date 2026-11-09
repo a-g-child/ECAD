@@ -9,6 +9,7 @@ export class TemplateArtwork {
   constructor(
     private model: TemplateVariant,
     private changed: () => void,
+    private selectedId?: string,
   ) {
     this.graphics = structuredClone(model.graphics);
     this.render();
@@ -35,14 +36,17 @@ export class TemplateArtwork {
   }
   private render() {
     this.root.replaceChildren(element('h3', '', 'Template artwork'));
-    this.root.append(
-      element(
-        'p',
-        'inspector-note',
-        'Paper coordinates in µm. Artwork may occupy margins. Apply properties commits changes.',
-      ),
-    );
-    for (const kind of ['text', 'polyline', 'rectangle', 'ellipse'] as const) {
+    if (!this.selectedId)
+      this.root.append(
+        element(
+          'p',
+          'inspector-note',
+          'Paper coordinates in µm. Artwork may occupy margins. Apply properties commits changes.',
+        ),
+      );
+    for (const kind of this.selectedId
+      ? []
+      : (['text', 'polyline', 'rectangle', 'ellipse'] as const)) {
       const b = element('button', 'plain', `Add ${kind === 'polyline' ? 'line / polyline' : kind}`);
       b.type = 'button';
       b.addEventListener('click', () => {
@@ -73,8 +77,10 @@ export class TemplateArtwork {
       this.root.append(b);
     }
     this.graphics.forEach((g, i) => {
+      if (this.selectedId && g.id !== this.selectedId) return;
       const details = element('details');
       details.dataset.artworkId = g.id;
+      details.open = !!this.selectedId;
       details.append(element('summary', '', `${i + 1} · ${g.kind}`));
       ['X', 'Y', 'Width', 'Height'].forEach((label, n) =>
         this.field(details, `Artwork ${label} (µm)`, g.bounds[n], (v) => (g.bounds[n] = v)),

@@ -113,3 +113,7 @@ Artwork changes share template Undo/Redo, Revert fields and Save revision. Artwo
 The Template ribbon's **Draw** group places text boxes, lines, rectangles and ellipses: choose a tool, then drag between two paper positions. Reverse drags are supported, including horizontal/vertical lines. Text starts as `Text`; edit multiline text or add variables through its properties. Drag an existing object to move it whole, or right-click to open its properties. **Escape** cancels; each changed gesture is one undo step. Click-only movement preserves redo.
 
 Placement previews are checked by Rust and commit the final release coordinate. Out-of-paper or collapsed geometry is rejected. Artwork pointer coordinates are currently unsnapped. Images, multi-click polyline drawing and pointer resize/vertex handles remain future work; numeric geometry/local-point editing remains available.
+
+### Contextual template selection
+
+The inspector now follows the active cell range or artwork object; blank-paper clicks and canvas Escape clear selection and return to paper properties. Artwork selection clears table handles. Table interiors receive hits ahead of background artwork. The explorer and right-click use the same selected target. Apply/Revert remain temporarily required for edited fields; unfinished fields are protected when switching targets. The existing Artwork management action is retained for numeric insertion while the simplified Insert workflow is implemented. See the [integration roadmap](contextual-editor-integration.md) for the staged replacement.

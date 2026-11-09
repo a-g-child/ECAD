@@ -1,5 +1,7 @@
 # Drawing sheets, layouts and metadata
 
+Current editor integration direction: [contextual editor roadmap](contextual-editor-integration.md). It supersedes earlier form-heavy template UI proposals: one selection owner, automatic contextual properties, simplified Insert/Draw tools, shared field/tool modules and explicit persistence evolution. Historical implementation sections remain records of their respective slices.
+
 Status: target architecture revised to Project → Documents → Sheets. The bounded desktop now edits directly on template-backed sheets; the numeric sheet review remains a separate clipped preview. Project metadata, profiles, paper/history primitives, logical document ownership and v11 project creation defaults, typed pages and generated drawing lists are implemented foundations. See [decision 0030](decisions/0030-sheet-first-project-documents.md).
 
 ## Scope and ownership
@@ -144,4 +146,4 @@ Schema v12 adds portable complete template revisions independently of electrical
 
 Normal desktop sheets and project/document defaults now resolve saved project-bundled references. A sheet can inherit the owning document's revision while retaining its stable paper variant; explicit equal-valued choices remain overrides. Exact paper/margins are validated projections of that saved body and shown read-only during sheet editing. Selecting a different saved variant is reviewed through the existing proposal/Apply path; source geometry never resizes implicitly. In-use revision removal, missing bodies and incompatible inherited transfers fail coherently.
 
-Desktop loading opts into an in-memory preservation migration before establishing a clean checkpoint. Explicit saves write v13, observing the original file version. Retained tiny layouts reopen with their omitted-table diagnostic and exact undo; normal authoring excludes them until a repaired saved revision exists. Template editor/ribbon/property panels, standard profiles and interactive table authoring remain pending. See [decision 0040](decisions/0040-saved-template-assignments-and-inherited-variants.md).
+Desktop loading opts into an in-memory preservation migration before establishing a clean checkpoint. Explicit saves write v13, observing the original file version. Retained tiny layouts reopen with their omitted-table diagnostic and exact undo; normal authoring excludes them until a repaired saved revision exists. The independent editor, structured tables and artwork tools are implemented; contextual workflow integration follows the roadmap linked above. Verified standard profiles remain pending. See [decision 0040](decisions/0040-saved-template-assignments-and-inherited-variants.md).

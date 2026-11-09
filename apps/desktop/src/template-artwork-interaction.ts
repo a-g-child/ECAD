@@ -7,7 +7,7 @@ type Point = { x: number; y: number };
 type Kind = 'text' | 'line' | 'rectangle' | 'ellipse' | 'move';
 export class TemplateArtworkInteraction {
   private model: TemplateVariant | null = null;
-  private selected: string | null = null;
+
   private tool: { kind: Kind; id: string; original: TemplateGraphic | null } | null = null;
   private drag: { start: Point; pointer: number } | null = null;
   private ending = false;
@@ -22,7 +22,8 @@ export class TemplateArtworkInteraction {
     private canStart: () => boolean,
     private changed: () => void,
     private status: (s: string, error?: boolean) => void,
-    private select: (id: string) => void,
+    private select: (id: string, focus?: boolean) => void,
+    private selection: () => string | null,
   ) {
     this.gesture = new TemplateGesture(
       context,
@@ -49,8 +50,7 @@ export class TemplateArtworkInteraction {
         if (id && !this.active && this.canStart()) {
           e.preventDefault();
           e.stopImmediatePropagation();
-          this.selected = id;
-          this.select(id);
+          this.select(id, true);
         }
       },
       true,
@@ -74,12 +74,11 @@ export class TemplateArtworkInteraction {
   }
   update(model: TemplateVariant) {
     this.model = model;
-    if (!model.graphics.some((g) => g.id === this.selected)) this.selected = null;
   }
   start(kind: Kind) {
     if (!this.model || this.active) return;
     const original =
-      kind === 'move' ? (this.model.graphics.find((g) => g.id === this.selected) ?? null) : null;
+      kind === 'move' ? (this.model.graphics.find((g) => g.id === this.selection()) ?? null) : null;
     if (kind === 'move' && !original) {
       this.status('Select artwork in the preview before choosing Move.');
       return;
@@ -115,7 +114,7 @@ export class TemplateArtworkInteraction {
       if (!hit || !this.canStart()) return;
       const g = this.model.graphics.find((g) => g.id === hit);
       if (!g) return;
-      this.selected = g.id;
+      this.select(g.id);
       this.arm('move', g.id, g);
     } else if (this.tool.kind === 'move' && hit !== this.tool.id) return;
     e.preventDefault();
@@ -167,8 +166,7 @@ export class TemplateArtworkInteraction {
       this.ending = false;
       this.changed();
       if (commit && id && this.model?.graphics.some((g) => g.id === id)) {
-        this.selected = id;
-        this.select(id);
+        this.select(id, true);
       }
     }
   }

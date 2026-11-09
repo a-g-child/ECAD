@@ -6,7 +6,7 @@ import { cellAt, cellRange, paperPoint, type TableSelection } from './template-t
 import { marginSnapGuides, tableHandles } from './template-table-handles';
 type Point = { x: number; y: number };
 type Drag =
-  | { kind: 'select'; table: TemplateTable; first: TemplateCell; before: TableSelection | null }
+  | { kind: 'select'; table: TemplateTable; first: TemplateCell; restore: () => void }
   | {
       kind: 'move' | 'edge';
       table: TemplateTable;
@@ -36,6 +36,7 @@ export class TemplateTableInteraction {
     private canStart: () => boolean,
     private changed: () => void,
     private status: (s: string, error?: boolean) => void,
+    private captureSelection: () => () => void,
   ) {
     this.gesture = new TemplateGesture(
       context,
@@ -164,9 +165,9 @@ export class TemplateTableInteraction {
     } else {
       const hit = this.hit(e);
       if (!hit) return;
-      const before = this.selected;
+      const restore = this.captureSelection();
       if (!this.choose(hit.table, [hit.cell])) return;
-      this.drag = { kind: 'select', table: hit.table, first: hit.cell, before };
+      this.drag = { kind: 'select', table: hit.table, first: hit.cell, restore };
     }
     e.preventDefault();
     svg.focus();
@@ -253,7 +254,7 @@ export class TemplateTableInteraction {
     if (!this.active) return false;
     const drag = this.drag;
     this.drag = null;
-    if (drag?.kind === 'select' && drag.before) this.choose(drag.before.table, drag.before.cells);
+    if (drag?.kind === 'select') drag.restore();
     await this.gesture.finish(false);
     this.preview.locked = false;
     this.paint();

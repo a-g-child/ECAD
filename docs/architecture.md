@@ -1,5 +1,7 @@
 # Architecture direction
 
+Current editor integration direction: [contextual editor roadmap](contextual-editor-integration.md). It supersedes earlier form-heavy template UI proposals: one selection owner, automatic contextual properties, simplified Insert/Draw tools, shared field/tool modules and explicit persistence evolution. Historical implementation sections remain records of their respective slices.
+
 Status: architecture direction with an initial headless implementation. Domain, application, JSON adapter, and local check-runner boundaries now exist; hierarchy, reusable revisions, drawing styles, whole conductor routes, and action contracts are implemented; a bounded Tauri desktop prototype is implemented on macOS; broader native/platform capabilities remain planned. See the [implementation checklist](implementation-checklist.md) and [first implementation decision](decisions/0001-headless-foundation.md).
 
 ## Principles

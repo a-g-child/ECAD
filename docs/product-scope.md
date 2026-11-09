@@ -1,5 +1,7 @@
 # Electrical CAD — product scope
 
+Current editor integration direction: [contextual editor roadmap](contextual-editor-integration.md). It supersedes earlier form-heavy template UI proposals: one selection owner, automatic contextual properties, simplified Insert/Draw tools, shared field/tool modules and explicit persistence evolution. Historical implementation sections remain records of their respective slices.
+
 Status: initial scope for discussion, not a final requirements specification or architecture.
 
 Implementation has begun with a small headless Rust slice. See the [implementation checklist](implementation-checklist.md) for working behavior, verification, and remaining scope.

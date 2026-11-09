@@ -11,6 +11,7 @@ import type { Shell } from './shell';
 import { element } from './ui';
 import { send, inputId, errorText } from './transport';
 import { TemplatePreview } from './template-preview';
+import { selectedTable, reconcileSelection, type TemplateSelection } from './template-selection';
 import { TemplateProperties } from './template-properties';
 import { TemplateTableTools } from './template-table-tools';
 import { TemplateArtworkInteraction } from './template-artwork-interaction';
@@ -26,7 +27,14 @@ export class TemplateEditor {
   private preview: TemplatePreview;
   private interaction: TemplateTableInteraction;
   private artworkInteraction: TemplateArtworkInteraction;
-  private selectedCells: TemplateCell[] = [];
+  private selected: TemplateSelection = { kind: 'paper' };
+  private get selectedCells() {
+    return selectedTable(this.variant, this.selected)?.cells ?? [];
+  }
+  private get selection() {
+    const found = selectedTable(this.variant, this.selected);
+    return found ? { table: found.table, cell: found.cells[0] } : null;
+  }
   get gestureActive() {
     return (this.interaction?.active ?? false) || (this.artworkInteraction?.active ?? false);
   }
@@ -41,7 +49,7 @@ export class TemplateEditor {
   }
   private model: TemplateView | null = null;
   private variant: TemplateVariant | null = null;
-  private selection: { table: TemplateTable; cell: TemplateCell } | null = null;
+
   private fieldsPending = false;
   private operating = false;
   private uiBusy = false;
@@ -126,6 +134,16 @@ export class TemplateEditor {
         !this.artworkInteraction?.active,
       controls,
       status,
+      () => {
+        const selected = structuredClone(this.selected);
+        return () => {
+          if (!this.variant) return;
+          this.selected = reconcileSelection(this.variant, selected);
+          this.interaction.update(this.variant, selectedTable(this.variant, this.selected));
+          this.renderProperties();
+          this.paintSelection();
+        };
+      },
     );
     this.artworkInteraction = new TemplateArtworkInteraction(
       this.preview,
@@ -139,11 +157,68 @@ export class TemplateEditor {
         !this.interaction.active,
       controls,
       status,
-      (id) => this.form.focusArtwork(id),
+      (id, focus) => this.selectArtwork(id, focus),
+      () => (this.selected.kind === 'artwork' ? this.selected.id : null),
     );
+    this.preview.onRender = () => {
+      this.interaction.paint();
+      this.paintSelection();
+    };
+    this.preview.svg.addEventListener('pointerdown', (e) => {
+      if (
+        e.button === 0 &&
+        !this.gestureActive &&
+        !(e.target as Element).closest('.frame-cell,.table-handles,[data-template-graphic]')
+      )
+        this.clearSelection();
+    });
+    this.preview.svg.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !e.isComposing && !this.gestureActive && this.clearSelection()) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
     this.canvas.append(this.preview.svg);
     this.root.append(left, center, right);
     shell.workspace.append(this.root);
+  }
+  private renderProperties() {
+    if (this.variant)
+      this.form.render(
+        this.variant,
+        this.selection,
+        this.selected.kind === 'artwork' ? this.selected.id : undefined,
+        this.selected.kind === 'artwork-catalog',
+      );
+  }
+  private paintSelection() {
+    for (const node of this.preview.svg.querySelectorAll<SVGElement>('[data-template-graphic]')) {
+      node.toggleAttribute(
+        'data-artwork-selected',
+        this.selected.kind === 'artwork' && node.dataset.templateGraphic === this.selected.id,
+      );
+    }
+  }
+  private selectArtwork(id: string, focus = false) {
+    if (this.fieldsPending || !this.variant?.graphics.some((g) => g.id === id)) return;
+    this.selected = { kind: 'artwork', id };
+    this.interaction.update(this.variant, null);
+    this.renderProperties();
+    this.paintSelection();
+    if (focus) this.form.focus();
+  }
+  private clearSelection() {
+    if (this.fieldsPending) {
+      this.status('Apply or revert the edited fields before changing selection.', true);
+      return false;
+    }
+    if (this.uiBusy || this.working || !this.variant) return false;
+    this.selected = { kind: 'paper' };
+    this.interaction.update(this.variant, null);
+    this.renderProperties();
+    this.paintSelection();
+    this.note.textContent = '';
+    return true;
   }
   private changed() {
     if (this.fieldsPending) return;
@@ -158,9 +233,9 @@ export class TemplateEditor {
   }
   private selectGroup(table: TemplateTable, cells: TemplateCell[]) {
     if (this.uiBusy || this.operating || this.fieldsPending || !cells.length) return false;
-    this.selection = { table, cell: cells[0] };
-    this.selectedCells = cells;
-    this.form.render(this.variant!, this.selection);
+    this.selected = { kind: 'cells', table: table.id, cells: cells.map((c) => c.id) };
+    this.renderProperties();
+    this.paintSelection();
     if (cells.length > 1)
       this.note.textContent = `${cells.length} cells selected. Properties show the first cell; Merge reviews the complete selection.`;
     else this.note.textContent = '';
@@ -178,8 +253,7 @@ export class TemplateEditor {
     if (!view) {
       this.fieldsPending = false;
       this.captured = null;
-      this.selection = null;
-      this.selectedCells = [];
+      this.selected = { kind: 'paper' };
       delete this.shell.workspace.dataset.editor;
       this.shell.ribbon.setTemplateContext(false);
       return;
@@ -203,31 +277,18 @@ export class TemplateEditor {
     );
     if (view.catalog.some(([key]) => key === selected)) this.catalog.value = selected;
     if (reset) {
-      this.selection = null;
-      this.selectedCells = [];
+      this.selected = { kind: 'paper' };
     }
     if (changed || !this.fieldsPending) {
       this.fieldsPending = false;
       this.captured = null;
-      if (this.selection) {
-        const table = this.variant.tables.find((t) => t.id === this.selection?.table.id);
-        const cell = table?.cells.find((c) => c.id === this.selection?.cell.id);
-        this.selection = table && cell ? { table, cell } : null;
-        const ids = new Set(this.selectedCells.map((c) => c.id));
-        this.selectedCells = table?.cells.filter((c) => ids.has(c.id)) ?? [];
-      }
-      this.form.render(this.variant, this.selection);
+      this.selected = reconcileSelection(this.variant, this.selected);
+      this.renderProperties();
     }
     this.structure.replaceChildren();
     const props = element('button', 'tree-item', 'Template properties');
     props.addEventListener('click', () => {
-      if (!this.fieldsPending) {
-        this.selection = null;
-        this.selectedCells = [];
-        this.interaction.update(this.variant!, null);
-        this.form.render(this.variant!, null);
-        this.form.focus();
-      }
+      if (this.clearSelection()) this.form.focus();
     });
     this.structure.append(props);
     for (const table of this.variant.tables) {
@@ -250,7 +311,7 @@ export class TemplateEditor {
       const item = element('button', 'tree-item', `Artwork ${i + 1} · ${graphic.kind}`);
       item.addEventListener('click', () => {
         if (!this.fieldsPending && !this.working && !this.uiBusy)
-          this.form.focusArtwork(graphic.id);
+          this.selectArtwork(graphic.id, true);
       });
       this.structure.append(item);
     }
@@ -311,6 +372,11 @@ export class TemplateEditor {
     this.artworkInteraction.start(kind);
   }
   artwork() {
+    if (this.fieldsPending || this.gestureActive) return;
+    this.selected = { kind: 'artwork-catalog' };
+    this.interaction.update(this.variant!, null);
+    this.renderProperties();
+    this.paintSelection();
     this.form.focusArtwork();
   }
   tables(operation: string) {

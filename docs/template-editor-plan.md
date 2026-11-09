@@ -1,6 +1,6 @@
 # Consolidated drawing-template library editor
 
-Status: saved definitions, local publication, project bundling, assignment migration and saved-only desktop controls are implemented. A first independent library editor now provides its own history, contextual ribbon, placeholder preview and exact paper/content/cell-content properties. Exact numeric table resize, cell grid split, rectangular merge and aligned-boundary editing are now available. Direct cell-range selection, move/resize handles and contextual row/column insertion are implemented. Verified standards presets remain planned. See [editor boundary](decisions/0041-independent-template-editor.md) and [template requirements](sheets-and-templates.md).
+Status: saved templates, independent editing/history, structured tables, variable text and pointer artwork are implemented. The accepted next direction is the [contextual editor integration roadmap](contextual-editor-integration.md). Its selection-first inspector, simplified Insert/Draw tools and staged integration order supersede earlier form-heavy UI proposals below. Initial selection/contextual inspection is being implemented; field-level commits, presets and insertion/model extensions remain pending.
 
 ## 1. User workflow and separation
 
@@ -24,14 +24,14 @@ Keep the existing shell bounds, pane scrolling and shared controls. The editor u
 | Contextual ribbon | File and Libraries remain available; the active template view adds/activates a Template ribbon. Returning to a project sheet restores its drawing context. Keep the ribbon height fixed as its groups change. |
 | Preview | Switch between placeholders and explicit sample project/document/sheet data; display missing values, overflow and role/layout diagnostics. |
 
-Contextual ribbon groups:
+Target ribbon groups:
 
-- **Template:** New, Open, Duplicate/Save as, Save revision, Validate and Close.
-- **Paper:** size family/preset, orientation, margin/border profile and binding edge.
-- **Title blocks:** insert an existing block, create a table block, select rows/cells, insert/delete rows, split, merge and resize.
-- **Contents:** literal text, grouped variable picker, sheet-entry fields and generated-content regions.
-- **Arrange:** exact position/size, anchoring, alignment and distribution of selected template elements.
-- **Preview:** sample-data context, placeholders/resolved text, diagnostics and Fit.
+- **Insert:** margin border, table, image and text. Insert Table asks only for row/column counts before placement.
+- **Draw:** line/polyline, rectangle, circle and ellipse, using shared start/finish tool behaviour.
+- **Selection tools:** Split/Merge and applicable arrangement operations in a fixed-height contextual group.
+- **Lifecycle/navigation:** existing New/Open/Save/Undo/Redo/Close/Fit remain available without requiring Properties/Artwork buttons for routine inspection.
+
+Paper/template settings appear automatically with nothing selected. ISO A/US presets, orientation and general margin are the normal controls; custom dimensions and individual margins belong under Advanced. Property selection and field transactions must be integrated before removing the current explicit Apply/Revert guards. The current numeric artwork-management action is transitional, not the target inspector design.
 
 Register eligible operations centrally for ribbon, menus, context menus, keyboard and command search. Reuse protected text/IME behavior and explicit default/unbound key policies. Context is the captured template session/revision and selection; a delayed action cannot target the project document or another template tab. Shared controls remain keyboard accessible without an action for every possible property value.
 
@@ -61,7 +61,7 @@ A title block is a retained structured block, not independent loose line segment
 
 Plan a table extent with stable rectangular cell IDs and integer cell bounds. Validate positive sizes, containment and a complete nonoverlapping partition of the table. This permits unequal columns per row and rectangular merged cells without forcing users to draw a fine global grid. Shared borders are derived once from the partition, avoiding doubled strokes. Expose logical rows/columns as editing operations over the structure.
 
-Split creates cells through one table command. Merge is allowed only when the selected cells form a rectangle; the user reviews how multiple contents/bindings are retained or replaced. Row/column resizing adjusts the coherent partition, including spans, or rejects an ambiguous proposal. It never leaves disconnected line segments. Define deterministic stable-ID/field-mapping rules for split/merge/delete before implementing them; do not tie sheet values to cell positions or displayed captions.
+Split is available for a selected single cell or contiguous column of cells with matching left/right edges, using subdivision counts only and one atomic edit. Merge is available only for a rectangular selected cell union, with deterministic survivor identity and a content decision only when needed. Targets come from selection, not redundant table/cell pickers. Row/column resizing adjusts the coherent partition, including spans, or rejects an ambiguous proposal. It never leaves disconnected line segments. Define deterministic stable-ID/field-mapping rules for split/merge/delete before implementing them; do not tie sheet values to cell positions or displayed captions.
 
 Cell contents are typed literals, field references, sheet-entry fields or simple literal/field runs. Variables are grouped by project, logical document, sheet and derived output context. Company/contact values come from portable project metadata copied from profiles, not the opening user's machine. Drawn/checked/approved responsibilities remain distinct from engineer/contact. Unknown/missing bindings remain visible diagnostics. Arbitrary executable formulas are outside the first release.
 
@@ -89,7 +89,9 @@ Library writes stay outside project undo and use validated versioned storage, st
 
 Preserve the headless dependency direction. Domain owns identities, paper profiles, table partitions, field schemas and layout validation. Application owns independent editor sessions, commands, preview/adoption and history. Adapters own library/project DTOs, migration, assets and durable saves. Bridge DTOs remain separate, using strings for exact values/identities. The UI owns transient selection, handles and preview presentation. Extend workspace/action targeting with a distinct template-editor session and revision; the current Project-specific Session/Document, ActionContext, dispatcher and bridge projections cannot be reused by pretending a template is an electrical project or drawing view. Route Save, Undo/Redo and Close to the captured editor kind and protect all dirty editor sessions on Quit. Refactor the fixed Project.sheet_frame calculation into a headless template-layout resolver with explicit binding/style context, called by both template preview and actual sheet projection. Start with canonical versioned library files consistent with current Git-friendly storage; a future SQLite index may be a derived cache, not a second authority. Add concrete modules as features land, without a plugin framework.
 
-## 7. Rework and preservation migration
+## 7. Historical preservation migration
+
+The following table records the original migration work, much of which is now delivered. Current rework and delivery order are maintained in the [contextual integration roadmap](contextual-editor-integration.md).
 
 | Current implementation | Required change |
 | --- | --- |
