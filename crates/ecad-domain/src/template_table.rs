@@ -153,6 +153,8 @@ pub(crate) fn overlaps(a: FrameRect, b: FrameRect) -> bool {
 /// Invalid structured template input; constructors leave prior definitions untouched.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TemplateError {
+    /// Cell text placement, justification or separator is invalid.
+    TextLayout,
     /// New cell content must be either text or a picture, never both.
     MixedCellContent,
     /// Positive geometry must be representable and contained in its owner.
@@ -175,6 +177,7 @@ pub enum TemplateError {
 impl fmt::Display for TemplateError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::TextLayout => f.write_str("Choose a valid cell text layout and a single-line separator of at most 64 characters"),
             Self::MixedCellContent => f.write_str("Choose text or a picture for each cell"),
             Self::Bounds => {
                 f.write_str("Template geometry is empty, overflowing or outside its owner")

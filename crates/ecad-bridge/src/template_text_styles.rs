@@ -1,10 +1,12 @@
 //! Exact editor appearance DTOs; optional fields retain inheritance intent.
 use crate::dto::BridgeError;
-use ecad_domain::{TemplateTextStyle, TemplateTextStyles};
+use ecad_domain::{TemplateCellTextLayout, TemplateTextStyle, TemplateTextStyles};
 use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct StylesRow {
+    #[serde(default)]
+    layout: LayoutRow,
     caption: StyleRow,
     content: StyleRow,
 }
@@ -80,6 +82,7 @@ impl TryFrom<StyleRow> for TemplateTextStyle {
 impl From<&TemplateTextStyles> for StylesRow {
     fn from(s: &TemplateTextStyles) -> Self {
         Self {
+            layout: (&s.layout).into(),
             caption: (&s.caption).into(),
             content: (&s.content).into(),
         }
@@ -88,9 +91,43 @@ impl From<&TemplateTextStyles> for StylesRow {
 impl TryFrom<StylesRow> for TemplateTextStyles {
     type Error = BridgeError;
     fn try_from(s: StylesRow) -> Result<Self, Self::Error> {
+        let layout: TemplateCellTextLayout = s.layout.into();
+        layout
+            .validate()
+            .map_err(|e| BridgeError::new("template", e))?;
         Ok(Self {
+            layout,
             caption: s.caption.try_into()?,
             content: s.content.try_into()?,
         })
+    }
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LayoutRow {
+    caption_position: Option<String>,
+    separator: Option<String>,
+    horizontal: Option<String>,
+    vertical: Option<String>,
+}
+impl From<&TemplateCellTextLayout> for LayoutRow {
+    fn from(v: &TemplateCellTextLayout) -> Self {
+        Self {
+            caption_position: v.caption_position.clone(),
+            separator: v.separator.clone(),
+            horizontal: v.horizontal.clone(),
+            vertical: v.vertical.clone(),
+        }
+    }
+}
+impl From<LayoutRow> for TemplateCellTextLayout {
+    fn from(v: LayoutRow) -> Self {
+        Self {
+            caption_position: v.caption_position,
+            separator: v.separator,
+            horizontal: v.horizontal,
+            vertical: v.vertical,
+        }
     }
 }

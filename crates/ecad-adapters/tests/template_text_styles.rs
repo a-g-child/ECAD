@@ -21,6 +21,7 @@ fn independent_channels_inherit_per_property_and_survive_structure_storage_and_h
         .unwrap();
     let legacy = encode_template_variant(&variant(old.clone())).unwrap();
     let defaults = TemplateTextStyles {
+        layout: Default::default(),
         caption: TemplateTextStyle {
             font: Some("serif".into()),
             height: Some(1800),
@@ -150,6 +151,7 @@ fn invalid_explicit_styles_are_rejected_before_a_layout_can_be_committed() {
         assert!(
             old.clone()
                 .with_text_defaults(TemplateTextStyles {
+                    layout: Default::default(),
                     caption: invalid.clone(),
                     content: Default::default()
                 })

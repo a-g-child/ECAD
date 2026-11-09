@@ -292,7 +292,14 @@ export interface TemplateTextStyle {
   horizontal: string | null;
   vertical: string | null;
 }
+export interface TemplateCellTextLayout {
+  caption_position?: string | null;
+  separator?: string | null;
+  horizontal?: string | null;
+  vertical?: string | null;
+}
 export interface TemplateTextStyles {
+  layout?: TemplateCellTextLayout;
   caption: TemplateTextStyle;
   content: TemplateTextStyle;
 }

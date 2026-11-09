@@ -65,3 +65,5 @@ The Tables ribbon now uses **Layout** instead of Resize: row count dynamically c
 Portable pictures now share browsing/property controls and rendering across schematic placements, template artwork and cells. Initial insertion reviews a placement dialog, then uses existing drag movement; click-to-place remains planned. See [decision 0058](decisions/0058-portable-pictures.md).
 
 Cell picture insertion now replaces caption/value text as one undoable edit; picture properties offer Use text instead. Legacy mixed cells retain their data until explicitly resolved. See [decision 0059](decisions/0059-image-formats-and-exclusive-cells.md).
+
+Caption block layout and justification now share one control adapter and one renderer across placeholder templates and actual sheets. Above/inline flow and exact separators inherit per property, bulk edit coherently and preserve prior canonical bodies; see [decision 0060](decisions/0060-cell-text-layout-and-justification.md).

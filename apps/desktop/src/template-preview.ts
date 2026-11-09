@@ -1,3 +1,4 @@
+import { resolveFrameTextStyles } from './frame-text';
 /** Paper preview owns only transient camera/selection; committed geometry comes from Rust. */
 import type { TemplateVariant, TemplateCell, TemplateTable } from './types';
 import { renderFrame } from './frame';
@@ -105,20 +106,7 @@ export class TemplatePreview {
           key: cell.id,
           picture: cell.picture,
           caption: cell.caption,
-          text_styles: {
-            caption: Object.fromEntries(
-              Object.entries(model.text_defaults.caption).map(([k, v]) => [
-                k,
-                cell.text_styles.caption[k as keyof typeof cell.text_styles.caption] ?? v,
-              ]),
-            ),
-            content: Object.fromEntries(
-              Object.entries(model.text_defaults.content).map(([k, v]) => [
-                k,
-                cell.text_styles.content[k as keyof typeof cell.text_styles.content] ?? v,
-              ]),
-            ),
-          } as import('./types').TemplateTextStyles,
+          text_styles: resolveFrameTextStyles(cell.text_styles, model.text_defaults),
           value: cell.contents
             .map((r) => (r.kind === 'literal' ? r.value : `{${r.value}}`))
             .join(''),

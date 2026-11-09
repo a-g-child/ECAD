@@ -149,3 +149,6 @@ pub use picture::{
 pub use identity::PictureId;
 mod drawing_pictures;
 pub use drawing_pictures::DrawingPicture;
+
+mod template_cell_text_layout;
+pub use template_cell_text_layout::TemplateCellTextLayout;

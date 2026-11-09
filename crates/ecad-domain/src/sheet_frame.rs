@@ -209,6 +209,7 @@ impl Project {
                     field,
                     caption: cell.caption.clone(),
                     text_styles: crate::TemplateTextStyles {
+                        layout: cell.text_styles.layout.over(&layout.text_defaults().layout),
                         caption: cell
                             .text_styles
                             .caption

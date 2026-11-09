@@ -1,3 +1,4 @@
+import { renderCellTextLayout } from './frame-cell-layout';
 import { renderPicture } from './picture-render';
 /** Paper-unit frame rendering. Literal values stay intact; overflowing text is clipped and flagged. */
 import type { FrameRow } from './types';
@@ -51,6 +52,23 @@ export function renderFrame(svg: SVGElement, frame: Omit<FrameRow, 'sheet'>) {
       stroke: frame.colour,
       'stroke-width': frame.stroke_width,
     });
+    if (Object.values(cell.text_styles?.layout ?? {}).some((v) => v != null)) {
+      if (cell.picture) renderPicture(container, cell.picture, { x, y, width, height });
+      container.append(title, box);
+      group.append(container);
+      if (renderCellTextLayout(container, cell, frame)) {
+        container.classList.add('frame-overflow');
+        title.textContent += '\nText exceeds cell bounds; full value is preserved';
+        container.append(
+          node('path', {
+            d: `M ${x + width - 2} ${y} l 2 0 l 0 2 Z`,
+            fill: '#b96b00',
+            class: 'overflow-marker',
+          }),
+        );
+      }
+      continue;
+    }
     const captionStyle = frameTextStyle(cell.text_styles?.caption, frame.font, 1.5, frame.colour);
     const valueStyle = frameTextStyle(
       cell.text_styles?.content,

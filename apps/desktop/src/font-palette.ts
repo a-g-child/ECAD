@@ -98,7 +98,7 @@ export class FontPalette {
     this.root.append(familyRow, tools, alignment);
   }
   private supports(key: Key) {
-    return this.styles.some((s) => key in s);
+    return !this.options.exclude?.includes(key) && this.styles.some((s) => key in s);
   }
   private defaultKeys() {
     return (this.options.defaults ?? (Object.keys(this.styles[0]) as Key[])).filter((key) =>

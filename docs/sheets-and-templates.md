@@ -170,3 +170,19 @@ The table ribbon now opens a **Layout** dialog with row count and independent co
 Portable PNG/JPEG/SVG artwork and cell pictures now use shared image controls and rendering with schematics. New cell contents are either caption/content text or one picture fitted to the cell bounds. Choosing a picture clears text in the same undoable edit; Use text instead returns to text. Older mixed cells remain unchanged until explicitly resolved. Template v5 (PNG) or v6 (JPEG/SVG) carries deduplicated original bytes into library publication and project bundles. Split preserves the original cell picture only; default merge retains the first cell picture, and text-combine rejects loss of other pictures. See [decision 0058](decisions/0058-portable-pictures.md).
 
 See [decision 0059](decisions/0059-image-formats-and-exclusive-cells.md) for SVG support and exclusive cell compatibility.
+
+
+### Caption placement and cell justification
+
+Text cells now expose **Cell text layout**: caption above content or inline,
+exact separator text (default `: `), and horizontal/vertical justification of the
+combined block. Controls work on single cells, ranges, whole tables and template
+defaults. Each property offers Default; an explicitly empty separator is preserved.
+Picture cells omit text layout controls. Inline text keeps independent caption and
+content fonts, uses a shared baseline and preserves explicit multiline content.
+The separator appears only when both text parts are present. Font controls omit
+alignment that is inapplicable to the selected block flow.
+
+New layout intent uses template v7; older unconfigured cells retain the previous
+caption-strip rendering until a block-layout option is chosen. The template editor
+and real sheets share the renderer and overflow diagnostics. See [decision 0060](decisions/0060-cell-text-layout-and-justification.md).

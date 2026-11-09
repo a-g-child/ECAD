@@ -52,9 +52,11 @@ impl TemplateTextStyle {
         }
     }
 }
-/// Separate caption and content style channels, used by both defaults and cells.
+/// Caption/content font channels and shared block layout, used by defaults and cells.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct TemplateTextStyles {
+    /// Shared caption/value block layout, inherited independently of font properties.
+    pub layout: crate::TemplateCellTextLayout,
     /// Caption appearance overrides.
     pub caption: TemplateTextStyle,
     /// Content appearance overrides, shared by literals and resolved variables.
@@ -63,8 +65,9 @@ pub struct TemplateTextStyles {
 impl TemplateTextStyles {
     /// Validate both style channels atomically.
     /// # Errors
-    /// Returns an error if either channel contains invalid explicit properties.
+    /// Rejects invalid block-layout or font-channel properties.
     pub fn validate(&self) -> Result<(), TemplateError> {
+        self.layout.validate()?;
         self.caption.validate()?;
         self.content.validate()
     }

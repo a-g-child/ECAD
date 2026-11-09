@@ -210,3 +210,15 @@ placement box. Limits are 4 MiB/4,194,304 pixels per image, and 64 distinct asse
 16 MiB compressed per drawing document or template variant. Existing older mixed text/picture cells remain unchanged until **Keep picture only** or **Use text instead** is chosen. SVG remains vector content; scripts, animation, foreign/embedded content and external resources are rejected. Clipboard/drop, rotation, opacity and locking remain follow-ups. Browser checks exercise
 real Rust state and reopening without the source; they do not establish native
 file-picker or rendering parity on Windows/Linux.
+
+
+Text cells now have a **Cell text layout** section for caption position, separator,
+horizontal justification (left/centre/right) and vertical justification
+(top/middle/bottom). Choose **Above content** or **Inline with content**. Inline
+flow retains both font styles; separators such as `: ` and ` - ` are used exactly
+as entered. Empty separators are allowed; **Default separator** restores the
+template/factory value. Default choices inherit per property. Range/table selection
+applies changes to text cells; template paper properties expose the corresponding
+defaults. Picture cells omit these controls. Changes use existing contextual
+completion and exact undo/redo. Saved templates and resolved project sheets carry
+the layout. No automatic wrapping or font shrinking is performed.

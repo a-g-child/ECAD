@@ -143,7 +143,17 @@ impl From<&SavedTemplateVariant> for VariantData {
         Self {
             assets: (!assets.is_empty()).then_some(assets.clone()),
             text_defaults: styled.then(|| value.layout().text_defaults().into()),
-            schema_version: if value
+            schema_version: if value.layout().text_defaults().layout
+                != TemplateCellTextLayout::default()
+                || value
+                    .layout()
+                    .tables()
+                    .iter()
+                    .flat_map(|t| t.cells())
+                    .any(|c| c.text_styles.layout != TemplateCellTextLayout::default())
+            {
+                7
+            } else if value
                 .layout()
                 .pictures()
                 .any(|p| p.asset.format() != PictureFormat::Png)
@@ -213,7 +223,7 @@ impl From<&SavedTemplateVariant> for VariantData {
 /// Reading a body has no publication, project migration or filesystem side effects.
 pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, TemplateFileError> {
     let version: crate::schema::VersionEnvelope = serde_json::from_str(text)?;
-    if ![1, 2, 3, 4, 5, 6].contains(&version.schema_version) {
+    if ![1, 2, 3, 4, 5, 6, 7].contains(&version.schema_version) {
         return Err(TemplateFileError::Version(version.schema_version));
     }
     let data: VariantData = serde_json::from_str(text)?;
@@ -222,7 +232,7 @@ pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, Templ
 impl TryFrom<VariantData> for SavedTemplateVariant {
     type Error = TemplateFileError;
     fn try_from(data: VariantData) -> Result<Self, Self::Error> {
-        if ![1, 2, 3, 4, 5, 6].contains(&data.schema_version) {
+        if ![1, 2, 3, 4, 5, 6, 7].contains(&data.schema_version) {
             return Err(TemplateFileError::Version(data.schema_version));
         }
         if (data.schema_version == 1 && data.new_assignments.is_some())
@@ -255,7 +265,17 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                     .tables
                     .iter()
                     .any(|t| t.cells.iter().any(|c| c.picture.is_some()))))
-            || (data.schema_version >= 5 && data.assets.is_none())
+            || ([5, 6].contains(&data.schema_version) && data.assets.is_none())
+        {
+            return Err(TemplateFileError::Version(data.schema_version));
+        }
+        if data.schema_version < 7
+            && (data.text_defaults.as_ref().is_some_and(|s| s.has_layout())
+                || data
+                    .tables
+                    .iter()
+                    .flat_map(|t| &t.cells)
+                    .any(|c| c.text_styles.as_ref().is_some_and(|s| s.has_layout())))
         {
             return Err(TemplateFileError::Version(data.schema_version));
         }

@@ -10,6 +10,8 @@ export interface FontProperties {
 }
 export type FontProperty = keyof FontProperties;
 export interface FontPaletteOptions {
+  /** Hide properties inapplicable to the current text layout, retaining their stored values. */
+  exclude?: FontProperty[];
   /** Only these properties offer Default. Omitted means all supported properties. */
   defaults?: FontProperty[];
   /** Mixed values from a projected selection without exposing its individual objects. */

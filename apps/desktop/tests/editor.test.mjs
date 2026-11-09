@@ -1,3 +1,4 @@
+import { registerCellTextLayoutTests } from './cell-text-layout.mjs';
 import { registerPictureTests } from './pictures.mjs';
 import { registerTableTextUnits } from './table-text-units.mjs';
 import { registerInlineVariables } from './inline-variables.mjs';
@@ -595,3 +596,5 @@ registerPictureTests({
   replaceProject,
   baseline: () => initialProject,
 });
+
+registerCellTextLayoutTests({ page, button, until });

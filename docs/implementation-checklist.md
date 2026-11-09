@@ -515,3 +515,16 @@ Row-layout validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (71 
 - [ ] Clipboard/drop, click placement, crop handles, rotation, opacity/locking, asset-handle transport and binary-sidecar packaging.
 
 See [decision 0058](decisions/0058-portable-pictures.md) for packaging tradeoffs and [decision 0059](decisions/0059-image-formats-and-exclusive-cells.md) for extended formats and exclusive cells.
+
+
+### Cell text layout and justification
+
+- [x] Above/inline caption choice with exact configurable separator, shown only when caption and content exist.
+- [x] Whole-block left/centre/right and top/middle/bottom justification, independent caption/content fonts and explicit multiline flow.
+- [x] Shared single-cell/range/table/default controls, mixed values, per-property Default, picture-cell exclusion and coherent undo/redo.
+- [x] Versioned template v7 layout fields, preserved older canonical bodies, real sheet/default resolution and project bundling.
+- [x] Local invariant/persistence/bridge and browser regressions for invalid/stale edits, range changes, blank lines, measured justification, overflow and publication.
+
+See [decision 0060](decisions/0060-cell-text-layout-and-justification.md). Automatic wrapping, word-spacing justification and native font/output parity remain future work.
+
+Cell-layout validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (79 browser workflows), and `cargo xtask desktop` passed. Final frontend build and focused empty-separator/reset/undo coverage also passed. Native Windows/Linux runtime and font/output parity remain unverified.

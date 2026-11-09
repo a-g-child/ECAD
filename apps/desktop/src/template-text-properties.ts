@@ -1,5 +1,6 @@
 /** Selection adapter: one palette for ranges, independent caption/content palettes for one cell. */
-import type { TemplateTextStyles } from './types';
+import { CellTextLayoutProperties } from './cell-text-layout-properties';
+import type { TemplateTextStyles, TemplateCellTextLayout } from './types';
 import { element } from './ui';
 import { FontPalette } from './font-palette';
 export class TemplateTextProperties {
@@ -10,7 +11,18 @@ export class TemplateTextProperties {
     defaults = false,
     complete: () => void = () => {},
     allText = false,
+    layoutDefaults?: TemplateCellTextLayout,
   ) {
+    const hasLayout = styles.some((s) =>
+      [s.layout, layoutDefaults].some((l) => Object.values(l ?? {}).some((v) => v != null)),
+    );
+    const inline = styles.every(
+      (s) => (s.layout?.caption_position ?? layoutDefaults?.caption_position) === 'inline',
+    );
+    const options: import('./font-properties').FontPaletteOptions = {
+      exclude: hasLayout ? (inline ? ['horizontal', 'vertical'] : ['vertical']) : [],
+    };
+    this.root.append(new CellTextLayoutProperties(styles, changed, defaults, complete).root);
     if (!defaults && (styles.length > 1 || allText)) {
       this.root.append(
         new FontPalette(
@@ -18,6 +30,7 @@ export class TemplateTextProperties {
           'Text',
           changed,
           complete,
+          options,
         ).root,
       );
       this.root.append(
@@ -36,6 +49,7 @@ export class TemplateTextProperties {
             title,
             changed,
             complete,
+            options,
           ).root,
         );
       }

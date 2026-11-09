@@ -1,5 +1,5 @@
 /** Paper text style resolution and alignment shared by template and sheet frame rendering. */
-import type { TemplateTextStyle } from './types';
+import type { TemplateTextStyle, TemplateTextStyles } from './types';
 export function frameTextStyle(
   style: TemplateTextStyle | undefined,
   font: string,
@@ -39,5 +39,31 @@ export function frameTextPosition(
         : style?.vertical === 'bottom'
           ? height - extent
           : 0),
+  };
+}
+
+/** Mirror the core's per-property resolution for template placeholder previews only. */
+export function resolveFrameTextStyles(
+  cell: TemplateTextStyles,
+  defaults: TemplateTextStyles,
+): TemplateTextStyles {
+  const resolve = (value: TemplateTextStyle, base: TemplateTextStyle): TemplateTextStyle => ({
+    font: value.font ?? base.font,
+    height: value.height ?? base.height,
+    bold: value.bold ?? base.bold,
+    italic: value.italic ?? base.italic,
+    colour: value.colour ?? base.colour,
+    horizontal: value.horizontal ?? base.horizontal,
+    vertical: value.vertical ?? base.vertical,
+  });
+  return {
+    caption: resolve(cell.caption, defaults.caption),
+    content: resolve(cell.content, defaults.content),
+    layout: {
+      caption_position: cell.layout?.caption_position ?? defaults.layout?.caption_position ?? null,
+      separator: cell.layout?.separator ?? defaults.layout?.separator ?? null,
+      horizontal: cell.layout?.horizontal ?? defaults.layout?.horizontal ?? null,
+      vertical: cell.layout?.vertical ?? defaults.layout?.vertical ?? null,
+    },
   };
 }

@@ -228,6 +228,7 @@ export class TemplateProperties {
             false,
             this.apply,
             this.blanket,
+            this.model?.text_defaults.layout,
           ).root,
         );
     }
