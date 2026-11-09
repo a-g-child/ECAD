@@ -491,7 +491,7 @@ function openPicture() {
     value: structuredClone(
       existing?.picture ?? {
         bounds: ['0', '0', '40000', '15000'],
-        picture: { png: '', fit: 'contain' },
+        picture: { data: '', mime: 'image/png', fit: 'contain' },
       },
     ),
     save: async (values) => {

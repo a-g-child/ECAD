@@ -143,7 +143,13 @@ impl From<&SavedTemplateVariant> for VariantData {
         Self {
             assets: (!assets.is_empty()).then_some(assets.clone()),
             text_defaults: styled.then(|| value.layout().text_defaults().into()),
-            schema_version: if !assets.is_empty() {
+            schema_version: if value
+                .layout()
+                .pictures()
+                .any(|p| p.asset.format() != PictureFormat::Png)
+            {
+                6
+            } else if !assets.is_empty() {
                 5
             } else if styled {
                 4
@@ -207,7 +213,7 @@ impl From<&SavedTemplateVariant> for VariantData {
 /// Reading a body has no publication, project migration or filesystem side effects.
 pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, TemplateFileError> {
     let version: crate::schema::VersionEnvelope = serde_json::from_str(text)?;
-    if ![1, 2, 3, 4, 5].contains(&version.schema_version) {
+    if ![1, 2, 3, 4, 5, 6].contains(&version.schema_version) {
         return Err(TemplateFileError::Version(version.schema_version));
     }
     let data: VariantData = serde_json::from_str(text)?;
@@ -216,7 +222,7 @@ pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, Templ
 impl TryFrom<VariantData> for SavedTemplateVariant {
     type Error = TemplateFileError;
     fn try_from(data: VariantData) -> Result<Self, Self::Error> {
-        if ![1, 2, 3, 4, 5].contains(&data.schema_version) {
+        if ![1, 2, 3, 4, 5, 6].contains(&data.schema_version) {
             return Err(TemplateFileError::Version(data.schema_version));
         }
         if (data.schema_version == 1 && data.new_assignments.is_some())
@@ -249,11 +255,14 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                     .tables
                     .iter()
                     .any(|t| t.cells.iter().any(|c| c.picture.is_some()))))
-            || (data.schema_version == 5 && data.assets.is_none())
+            || (data.schema_version >= 5 && data.assets.is_none())
         {
             return Err(TemplateFileError::Version(data.schema_version));
         }
         let assets = crate::picture_data::decode_assets(data.assets.unwrap_or_default())?;
+        if data.schema_version < 6 && assets.values().any(|a| a.format() != PictureFormat::Png) {
+            return Err(TemplateFileError::Version(data.schema_version));
+        }
         let retained = data.new_assignments == Some(false);
         let paper = SheetPaper {
             width: data.paper_um[0],

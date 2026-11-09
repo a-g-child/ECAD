@@ -510,6 +510,8 @@ Row-layout validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (71 
 - [x] Schematic movement and exact undo; template artwork movement and cell-bound resizing use existing geometry workflows. Unsupported schematic rotation/mirroring is disabled centrally.
 - [x] Versioned, content-addressed embedded asset tables: project v14 for schematic pictures, nested template v5 for pictures. Older bodies retain their existing encoding.
 - [x] Codec bounds/corruption checks, deduplication, old-schema rejection, save/reopen, stale/invalid/no-op edits, removal/undo, cell splitting and publication regressions.
-- [ ] JPEG/SVG, clipboard/drop, click placement, crop handles, rotation, opacity/locking, asset-handle transport and binary-sidecar packaging.
+- [x] Shared JPEG and static SVG import with original copied bytes, vector preservation, verified MIME and versioned format gates (project v15/template v6).
+- [x] Exclusive text/picture cell edits, applicable font controls, coherent switching/undo and lossless legacy mixed-cell resolution.
+- [ ] Clipboard/drop, click placement, crop handles, rotation, opacity/locking, asset-handle transport and binary-sidecar packaging.
 
-See [decision 0058](decisions/0058-portable-pictures.md) for scope, budgets and packaging tradeoffs.
+See [decision 0058](decisions/0058-portable-pictures.md) for packaging tradeoffs and [decision 0059](decisions/0059-image-formats-and-exclusive-cells.md) for extended formats and exclusive cells.

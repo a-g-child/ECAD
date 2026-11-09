@@ -20,6 +20,9 @@ uuid = { version = "1.29.0", default-features = false }
 sha2 = "0.10.9"
 base64 = "0.22.1"
 png = "0.18.1"
+jpeg-decoder = { version = "0.3.2", default-features = false }
+roxmltree = "0.21.2"
+cssparser = "0.37.0"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

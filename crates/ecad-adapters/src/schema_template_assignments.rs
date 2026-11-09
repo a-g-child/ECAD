@@ -69,7 +69,13 @@ impl From<&Project> for AssignedProjectData {
         sheets.sort_by(|a, b| a.id.cmp(&b.id));
         Self {
             pictures: (project.drawing().pictures().len() > 0).then(|| project.drawing().into()),
-            schema_version: if project.drawing().pictures().len() > 0 {
+            schema_version: if project
+                .drawing()
+                .pictures()
+                .any(|p| p.picture.asset.format() != PictureFormat::Png)
+            {
+                15
+            } else if project.drawing().pictures().len() > 0 {
                 14
             } else {
                 13
@@ -95,9 +101,9 @@ impl From<&Project> for AssignedProjectData {
 impl TryFrom<AssignedProjectData> for Project {
     type Error = ProjectFileError;
     fn try_from(mut b: AssignedProjectData) -> Result<Self, Self::Error> {
-        if ![13, 14].contains(&b.schema_version)
+        if ![13, 14, 15].contains(&b.schema_version)
             || (b.schema_version == 13 && b.pictures.is_some())
-            || (b.schema_version == 14 && b.pictures.is_none())
+            || (b.schema_version >= 14 && b.pictures.is_none())
         {
             return Err(ProjectFileError::UnsupportedVersion(b.schema_version));
         }
@@ -176,7 +182,7 @@ impl TryFrom<AssignedProjectData> for Project {
         }
         project.replace_template_assignments(value)?;
         if let Some(pictures) = b.pictures {
-            pictures.install(&mut project)?;
+            pictures.install(&mut project, b.schema_version >= 15)?;
         }
         Ok(project)
     }

@@ -449,7 +449,8 @@ export class TemplateEditor {
         ? this.variant.graphics.find((g) => g.id === selected.id && g.kind === 'picture')
         : null;
     const picture = structuredClone(
-      cell?.picture ?? graphic?.picture ?? { png: '', fit: 'contain' as const },
+      cell?.picture ??
+        graphic?.picture ?? { data: '', mime: 'image/png' as const, fit: 'contain' as const },
     );
     const bounds = cell
       ? cell.bounds
@@ -463,8 +464,13 @@ export class TemplateEditor {
       existing: !!(cell?.picture || graphic),
       save: async (value) => {
         const proposal = structuredClone(values);
-        if (cell && proposal.cell) proposal.cell.picture = value?.picture ?? null;
-        else {
+        if (cell && proposal.cell) {
+          proposal.cell.picture = value?.picture ?? null;
+          if (value) {
+            proposal.cell.caption = '';
+            proposal.cell.contents = [];
+          }
+        } else {
           proposal.graphics = proposal.graphics.filter((g) => g.id !== id);
           if (value)
             proposal.graphics.push({

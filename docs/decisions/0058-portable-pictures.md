@@ -1,6 +1,6 @@
 # 0058 — Shared portable pictures
 
-Status: accepted for the first bounded image slice.
+Status: accepted for the initial slice. [Decision 0059](0059-image-formats-and-exclusive-cells.md) extends formats and supersedes the initial text-over-picture cell rule.
 
 ## Decision
 

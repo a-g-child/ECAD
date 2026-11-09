@@ -184,9 +184,10 @@ impl TemplateTable {
             height: bottom - y,
         };
         if contents == MergeContents::Combine {
-            if chosen
-                .iter()
-                .any(|c| c.id != primary && c.picture.is_some())
+            if (merged.picture.is_some() && chosen.iter().any(|c| c.has_text()))
+                || chosen
+                    .iter()
+                    .any(|c| c.id != primary && c.picture.is_some())
             {
                 return Err(TableEditError::Pictures);
             }

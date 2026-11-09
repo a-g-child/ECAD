@@ -272,14 +272,15 @@ impl DesktopBridge {
             ));
         }
         match request {
-            Request::ImportPicture { png } => {
-                let asset = ecad_adapters::picture_from_base64(&png)
+            Request::ImportPicture { data } => {
+                let asset = ecad_adapters::picture_from_base64(&data)
                     .map_err(|e| BridgeError::new("picture", e))?;
                 Ok(Response {
                     imported_picture: Some(crate::picture_rows::ImportedPictureRow {
                         pixels: [asset.width().to_string(), asset.height().to_string()],
                         picture: crate::picture_rows::PictureRow {
-                            png: ecad_adapters::picture_base64(&asset),
+                            data: ecad_adapters::picture_base64(&asset),
+                            mime: asset.format().mime().into(),
                             fit: "contain".into(),
                         },
                     }),

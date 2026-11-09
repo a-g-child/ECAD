@@ -115,7 +115,8 @@ pub enum Request {
     /// Decode a portable PNG for review without changing document/history.
     ImportPicture {
         /// Base64 PNG content, never a file path or arbitrary URL.
-        png: String,
+        #[serde(alias = "png")]
+        data: String,
     },
     /// Commit a complete picture edit through the shared registered action.
     EditPicture {

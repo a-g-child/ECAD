@@ -76,8 +76,12 @@ mod schema_template_assignments;
 
 mod template_text_style_data;
 
+mod jpeg_picture;
 mod picture_codec;
-pub use picture_codec::{import_png, picture_base64, picture_from_base64, picture_key};
+mod svg_picture;
+pub use picture_codec::{
+    import_picture, import_png, picture_base64, picture_from_base64, picture_key,
+};
 
 mod picture_data;
 

@@ -40,8 +40,15 @@ impl From<&DrawingDocument> for PicturesData {
     }
 }
 impl PicturesData {
-    pub(crate) fn install(self, project: &mut Project) -> Result<(), ProjectFileError> {
+    pub(crate) fn install(
+        self,
+        project: &mut Project,
+        extended: bool,
+    ) -> Result<(), ProjectFileError> {
         let assets = decode_assets(self.assets).map_err(data_error)?;
+        if !extended && assets.values().any(|a| a.format() != PictureFormat::Png) {
+            return Err(data_error("PNG-only schema contains another image format"));
+        }
         for p in self.placements {
             project.insert_drawing_picture(DrawingPicture {
                 id: p.id.parse()?,

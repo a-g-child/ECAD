@@ -18,7 +18,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Encode v13 (or v14 with drawing pictures) JSON in identity order, with two-space indentation and a final LF.
+/// Encode v13 (v14 with PNG pictures or v15 with JPEG/SVG pictures) JSON in identity order, with two-space indentation and a final LF.
 ///
 /// No timestamps, session history, or platform line endings are embedded.
 /// # Errors
@@ -48,7 +48,7 @@ pub fn decode_project(text: &str) -> Result<Project, ProjectFileError> {
     if envelope.schema_version == 3 {
         return Project::try_from(serde_json::from_str::<ProjectData>(text)?);
     }
-    if [13, 14].contains(&envelope.schema_version) {
+    if [13, 14, 15].contains(&envelope.schema_version) {
         return Project::try_from(serde_json::from_str::<
             crate::schema_template_assignments::AssignedProjectData,
         >(text)?);

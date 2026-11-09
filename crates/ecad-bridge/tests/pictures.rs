@@ -93,3 +93,40 @@ fn import_is_transient_and_placement_edits_guard_targets_revisions_and_history()
     .unwrap();
     assert_eq!(snapshot(&b)["scene"], created["snapshot"]["scene"]);
 }
+
+#[test]
+fn extended_imports_return_verified_mime_and_forged_formats_cannot_edit() {
+    let mut b = DesktopBridge::demo().unwrap();
+    for (index, (bytes, mime)) in [
+        (
+            include_bytes!("../../../apps/desktop/tests/fixtures/picture.jpg").as_slice(),
+            "image/jpeg",
+        ),
+        (
+            include_bytes!("../../../apps/desktop/tests/fixtures/picture.svg").as_slice(),
+            "image/svg+xml",
+        ),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let data =
+            ecad_adapters::picture_base64(&ecad_adapters::import_picture(bytes.to_vec()).unwrap());
+        let imported = send(&mut b, json!({"type":"import_picture","data":data})).unwrap();
+        assert_eq!(imported["imported_picture"]["picture"]["mime"], mime);
+        let mut values = json!({"bounds":["0","0","40000","20000"],"picture":imported["imported_picture"]["picture"]});
+        values["picture"]["mime"] = "image/png".into();
+        let ctx = context(&b, json!([]));
+        let before = snapshot(&b);
+        assert!(
+            send(
+                &mut b,
+                json!({"type":"edit_picture","context":ctx,"id":null,"values":values,"input":(index+1).to_string()})
+            )
+            .is_err()
+        );
+        assert_eq!(snapshot(&b)["scene"], before["scene"]);
+        assert_eq!(snapshot(&b)["revision"], before["revision"]);
+        assert!(!b.is_dirty());
+    }
+}

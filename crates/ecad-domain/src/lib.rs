@@ -143,6 +143,7 @@ pub use template_text_style::{TemplateTextStyle, TemplateTextStyles};
 mod picture;
 pub use picture::{
     MAX_PICTURE_BYTES, MAX_PICTURE_PIXELS, Picture, PictureAsset, PictureError, PictureFit,
+    PictureFormat,
 };
 
 pub use identity::PictureId;

@@ -41,7 +41,7 @@ export class PictureDialog {
     for (const b of [apply, cancel, remove]) b.type = 'button';
     const finish = async (value: PicturePlacement | null) => {
       if (this.pending || fields.pending) return;
-      if (value && !value.picture.png) {
+      if (value && !value.picture.data) {
         error.textContent = 'Choose a picture first.';
         return;
       }
@@ -71,7 +71,16 @@ export class PictureDialog {
       e.preventDefault();
       void finish(fields.value);
     });
-    form.append(heading, fields.root, error, actions);
+    form.append(heading);
+    if (target.cell)
+      form.append(
+        element(
+          'p',
+          'settings-note',
+          'A picture replaces the cell caption and content. Undo restores the previous cell.',
+        ),
+      );
+    form.append(fields.root, error, actions);
     this.dialog.replaceChildren(form);
     this.dialog.showModal();
   }

@@ -9,7 +9,7 @@ export function renderPicture(
   const ns = 'http://www.w3.org/2000/svg';
   const image = document.createElementNS(ns, 'image');
   for (const [key, value] of Object.entries(bounds)) image.setAttribute(key, String(value));
-  image.setAttribute('href', `data:image/png;base64,${picture.png}`);
+  image.setAttribute('href', `data:${picture.mime};base64,${picture.data}`);
   image.setAttribute(
     'preserveAspectRatio',
     picture.fit === 'stretch' ? 'none' : `xMidYMid ${picture.fit === 'cover' ? 'slice' : 'meet'}`,

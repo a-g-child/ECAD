@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" viewBox="0 0 200 100">
+  <defs><linearGradient id="ink"><stop stop-color="#ff7700"/><stop offset="1" stop-color="#2266cc"/></linearGradient></defs>
+  <style>.logo { fill: url(#ink); stroke: #123; stroke-width: 2 }</style>
+  <path class="logo" d="M10 10 H190 V90 H10 Z"/>
+  <text x="40" y="65" font-size="36">ECAD</text>
+</svg>

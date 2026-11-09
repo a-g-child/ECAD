@@ -13,7 +13,8 @@ pub enum TemplateTextRun {
 /// A retained cell. Bounds are relative to its table's upper-left corner, in µm.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TemplateCell {
-    /// Optional picture fitted to the whole cell, behind caption/content and borders.
+    /// Optional picture fitted to the whole cell. New edits are exclusive with text;
+    /// historical mixed cells remain representable for lossless loading and undo.
     pub picture: Option<crate::Picture>,
     /// Stable identity, separate from caption, binding and position.
     pub id: TemplateCellId,
@@ -27,6 +28,15 @@ pub struct TemplateCell {
     pub text_styles: crate::TemplateTextStyles,
 }
 impl TemplateCell {
+    /// Whether caption or value runs contain visible or bound text.
+    pub fn has_text(&self) -> bool {
+        !self.caption.is_empty()
+            || self.contents.iter().any(|r| match r {
+                TemplateTextRun::Literal(s) => !s.is_empty(),
+                TemplateTextRun::Field(_) => true,
+            })
+    }
+
     /// Resolve with an explicit sample/real binding context. Missing fields remain
     /// diagnostic identities; literal text and resolved values are never trimmed.
     pub fn resolve(&self, field: impl FnMut(FrameField) -> Option<String>) -> TemplateText {
@@ -143,6 +153,8 @@ pub(crate) fn overlaps(a: FrameRect, b: FrameRect) -> bool {
 /// Invalid structured template input; constructors leave prior definitions untouched.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TemplateError {
+    /// New cell content must be either text or a picture, never both.
+    MixedCellContent,
     /// Positive geometry must be representable and contained in its owner.
     Bounds,
     /// Invalid or repeated artwork identity, geometry, style or resource budget.
@@ -163,6 +175,7 @@ pub enum TemplateError {
 impl fmt::Display for TemplateError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::MixedCellContent => f.write_str("Choose text or a picture for each cell"),
             Self::Bounds => {
                 f.write_str("Template geometry is empty, overflowing or outside its owner")
             }

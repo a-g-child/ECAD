@@ -152,4 +152,6 @@ These are sequencing proposals, not a commitment to include every tool in the fi
 - Which geometry and hit-testing services are shared between interactive rendering and export?
 - How does a preview remain responsive while the committed operation passes through the authoritative command and validation model?
 
-The current shared PNG slice supports browsing, exact placement properties, fit/fill/stretch, replacement/removal and translation in schematics and templates, plus cell-bound pictures. The broader image workflow above remains target scope; paste/drop, rotation, explicit crop handles, anchoring/locking and output parity are not yet implemented.
+The current shared PNG/JPEG/static SVG slice supports browsing, exact placement properties, fit/fill/stretch, replacement/removal and translation in schematics and templates, plus cell-bound pictures. The broader image workflow above remains target scope; paste/drop, rotation, explicit crop handles, anchoring/locking and output parity are not yet implemented.
+
+JPEG and SVG keep their original copied bytes; SVG stays vector. Import rejects external dependencies and unsupported active/embedded content. See [decision 0059](decisions/0059-image-formats-and-exclusive-cells.md).

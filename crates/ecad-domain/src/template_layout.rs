@@ -122,6 +122,46 @@ impl TemplateLayout {
     pub fn graphics(&self) -> &[crate::TemplateGraphic] {
         &self.graphics
     }
+    /// Validate exclusive cell content for a newly created layout.
+    /// # Errors
+    /// Rejects every cell combining a picture with caption/content text.
+    pub fn validate_cell_contents(&self) -> Result<(), TemplateError> {
+        if self
+            .tables()
+            .iter()
+            .flat_map(|t| t.cells())
+            .any(|c| c.picture.is_some() && c.has_text())
+        {
+            Err(TemplateError::MixedCellContent)
+        } else {
+            Ok(())
+        }
+    }
+    /// Reject new mixed picture/text content while preserving unchanged historical cells.
+    /// Geometry/style-only edits and exact undo need not rewrite published content.
+    /// # Errors
+    /// Returns `MixedCellContent` if a new/changed cell combines text and a picture.
+    pub fn validate_cell_contents_from(&self, previous: &Self) -> Result<(), TemplateError> {
+        let old: std::collections::BTreeMap<_, _> = previous
+            .tables()
+            .iter()
+            .flat_map(|t| t.cells())
+            .map(|c| (c.id, c))
+            .collect();
+        for cell in self.tables().iter().flat_map(|t| t.cells()) {
+            if cell.picture.is_some()
+                && cell.has_text()
+                && !old.get(&cell.id).is_some_and(|before| {
+                    before.picture == cell.picture
+                        && before.caption == cell.caption
+                        && before.contents == cell.contents
+                })
+            {
+                return Err(TemplateError::MixedCellContent);
+            }
+        }
+        Ok(())
+    }
     /// Pictures referenced by cells and free artwork, including repeated asset uses.
     pub fn pictures(&self) -> impl Iterator<Item = &crate::Picture> {
         self.tables

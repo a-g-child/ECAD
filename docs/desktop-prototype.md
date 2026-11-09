@@ -194,20 +194,19 @@ The selected-cell **+ column** control now fits the inserted column within the e
 
 Drawing → Picture opens the shared browsing/placement dialog for a schematic.
 Template → Picture inserts artwork, or fills the selected single table cell.
-Choose a static PNG, review its dimensions and fit, then Apply. The properties
+Choose a PNG, JPEG or supported static SVG, review its dimensions and fit, then Apply. The properties
 panel offers the same Browse and fit controls; free placements also expose exact
 position and dimensions in the selected display units. Drag existing artwork or
 schematic pictures to move them. Cell pictures follow the cell when resized;
-caption and content remain editable above the picture. Remove picture and undo
+picture cells replace caption/content text. Use **Use text instead** to return to text; undo restores the previous content. Remove picture and undo
 use the owning editor's history.
 
-A copy of the original PNG is embedded in the saved project or template revision.
+A copy of the original image is embedded in the saved project or template revision.
 Moving/deleting the source file does not affect the drawing; published templates
 and bundled project copies carry their own bytes. Repeated images share one asset
 entry per owning body. Supported fits are whole-image, fill-and-crop, and stretch.
 First import sets an aspect-preserving initial size; replacing an image keeps its
-placement box. Limits are 4 MiB/4,194,304 pixels per PNG, and 64 distinct assets/
-16 MiB compressed per drawing document or template variant. JPEG/SVG, clipboard,
-drop, rotation, opacity and locking remain follow-ups. Browser checks exercise
+placement box. Limits are 4 MiB/4,194,304 pixels per image, and 64 distinct assets/
+16 MiB compressed per drawing document or template variant. Existing older mixed text/picture cells remain unchanged until **Keep picture only** or **Use text instead** is chosen. SVG remains vector content; scripts, animation, foreign/embedded content and external resources are rejected. Clipboard/drop, rotation, opacity and locking remain follow-ups. Browser checks exercise
 real Rust state and reopening without the source; they do not establish native
 file-picker or rendering parity on Windows/Linux.

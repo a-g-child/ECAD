@@ -40,7 +40,7 @@ Insert Text takes an anchor click, then edits multiline text/variables inline be
 | Separate schematic click-path and template drag-shape workflows | Shared tool state machines behind coordinate/command adapters. |
 | Explicit artwork appearance versus inherited schematic styles | Common controls/types with owner-specific write semantics. |
 | Border is always derived/rendered from margins | Separate visible border intent from geometric margin guides. |
-| Portable PNG assets implemented | Shared controls/rendering, versioned embedded asset tables and transitive template bundling; click placement and advanced transforms remain follow-up. |
+| Portable PNG/JPEG/SVG assets implemented | Shared controls/rendering, versioned embedded asset tables and transitive template bundling; click placement and advanced transforms remain follow-up. |
 
 ## Verification gates
 
@@ -63,3 +63,5 @@ Schematic font/height changes use a strict `edit_appearance` bridge request: str
 The Tables ribbon now uses **Layout** instead of Resize: row count dynamically creates per-row column inputs, with explicit removal acknowledgement. This is a registered action with captured template revision and one core-validated layout/history replacement. Size changes remain pointer operations or the numeric Resize command. Contextual column insertion fits inside the existing width, resolving margin rejection for wide cells. See [decision 0057](decisions/0057-row-specific-table-layout.md); this supersedes earlier ribbon Resize and growing-column behavior.
 
 Portable pictures now share browsing/property controls and rendering across schematic placements, template artwork and cells. Initial insertion reviews a placement dialog, then uses existing drag movement; click-to-place remains planned. See [decision 0058](decisions/0058-portable-pictures.md).
+
+Cell picture insertion now replaces caption/value text as one undoable edit; picture properties offer Use text instead. Legacy mixed cells retain their data until explicitly resolved. See [decision 0059](decisions/0059-image-formats-and-exclusive-cells.md).

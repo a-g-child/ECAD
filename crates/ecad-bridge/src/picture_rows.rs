@@ -1,17 +1,21 @@
-//! Shared picture transport; PNG bytes are validated at every write boundary, never URLs/paths.
+//! Shared picture transport; Image bytes are validated at every write boundary, never URLs/paths.
 use crate::dto::BridgeError;
 use ecad_domain::*;
 use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct PictureRow {
-    pub png: String,
+    #[serde(alias = "png")]
+    pub data: String,
+    #[serde(default = "png_mime")]
+    pub mime: String,
     pub fit: String,
 }
 impl From<&Picture> for PictureRow {
     fn from(p: &Picture) -> Self {
         Self {
-            png: ecad_adapters::picture_base64(&p.asset),
+            data: ecad_adapters::picture_base64(&p.asset),
+            mime: p.asset.format().mime().into(),
             fit: p.fit.key().into(),
         }
     }
@@ -19,9 +23,16 @@ impl From<&Picture> for PictureRow {
 impl TryFrom<PictureRow> for Picture {
     type Error = BridgeError;
     fn try_from(p: PictureRow) -> Result<Self, Self::Error> {
+        let asset = ecad_adapters::picture_from_base64(&p.data)
+            .map_err(|e| BridgeError::new("picture", e))?;
+        if p.mime != asset.format().mime() {
+            return Err(BridgeError::new(
+                "picture",
+                "Picture format does not match its content",
+            ));
+        }
         Ok(Self {
-            asset: ecad_adapters::picture_from_base64(&p.png)
-                .map_err(|e| BridgeError::new("picture", e))?,
+            asset,
             fit: PictureFit::from_key(&p.fit)
                 .ok_or_else(|| BridgeError::new("picture", "Choose a supported picture fit"))?,
         })
@@ -76,4 +87,8 @@ impl PlacementRow {
 pub(crate) struct ImportedPictureRow {
     pub picture: PictureRow,
     pub pixels: [String; 2],
+}
+
+fn png_mime() -> String {
+    "image/png".into()
 }

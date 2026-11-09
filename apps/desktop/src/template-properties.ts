@@ -143,7 +143,9 @@ export class TemplateProperties {
       this.apply,
     );
     this.paperFields.append(this.textDefaults.root, unitPicker());
-    this.cellStyles = cells.map((c) => ({ id: c.id, styles: structuredClone(c.text_styles) }));
+    this.cellStyles = cells
+      .filter((c) => !c.picture)
+      .map((c) => ({ id: c.id, styles: structuredClone(c.text_styles) }));
     this.artwork = new TemplateArtwork(model, this.changed, artworkId, () => {
       if (!this.catalog) this.apply();
     });
@@ -157,44 +159,77 @@ export class TemplateProperties {
       if (!this.blanket) {
         this.caption = textEditor('property-input property-text', 2);
         this.caption.value = selection.cell.caption;
-        this.label('Cell caption', this.caption, this.root);
+        if (!selection.cell.picture) this.label('Cell caption', this.caption, this.root);
         this.root.append(dimensionSummary(selection.cell.bounds, 'Cell bounds · '));
         this.runs = selection.cell.contents.map((r) => ({ ...r }));
-        this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
+        if (!selection.cell.picture) {
+          this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
+          this.root.append(
+            element(
+              'p',
+              'settings-note',
+              'Choosing a picture replaces the cell caption and content.',
+            ),
+          );
+        } else if (selection.cell.caption || selection.cell.contents.length) {
+          this.root.append(
+            element(
+              'p',
+              'settings-note',
+              'This older cell contains text and a picture. Choose which content to keep.',
+            ),
+          );
+          const keep = element('button', 'plain', 'Keep picture only');
+          keep.type = 'button';
+          keep.addEventListener('click', () => {
+            this.caption.value = '';
+            this.runs.splice(0);
+            this.changed();
+            this.apply();
+          });
+          this.root.append(keep);
+        }
         this.cellPicture = new PictureFields(
           {
             bounds: selection.cell.bounds,
-            picture: structuredClone(selection.cell.picture ?? { png: '', fit: 'contain' }),
+            picture: structuredClone(
+              selection.cell.picture ?? { data: '', mime: 'image/png', fit: 'contain' },
+            ),
           },
           false,
           this.changed,
-          this.apply,
+          () => {
+            this.caption.value = '';
+            this.runs.splice(0);
+            this.apply();
+          },
         );
         this.root.append(this.cellPicture.root);
         if (selection.cell.picture) {
-          const remove = element('button', 'plain', 'Remove cell picture');
+          const remove = element('button', 'plain', 'Use text instead');
           remove.type = 'button';
           remove.addEventListener('click', () => {
-            this.cellPicture!.value.picture.png = '';
+            this.cellPicture!.value.picture.data = '';
             this.changed();
             this.apply();
           });
           this.cellPicture.root.append(remove);
         }
       }
-      if (!this.cellStyles.length)
+      if (!this.cellStyles.length && !selection.cell.picture && !this.blanket)
         this.cellStyles = [
           { id: selection.cell.id, styles: structuredClone(selection.cell.text_styles) },
         ];
-      this.root.append(
-        new TemplateTextProperties(
-          this.cellStyles.map((c) => c.styles),
-          this.changed,
-          false,
-          this.apply,
-          this.blanket,
-        ).root,
-      );
+      if (this.cellStyles.length)
+        this.root.append(
+          new TemplateTextProperties(
+            this.cellStyles.map((c) => c.styles),
+            this.changed,
+            false,
+            this.apply,
+            this.blanket,
+          ).root,
+        );
     }
   }
 
@@ -214,7 +249,7 @@ export class TemplateProperties {
           ? {
               table: this.selected.table.id,
               id: this.selected.cell.id,
-              picture: this.cellPicture?.value.picture.png ? this.cellPicture.value.picture : null,
+              picture: this.cellPicture?.value.picture.data ? this.cellPicture.value.picture : null,
               caption: this.caption.value,
               contents: this.runs,
             }

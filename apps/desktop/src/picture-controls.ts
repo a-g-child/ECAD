@@ -3,7 +3,8 @@ import { element } from './ui';
 import { dimension, readDimension, writeDimension } from './dimensions';
 import { send, errorText } from './transport';
 export interface Picture {
-  png: string;
+  data: string;
+  mime: 'image/png' | 'image/jpeg' | 'image/svg+xml';
   fit: 'contain' | 'cover' | 'stretch';
 }
 export interface PicturePlacement {
@@ -27,11 +28,11 @@ export class PictureFields {
   ) {
     this.preview.alt = 'Picture preview';
     this.error.setAttribute('role', 'alert');
-    const browse = element('button', 'plain', 'Browse PNG…');
+    const browse = element('button', 'plain', 'Browse image…');
     browse.type = 'button';
     const file = element('input');
     file.type = 'file';
-    file.accept = 'image/png,.png';
+    file.accept = 'image/png,image/jpeg,image/svg+xml,.png,.jpg,.jpeg,.svg';
     file.hidden = true;
     file.setAttribute('aria-label', 'Picture file');
     browse.addEventListener('click', () => file.click());
@@ -43,17 +44,18 @@ export class PictureFields {
       browse.disabled = true;
       this.error.textContent = '';
       try {
-        if (chosen.size > 4 * 1024 * 1024) throw new Error('Choose a PNG up to 4 MiB.');
-        const png = await new Promise<string>((resolve, reject) => {
+        if (chosen.size > 4 * 1024 * 1024) throw new Error('Choose an image up to 4 MiB.');
+        const data = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result).split(',')[1]);
           reader.onerror = () => reject(new Error('Could not read this picture.'));
           reader.readAsDataURL(chosen);
         });
-        const result = (await send({ type: 'import_picture', png })).imported_picture;
+        const result = (await send({ type: 'import_picture', data })).imported_picture;
         if (!this.root.isConnected || !result) return;
-        const fresh = !value.picture.png;
-        value.picture.png = result.picture.png;
+        const fresh = !value.picture.data;
+        value.picture.data = result.picture.data;
+        value.picture.mime = result.picture.mime;
         if (fresh && geometry) {
           value.bounds[3] = String(
             Math.max(
@@ -117,16 +119,16 @@ export class PictureFields {
       element(
         'p',
         'settings-note',
-        'A local copy is saved with the project or template. PNG · up to 4 MiB and 4 megapixels.',
+        'A local copy is saved with the project or template. PNG, JPEG or self-contained SVG · up to 4 MiB and 4 megapixels.',
       ),
       this.error,
     );
     this.show();
   }
   private show() {
-    this.preview.hidden = !this.value.picture.png;
-    if (this.value.picture.png)
-      this.preview.src = `data:image/png;base64,${this.value.picture.png}`;
+    this.preview.hidden = !this.value.picture.data;
+    if (this.value.picture.data)
+      this.preview.src = `data:${this.value.picture.mime};base64,${this.value.picture.data}`;
     this.preview.style.objectFit =
       this.value.picture.fit === 'stretch' ? 'fill' : this.value.picture.fit;
   }

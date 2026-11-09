@@ -1,14 +1,15 @@
-//! Portable immutable raster content and reusable placement appearance, independent of editors.
+//! Portable immutable image content and reusable placement appearance, independent of editors.
 use std::{error::Error, fmt, sync::Arc};
 /// Maximum compressed bytes in one imported picture (4 MiB).
 pub const MAX_PICTURE_BYTES: usize = 4 * 1024 * 1024;
 /// Maximum decoded pixels in one picture, bounding ordinary RGBA decoding to 16 MiB.
 pub const MAX_PICTURE_PIXELS: u64 = 4 * 1024 * 1024;
-/// Immutable PNG asset. Clone shares bytes; placements never contain machine-local paths.
+/// Immutable image asset. Clone shares bytes; placements never contain machine-local paths.
 /// Import/persistence adapters fully decode PNG before construction; the domain checks
 /// the format envelope, dimensions and budget without depending on a codec.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PictureAsset {
+    format: PictureFormat,
     bytes: Arc<[u8]>,
     width: u32,
     height: u32,
@@ -32,12 +33,47 @@ impl PictureAsset {
             return Err(PictureError);
         }
         Ok(Self {
+            format: PictureFormat::Png,
             bytes: bytes.into(),
             width,
             height,
         })
     }
-    /// Validated original PNG bytes, independent of placements.
+    /// Retain validated JPEG or self-contained SVG bytes from an import adapter.
+    /// # Errors
+    /// Rejects format envelopes and dimensions outside the shared image budget.
+    /// Adapters must fully validate/decode the content before calling this constructor.
+    pub fn validated(
+        bytes: Vec<u8>,
+        width: u32,
+        height: u32,
+        format: PictureFormat,
+    ) -> Result<Self, PictureError> {
+        if format == PictureFormat::Png {
+            return Self::png(bytes, width, height);
+        }
+        if bytes.is_empty()
+            || bytes.len() > MAX_PICTURE_BYTES
+            || width == 0
+            || height == 0
+            || u64::from(width) * u64::from(height) > MAX_PICTURE_PIXELS
+            || (format == PictureFormat::Jpeg && !bytes.starts_with(&[0xff, 0xd8]))
+            || (format == PictureFormat::Svg && std::str::from_utf8(&bytes).is_err())
+        {
+            return Err(PictureError);
+        }
+        Ok(Self {
+            format,
+            bytes: bytes.into(),
+            width,
+            height,
+        })
+    }
+    /// Validated media format; filenames and supplied MIME types are not authoritative.
+    pub fn format(&self) -> PictureFormat {
+        self.format
+    }
+    /// Validated original image bytes, independent of placements.
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -74,7 +110,9 @@ pub struct Picture {
 pub struct PictureError;
 impl fmt::Display for PictureError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Use a valid static PNG up to 4 MiB and 4 megapixels")
+        f.write_str(
+            "Use PNG, JPEG or supported static SVG up to 4 MiB and 4 megapixels. SVG scripts, animation, embedded images and external resources are unsupported",
+        )
     }
 }
 impl Error for PictureError {}
@@ -95,6 +133,27 @@ impl PictureFit {
             "cover" => Some(Self::Cover),
             "stretch" => Some(Self::Stretch),
             _ => None,
+        }
+    }
+}
+
+/// Supported portable image encodings.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PictureFormat {
+    /// Portable Network Graphics, including transparency.
+    Png,
+    /// JPEG raster.
+    Jpeg,
+    /// Self-contained static SVG, retained as vector data.
+    Svg,
+}
+impl PictureFormat {
+    /// MIME type for image-only rendering.
+    pub fn mime(self) -> &'static str {
+        match self {
+            Self::Png => "image/png",
+            Self::Jpeg => "image/jpeg",
+            Self::Svg => "image/svg+xml",
         }
     }
 }

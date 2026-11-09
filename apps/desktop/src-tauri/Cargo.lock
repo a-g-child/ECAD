@@ -699,10 +699,13 @@ name = "ecad-adapters"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
+ "cssparser",
  "ecad-app",
  "ecad-domain",
  "getrandom 0.4.3",
+ "jpeg-decoder",
  "png",
+ "roxmltree",
  "serde",
  "serde_json",
  "sha2",
@@ -1663,6 +1666,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "jpeg-decoder"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00810f1d8b74be64b13dbf3db89ac67740615d6c891f0e7b6179326533011a07"
+
+[[package]]
 name = "js-sys"
 version = "0.3.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2559,6 +2568,15 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "windows-sys 0.60.2",
+]
+
+[[package]]
+name = "roxmltree"
+version = "0.21.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9da7f59328b09405b181fee1018925fad50f157afb43c0c0f5c522c256dd5907"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]

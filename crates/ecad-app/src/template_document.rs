@@ -84,6 +84,9 @@ impl TemplateDocument {
         if name.trim().is_empty() {
             return Err(TemplateEditError::BlankName);
         }
+        layout
+            .validate_cell_contents()
+            .map_err(TemplateEditError::Layout)?;
         Ok(Self {
             revision: Revision::fresh(),
             definition,
@@ -157,6 +160,9 @@ impl TemplateDocument {
             .get(&id)
             .ok_or(TemplateEditError::MissingVariant(id))?
             .clone();
+        layout
+            .validate_cell_contents_from(&before.layout)
+            .map_err(TemplateEditError::Layout)?;
         let retained = before.retained && layout.tables().is_empty();
         let after = TemplateDraftVariant {
             name,
