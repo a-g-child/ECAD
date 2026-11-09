@@ -63,7 +63,8 @@ export function registerTableTextUnits({ page, button, until }) {
       if (name === 'Close template editor') await editor.waitFor({ state: 'hidden' });
       else await ready();
     };
-    const field = (name) => editor.getByRole('textbox', { name, exact: true });
+    const field = (name) =>
+      editor.getByRole(name.endsWith(' font') ? 'combobox' : 'textbox', { name, exact: true });
     const edit = async (name, value) => {
       await field(name).fill(value);
       await field(name).press('Control+Enter');
@@ -89,7 +90,7 @@ export function registerTableTextUnits({ page, button, until }) {
     await p.mouse.click(points[0].x, points[0].y);
     await ready();
     await edit('Caption font', 'serif');
-    await editor.getByRole('combobox', { name: 'Caption bold', exact: true }).selectOption('true');
+    await editor.getByRole('button', { name: 'Caption bold', exact: true }).click();
     await ready();
     assert.equal(await cells.first().locator('text').first().getAttribute('font-weight'), 'bold');
     assert.equal(await value.getAttribute('font-weight'), 'normal');
@@ -115,18 +116,62 @@ export function registerTableTextUnits({ page, button, until }) {
     await p.mouse.move(points[1].x, points[1].y, { steps: 5 });
     await p.mouse.up();
     await ready();
-    assert.equal(await field('Content height (mm)').getAttribute('placeholder'), 'Mixed');
-    await edit('Content height (mm)', '3');
+    assert.equal(await field('Text height (mm)').getAttribute('placeholder'), 'Mixed');
+    await edit('Text height (mm)', '3');
     for (const n of [0, 1])
       assert.equal(await cells.nth(n).locator('.frame-value').getAttribute('font-size'), '3');
     await command('Undo');
     assert.equal(await cells.first().locator('.frame-value').getAttribute('font-size'), '3.175');
     assert.equal(await cells.nth(1).locator('.frame-value').getAttribute('font-size'), '2.5');
     await command('Redo');
-    await editor.getByRole('button', { name: 'Reset content height', exact: true }).click();
+    await editor
+      .getByRole('combobox', { name: 'Reset text formatting', exact: true })
+      .selectOption('height');
     await ready();
     for (const n of [0, 1])
       assert.equal(await cells.nth(n).locator('.frame-value').getAttribute('font-size'), '2.5');
+    assert.equal(await field('Cell caption').count(), 0);
+    assert.equal(await editor.locator('.font-palette:visible').count(), 1);
+    // Each size change covers both channels; content itself remains untouched.
+    await edit('Text height (mm)', '3');
+    for (const n of [0, 1])
+      assert.equal(await cells.nth(n).locator('text').first().getAttribute('font-size'), '3');
+    await command('Undo');
+    const textBefore = await cells.locator('text').allTextContents();
+    await editor.getByRole('button', { name: 'Table 1 · select all cells', exact: true }).click();
+    await ready();
+    assert.equal(await editor.locator('[data-selected-cell]').count(), await cells.count());
+    await edit('Text font', 'Arial');
+    for (const font of await cells
+      .locator('text')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('font-family'))))
+      assert.equal(font, 'Arial');
+    await editor
+      .getByRole('combobox', { name: 'Text font style', exact: true })
+      .selectOption('bold-italic');
+    await ready();
+    for (const style of await cells
+      .locator('text')
+      .evaluateAll((nodes) =>
+        nodes.map((n) => [n.getAttribute('font-weight'), n.getAttribute('font-style')]),
+      ))
+      assert.deepEqual(style, ['bold', 'italic']);
+    assert.deepEqual(await cells.locator('text').allTextContents(), textBefore);
+    await command('Undo');
+    await command('Undo');
+    assert.equal(await cells.first().locator('text').first().getAttribute('font-family'), 'serif');
+    await p.screenshot({ path: '../../target/ui/font-palette.png' });
+    await ribbon.getByRole('button', { name: 'Merge title-block cells', exact: true }).click();
+    const merge = p.getByRole('dialog', { name: 'Merge title-block cells', exact: true });
+    await merge.getByRole('button', { name: 'Apply table edit', exact: true }).click();
+    await merge.waitFor({ state: 'hidden' });
+    await ready();
+    assert.equal(await cells.count(), 1);
+    assert.equal(await field('Text font').count(), 1);
+    assert.equal(await field('Cell caption').count(), 0);
+    await command('Undo');
+    assert.equal(await editor.locator('[data-selected-cell]').count(), await cells.count());
+
     await command('Save template revision');
     await command('Close template editor');
     await p.getByRole('tab', { name: 'Library', exact: true }).click();

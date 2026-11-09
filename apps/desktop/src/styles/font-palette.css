@@ -1,0 +1,75 @@
+/* Fixed compact rows keep long font names and mixed states inside the inspector. */
+.font-palette {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  margin: 8px 0 14px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--panel);
+}
+.font-palette-heading {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+}
+.font-palette-family {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 94px;
+  gap: 5px;
+}
+.font-palette-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px 28px 48px;
+  gap: 5px;
+  align-items: end;
+}
+.font-palette-size {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.font-palette-size span {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.font-toggle {
+  height: 24px;
+  padding: 0;
+  font-size: 14px;
+}
+.font-bold {
+  font-weight: bold;
+}
+.font-italic {
+  font-style: italic;
+}
+.font-toggle[aria-pressed='true'] {
+  background: #dceaf4;
+  border-color: #6b9cbd;
+}
+.font-toggle[aria-pressed='mixed'] {
+  background: repeating-linear-gradient(135deg, #e7edf1, #e7edf1 3px, #f6f8fa 3px, #f6f8fa 6px);
+}
+.font-palette-alignment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 64px;
+  gap: 5px;
+}
+.font-palette-colour {
+  height: 24px;
+  min-width: 0;
+}
+.font-palette-colour .colour-picker-hint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-align: center;
+}

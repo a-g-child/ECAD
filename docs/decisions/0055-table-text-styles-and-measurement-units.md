@@ -1,5 +1,7 @@
 # 0055 — Table text styles and user measurement units
 
+The property-panel presentation and first-cell range text editing described below are superseded by [decision 0056](0056-compact-font-palette-and-blanket-table-formatting.md). The domain, persistence and unit contracts remain in effect.
+
 Caption and content use separate per-property overrides: font family, physical height, bold, italic, RGB colour, horizontal alignment and vertical alignment. Cells inherit template defaults, then the existing frame/project fallback. Null means inherited; explicit false and equal-valued overrides remain explicit. Variables share the content style. Inline rich text is outside this slice.
 
 The contextual inspector exposes both channels. A range edit changes only the selected property across all selected cells in one validated template transaction; text content editing remains on the first cell. Reset clears only the chosen override. Splits copy source appearance to new cells, merges preserve the primary/top-left style, and resizing keeps physical text sizes. Captions reserve a strip when explicitly styled; content aligns within the remaining area. Tables do not auto-resize or shrink fonts. Existing unstyled layouts retain their previous caption strip and cell overflow policy.

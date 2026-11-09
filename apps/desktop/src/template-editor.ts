@@ -69,6 +69,13 @@ export class TemplateEditor {
   get selectionContext(): Context['template_selection'] {
     if (!this.variant || this.selected.kind === 'paper' || this.selected.kind === 'artwork-catalog')
       return { kind: 'paper' };
+    if (this.selected.kind === 'cells')
+      return {
+        kind: 'cells',
+        table: this.selected.table,
+        cells: this.selected.cells,
+        variant: this.variant.id,
+      };
     return { ...this.selected, variant: this.variant.id };
   }
   actionEnabled(id: string, fallback: boolean) {
@@ -271,6 +278,7 @@ export class TemplateEditor {
         this.selected.kind === 'artwork' ? this.selected.id : undefined,
         this.selected.kind === 'artwork-catalog',
         this.selectedCells,
+        this.selected.kind === 'cells' && !!this.selected.whole,
       );
   }
   private paintSelection() {
@@ -321,7 +329,7 @@ export class TemplateEditor {
     this.renderProperties();
     this.paintSelection();
     if (cells.length > 1)
-      this.note.textContent = `${cells.length} cells selected. Text editing shows the first cell; formatting applies to all selected cells.`;
+      this.note.textContent = `${cells.length} cells selected. Formatting applies to captions and contents in all selected cells.`;
     else this.note.textContent = '';
     return true;
   }
@@ -376,7 +384,27 @@ export class TemplateEditor {
       if (this.clearSelection()) this.focusProperties();
     });
     this.structure.append(props);
-    for (const table of this.variant.tables) {
+    for (const [index, table] of this.variant.tables.entries()) {
+      const selectTable = element('button', 'tree-item', `Table ${index + 1} · select all cells`);
+      selectTable.dataset.templateTable = table.id;
+      const choose = () => {
+        if (!this.selectGroup(table, table.cells)) return;
+        this.selected = {
+          kind: 'cells',
+          table: table.id,
+          cells: table.cells.map((c) => c.id),
+          whole: true,
+        };
+        this.interaction.selection(table, table.cells);
+        this.renderProperties();
+      };
+      selectTable.addEventListener('click', choose);
+      selectTable.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        choose();
+        this.action('selection.properties');
+      });
+      this.structure.append(selectTable);
       this.structure.append(dimensionSummary(table.bounds, 'Table · '));
       for (const cell of table.cells) {
         const b = element('button', 'tree-item', cell.caption || 'Blank cell');

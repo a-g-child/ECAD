@@ -2,13 +2,15 @@
 import type { TemplateVariant } from './types';
 export type TemplateSelection =
   | { kind: 'paper' }
-  | { kind: 'cells'; table: string; cells: string[] }
+  | { kind: 'cells'; table: string; cells: string[]; whole?: boolean }
   | { kind: 'artwork'; id: string }
   | { kind: 'artwork-catalog' }; // Transitional numeric insertion surface, not an object selection.
 export function selectedTable(model: TemplateVariant | null, selected: TemplateSelection) {
   if (selected.kind !== 'cells') return null;
   const table = model?.tables.find((t) => t.id === selected.table);
-  const cells = table?.cells.filter((c) => selected.cells.includes(c.id)) ?? [];
+  const cells =
+    (selected.whole ? table?.cells : table?.cells.filter((c) => selected.cells.includes(c.id))) ??
+    [];
   return table && cells.length ? { table, cells } : null;
 }
 export function reconcileSelection(
@@ -18,7 +20,12 @@ export function reconcileSelection(
   if (selected.kind === 'cells') {
     const resolved = selectedTable(model, selected);
     return resolved
-      ? { kind: 'cells', table: resolved.table.id, cells: resolved.cells.map((c) => c.id) }
+      ? {
+          kind: 'cells',
+          table: resolved.table.id,
+          cells: resolved.cells.map((c) => c.id),
+          whole: selected.whole,
+        }
       : { kind: 'paper' };
   }
   if (selected.kind === 'artwork' && !model.graphics.some((g) => g.id === selected.id))
@@ -28,6 +35,10 @@ export function reconcileSelection(
 
 /** Resolve an explicit pointer selection before asynchronous field completion replaces DOM nodes. */
 export function selectionAt(model: TemplateVariant, target: Element): TemplateSelection | null {
+  const tableId = target.closest<HTMLElement>('[data-template-table]')?.dataset.templateTable;
+  const table = model.tables.find((t) => t.id === tableId);
+  if (table)
+    return { kind: 'cells', table: table.id, cells: table.cells.map((c) => c.id), whole: true };
   const cellNode = target.closest<HTMLElement>('[data-template-cell],.frame-cell');
   const cellId = cellNode?.dataset.templateCell ?? cellNode?.dataset.field;
   if (cellId) {

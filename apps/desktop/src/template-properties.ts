@@ -10,6 +10,7 @@ import { TemplateRuns } from './template-runs';
 import { TemplateArtwork } from './template-artwork';
 export class TemplateProperties {
   readonly root = element('form', 'template-properties inspector');
+  private blanket = false;
   private textDefaults: TemplateTextProperties | null = null;
   private cellStyles: { id: string; styles: import('./types').TemplateTextStyles }[] = [];
   private paperFields = element('div');
@@ -65,8 +66,10 @@ export class TemplateProperties {
     artworkId?: string,
     catalog = false,
     cells: TemplateCell[] = [],
+    wholeTable = false,
   ) {
     this.model = model;
+    this.blanket = wholeTable || cells.length > 1;
     this.selected = selection;
     this.artworkId = artworkId;
     this.catalog = catalog;
@@ -143,13 +146,17 @@ export class TemplateProperties {
     if (artworkId || catalog) this.root.append(this.artwork.root);
     this.runs = [];
     if (selection) {
-      this.root.append(element('h3', '', 'Cell properties'));
-      this.caption = textEditor('property-input property-text', 2);
-      this.caption.value = selection.cell.caption;
-      this.label('Cell caption', this.caption, this.root);
-      this.root.append(dimensionSummary(selection.cell.bounds, 'Cell bounds · '));
-      this.runs = selection.cell.contents.map((r) => ({ ...r }));
-      this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
+      this.root.append(
+        element('h3', '', this.blanket ? `${cells.length} cells selected` : 'Cell properties'),
+      );
+      if (!this.blanket) {
+        this.caption = textEditor('property-input property-text', 2);
+        this.caption.value = selection.cell.caption;
+        this.label('Cell caption', this.caption, this.root);
+        this.root.append(dimensionSummary(selection.cell.bounds, 'Cell bounds · '));
+        this.runs = selection.cell.contents.map((r) => ({ ...r }));
+        this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
+      }
       if (!this.cellStyles.length)
         this.cellStyles = [
           { id: selection.cell.id, styles: structuredClone(selection.cell.text_styles) },
@@ -160,6 +167,7 @@ export class TemplateProperties {
           this.changed,
           false,
           this.apply,
+          this.blanket,
         ).root,
       );
     }
@@ -176,14 +184,15 @@ export class TemplateProperties {
       fit_margins: this.fitMargins.checked,
       content: this.content.map(readDimension),
       graphics: this.artwork!.graphics,
-      cell: this.selected
-        ? {
-            table: this.selected.table.id,
-            id: this.selected.cell.id,
-            caption: this.caption.value,
-            contents: this.runs,
-          }
-        : null,
+      cell:
+        this.selected && !this.blanket
+          ? {
+              table: this.selected.table.id,
+              id: this.selected.cell.id,
+              caption: this.caption.value,
+              contents: this.runs,
+            }
+          : null,
     };
   }
   focusArtwork(id?: string) {
@@ -205,6 +214,7 @@ export class TemplateProperties {
       this.focusArtwork(this.artworkId);
       return;
     }
-    (this.selected ? this.caption : this.name).focus();
+    if (this.blanket) this.root.querySelector<HTMLInputElement>('.font-palette input')?.focus();
+    else (this.selected ? this.caption : this.name).focus();
   }
 }

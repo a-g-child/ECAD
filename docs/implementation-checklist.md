@@ -465,3 +465,14 @@ Inline-variable validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui`
 - [ ] Fractional inches/mils, portable font/output parity and native Windows/Linux runtime verification.
 
 See [decision 0055](decisions/0055-table-text-styles-and-measurement-units.md). Validation on macOS/aarch64: `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. Additional pinned-sheet persistence and bold/alignment assertions passed in focused adapter/browser runs; final all-target Clippy and formatting checks passed. Native Linux/Windows runtime and font/output parity remain unverified.
+
+### Compact font palette and blanket table formatting
+
+- [x] Compact shared palette for family, style, physical height, bold/italic, colour, alignment and inherited-property reset.
+- [x] Single-cell caption/content palettes; one mixed-value palette applies changed properties to both channels across multi-cell selections.
+- [x] Explicit whole-table selection in the explorer, with pending-field guards, current membership resolution and no ambiguous text-content editor.
+- [x] Preserve unrelated formatting, contents, existing schema and one-step undo; regression coverage includes reset, whole-table edits and save/reopen.
+
+See [decision 0056](decisions/0056-compact-font-palette-and-blanket-table-formatting.md).
+
+Palette validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. Final focused coverage also verifies whole-table merge-to-one-cell/undo and final frontend type checking. Native Windows/Linux picker behavior remains unverified.
