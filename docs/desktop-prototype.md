@@ -188,3 +188,26 @@ Schematic font/height changes use a strict `edit_appearance` bridge request: str
 **Template → Tables → Layout** sets a row count and a separate column count for every row, keeping the table's outer size and position. The row selector offers 1–64 rows (and retains larger imported counts). Existing cells keep their content and formatting by row/column position; added cells are blank. Reducing counts asks you to acknowledge removal of surplus cells and their contents. Changed rows use equal column widths; changing row count uses equal heights. Spanning cells become ordinary row cells when counts change. Unchanged counts preserve the exact existing layout. Apply is one undo step; Cancel preserves history.
 
 The selected-cell **+ column** control now fits the inserted column within the existing width, so wide/repeated insertions do not fail simply because the table is near a margin. It inserts across the table using existing span rules. **+ row** still grows upward with its bottom edge fixed. Pointer resizing remains available, and **Resize title-block table** in command search retains exact numeric bounds. This supersedes the earlier ribbon Resize/growing contextual-column description. See [decision 0057](decisions/0057-row-specific-table-layout.md).
+
+
+## Portable pictures
+
+Drawing → Picture opens the shared browsing/placement dialog for a schematic.
+Template → Picture inserts artwork, or fills the selected single table cell.
+Choose a static PNG, review its dimensions and fit, then Apply. The properties
+panel offers the same Browse and fit controls; free placements also expose exact
+position and dimensions in the selected display units. Drag existing artwork or
+schematic pictures to move them. Cell pictures follow the cell when resized;
+caption and content remain editable above the picture. Remove picture and undo
+use the owning editor's history.
+
+A copy of the original PNG is embedded in the saved project or template revision.
+Moving/deleting the source file does not affect the drawing; published templates
+and bundled project copies carry their own bytes. Repeated images share one asset
+entry per owning body. Supported fits are whole-image, fill-and-crop, and stretch.
+First import sets an aspect-preserving initial size; replacing an image keeps its
+placement box. Limits are 4 MiB/4,194,304 pixels per PNG, and 64 distinct assets/
+16 MiB compressed per drawing document or template variant. JPEG/SVG, clipboard,
+drop, rotation, opacity and locking remain follow-ups. Browser checks exercise
+real Rust state and reopening without the source; they do not establish native
+file-picker or rendering parity on Windows/Linux.

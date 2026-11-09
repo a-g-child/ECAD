@@ -113,7 +113,8 @@ fn handle(
         return Err("Only JSON requests from the local UI are allowed".into());
     }
     let size = size
-        .filter(|s| *s <= 262144)
+        // Permit bounded embedded PNGs and template proposals in the local test host.
+        .filter(|s| *s <= 32 * 1024 * 1024)
         .ok_or("Missing or excessive content length")?;
     let mut body = vec![0; size];
     reader.read_exact(&mut body)?;

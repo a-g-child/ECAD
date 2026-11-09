@@ -139,6 +139,10 @@ pub(crate) fn layout_origins(
     for target in selection.into_iter().collect::<BTreeSet<_>>() {
         project.require_object(target)?;
         let (current_view, origin) = match target {
+            ObjectRef::Picture(id) => {
+                let item = drawing.picture(id).expect("required picture");
+                (item.view, item.position)
+            }
             ObjectRef::Label(id) => {
                 let item = drawing.label(id).expect("required label");
                 (item.view, item.position)
@@ -204,6 +208,22 @@ pub(crate) fn layout_plan_candidate(
             });
         }
         let changed = match target {
+            ObjectRef::Picture(id) => {
+                if matches!(operation, LayoutOperation::Transform(_)) {
+                    return Err(LayoutError::UnsupportedTarget(target));
+                }
+                if before != after {
+                    let mut picture = project
+                        .drawing()
+                        .picture(id)
+                        .expect("known picture")
+                        .clone();
+                    picture.position = after;
+                    plan.commands
+                        .push(Command::Drawing(DrawingCommand::ReplacePicture(picture)));
+                }
+                before != after
+            }
             ObjectRef::Anchor(id) => {
                 if before != after || matches!(operation, LayoutOperation::Transform(_)) {
                     anchors.insert(id, after);

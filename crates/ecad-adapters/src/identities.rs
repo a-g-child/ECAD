@@ -12,6 +12,16 @@ use ecad_domain::{
 pub struct RandomIds;
 
 impl RandomIds {
+    /// Allocate a fresh picture placement identity.
+    /// # Errors
+    /// Propagates operating-system entropy failures.
+    pub fn picture() -> Result<ecad_domain::PictureId, getrandom::Error> {
+        let id = Self::label()?;
+        Ok(id
+            .to_string()
+            .parse()
+            .expect("same identity representation"))
+    }
     /// Generate a stable title-block cell identity from OS entropy.
     /// # Errors
     /// Returns the original OS entropy failure without a weak fallback.

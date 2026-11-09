@@ -103,6 +103,7 @@ export class TemplatePreview {
       cells: model.tables.flatMap((table) =>
         table.cells.map((cell) => ({
           key: cell.id,
+          picture: cell.picture,
           caption: cell.caption,
           text_styles: {
             caption: Object.fromEntries(

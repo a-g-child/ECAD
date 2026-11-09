@@ -1,3 +1,4 @@
+import { renderPicture } from './picture-render';
 /** Paper-space review projection; the editable canvas shares this background/frame renderer. */
 import type { DrawingListRow, FrameRow, SceneRow, SheetRow } from './types';
 import { renderText } from './text';
@@ -37,7 +38,14 @@ export function renderPaper(
   for (const row of scene.filter((r) => r.view === sheet.view)) {
     const group = node('g', {});
     const [x, y] = row.points[0];
-    if (row.shape === 'path')
+    if (row.shape === 'picture' && row.picture)
+      renderPicture(group, row.picture.picture, {
+        x,
+        y,
+        width: row.points[1][0] - x,
+        height: row.points[1][1] - y,
+      });
+    else if (row.shape === 'path')
       group.append(
         node('polyline', {
           points: row.points.map((p) => p.join(',')).join(' '),

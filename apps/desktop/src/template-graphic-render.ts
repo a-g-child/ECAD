@@ -1,3 +1,4 @@
+import { renderPicture } from './picture-render';
 /** Shared artwork rendering for template placeholders and resolved project sheets. */
 import type { TemplateGraphic } from './types';
 import { renderText, reserveTextBounds } from './text';
@@ -15,7 +16,9 @@ export function renderTemplateGraphics(parent: SVGElement, graphics: TemplateGra
     const [x, y, width, height] = g.bounds.map((v) => Number(v) / 1000);
     const group = node('g', { 'data-template-graphic': g.id, 'pointer-events': 'none' });
     const style = { fill: 'none', stroke: g.colour, 'stroke-width': Number(g.stroke_width) / 1000 };
-    if (g.kind === 'text') {
+    if (g.kind === 'picture' && g.picture) {
+      renderPicture(group, g.picture, { x, y, width, height });
+    } else if (g.kind === 'text') {
       const size = Number(g.text_height) / 1000;
       const value = g.contents
         .map((r) => (r.kind === 'literal' ? r.value : `{${r.value}}`))

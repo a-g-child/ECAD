@@ -36,6 +36,16 @@ pub(crate) fn project(
     let mut scene = Vec::new();
     for object in preview.objects() {
         let (target, points) = match object {
+            PreviewObject::Picture(v) => (
+                ObjectRef::Picture(v.id),
+                vec![
+                    v.position,
+                    DrawingPoint {
+                        x: v.position.x + i64::from(v.width),
+                        y: v.position.y + i64::from(v.height),
+                    },
+                ],
+            ),
             PreviewObject::Label(v) => (ObjectRef::Label(v.id), vec![v.position]),
             PreviewObject::Polyline(v) => (ObjectRef::Polyline(v.id), v.points.clone()),
             PreviewObject::Anchor(v) => (ObjectRef::Anchor(v.id), vec![v.position]),

@@ -192,7 +192,7 @@ export class TemplateTableTools {
     } else if (this.operation === 'merge') {
       const otherContents = this.selectedCells
         .slice(1)
-        .some((c) => c.caption.length || c.contents.length);
+        .some((c) => c.caption.length || c.contents.length || c.picture);
       if (otherContents)
         this.select('Merged contents', [
           ['keep_primary', 'Keep only the first cell’s contents'],

@@ -232,6 +232,7 @@ impl DesktopBridge {
         | Request::TemplateTableCommit { input, .. }
         | Request::TemplateOperation { input, .. }
         | Request::TemplatePending { input, .. }
+        | Request::EditPicture { input, .. }
         | Request::Action { input, .. }
         | Request::Key { input, .. }
         | Request::CommitMove { input, .. }
@@ -257,6 +258,7 @@ impl DesktopBridge {
                 Request::Action { .. }
                     | Request::Key { .. }
                     | Request::Snapshot {}
+                    | Request::ImportPicture { .. }
                     | Request::TemplateOperation { .. }
                     | Request::TemplatePending { .. }
                     | Request::TemplateActions { .. }
@@ -270,6 +272,60 @@ impl DesktopBridge {
             ));
         }
         match request {
+            Request::ImportPicture { png } => {
+                let asset = ecad_adapters::picture_from_base64(&png)
+                    .map_err(|e| BridgeError::new("picture", e))?;
+                Ok(Response {
+                    imported_picture: Some(crate::picture_rows::ImportedPictureRow {
+                        pixels: [asset.width().to_string(), asset.height().to_string()],
+                        picture: crate::picture_rows::PictureRow {
+                            png: ecad_adapters::picture_base64(&asset),
+                            fit: "contain".into(),
+                        },
+                    }),
+                    ..Response::default()
+                })
+            }
+            Request::EditPicture {
+                context,
+                id,
+                values,
+                input,
+            } => {
+                let context = self.context(context)?;
+                let target = id
+                    .map(|s| {
+                        s.parse::<ecad_domain::PictureId>()
+                            .map_err(|e| BridgeError::new("picture", e))
+                    })
+                    .transpose()?;
+                let value = values
+                    .map(|v| {
+                        let row: crate::picture_rows::PlacementRow = serde_json::from_value(v)
+                            .map_err(|e| BridgeError::new("picture", e))?;
+                        let id = match target {
+                            Some(id) => id,
+                            None => ecad_adapters::RandomIds::picture()
+                                .map_err(|e| BridgeError::new("picture", e))?,
+                        };
+                        row.drawing(
+                            id,
+                            context.view.ok_or_else(|| {
+                                BridgeError::new("picture", "Select a schematic drawing view")
+                            })?,
+                        )
+                        .map(Box::new)
+                    })
+                    .transpose()?;
+                self.invoke(ActionInvocation {
+                    input_id: input_id(&input)?,
+                    action: ActionId::new("drawing.picture").expect("registered"),
+                    source: InvocationSource::Toolbar,
+                    repeat: false,
+                    context,
+                    parameters: ActionParameters::Picture { target, value },
+                })
+            }
             Request::TemplateActions { context } => self.template_actions(context),
             request @ (Request::TemplateTablePreview { .. }
             | Request::TemplateTableCommit { .. }) => self.template_table_request(request),

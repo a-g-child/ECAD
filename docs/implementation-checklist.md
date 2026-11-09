@@ -223,7 +223,7 @@ Target corrected by [decision 0030](decisions/0030-sheet-first-project-documents
 
 ## Later scope
 
-Visual-bounds alignment and edge-gap distribution, retained arrays, advanced drawing constraints, image attachments, complete output conventions, dimensionally accurate DXF layout, and STEP/manifest handoff remain in the product scope. Introduce each with its own executable slice and tests; they are not part of the current headless foundation.
+Visual-bounds alignment and edge-gap distribution, retained arrays, advanced drawing constraints, advanced image transforms, complete output conventions, dimensionally accurate DXF layout, and STEP/manifest handoff remain in the product scope. Introduce each with its own executable slice and tests; they are not part of the current headless foundation.
 
 ## Source repository
 
@@ -248,7 +248,8 @@ See [decision 0037](decisions/0037-library-template-editor-workspace.md) and [re
 - [x] Capture legacy sheet layouts and unused document/creation defaults deterministically, retaining paper, geometry and explicit override/inheritance intent in a closed revision-bound proposal.
 - [x] Migrate normal desktop assignments/defaults to saved references with stable inherited variants; protect in-use revisions and reject invalid paper/variant changes and transfers.
 - [x] Restrict sheet/project-default selectors to saved variants and make paper/margins read-only; retain source placement/scale editing and historical tiny-sheet recovery.
-- [ ] Extend dependency closure/bundling when reusable title blocks and portable assets are implemented.
+- [x] Carry portable PNG assets through template revision publication and project bundling.
+- [ ] Extend dependency closure for separately reusable title-block definitions.
 - [x] Store paper/margins and retained title-block structure in saved variants, with validated read-only sheet projections.
 - [ ] Complete standard-profile provenance and the separate title-block authoring workflow.
 - [x] Add Libraries access, a separate template editor view, independent draft history/publication, contextual ribbon and exact template/cell-content properties.
@@ -304,7 +305,7 @@ Margin validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (51 brow
 - [x] Shared typed variable resolution from each project/document/sheet; independent template bodies never store resolved project values.
 - [x] Strict nested variant v3 artwork persistence, existing v1/v2 encoding preserved for artwork-free bodies; project/library round trips and table-edit preservation.
 - [x] Two-point pointer drawing and whole-object dragging (see pointer tools below).
-- [ ] Artwork snapping/transform tools; image/logo portable assets, fills and arcs.
+- [ ] Artwork snapping/transform tools, fills and arcs.
 
 Validation: added adapter/domain integration coverage for all shapes, malformed/duplicate/out-of-paper geometry, unknown fields, version rejection, exact canonical round trips and per-sheet variable resolution; bridge regression covers Apply/Undo/Redo, failed edits, table preservation and library saves. Browser workflow covers multiline bindings, all shapes, exact polyline edits, validation, Revert, history and saved-template reopen. See decision 0045 for first-slice limits.
 
@@ -316,7 +317,7 @@ Local verification for this slice: `cargo xtask full`, `cargo xtask ui` (52 brow
 - [x] Checked paper geometry, reverse box drags, retained line endpoint order, complete local path/text/style preservation during movement.
 - [x] Shared revision/target-bound retained previews, guarded armed tools, coalesced pointer updates, exact final-release commits, Escape/capture-loss cancellation and coherent history.
 - [x] Domain geometry/failure regressions, bridge arming/dirty guards/history/token/retarget tests, and Rust-backed browser placement/movement/delayed-release/cancel/invalid-release workflow.
-- [ ] Multi-click polyline drawing, pointer resizing and vertex handles, artwork snaps and portable image assets.
+- [ ] Multi-click polyline drawing, pointer resizing and vertex handles, artwork snaps and advanced image transforms.
 
 See [decision 0046](decisions/0046-template-artwork-pointer-tools.md). Existing numeric properties and variable text editing remain available after placement.
 
@@ -332,7 +333,7 @@ Pointer-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (5
 - [x] Add typed template selection and shared core Split/Merge eligibility.
 - [ ] Retire transitional Apply/Revert/catalog surfaces as insertion tools replace them.
 - [x] Simplify Split/Merge and paper presets.
-- [ ] Extract shared drawing/text modules, then add table/border/image insertion with persistence support.
+- [ ] Continue shared drawing/text extraction and click-to-place image insertion; shared portable image controls and persistence are implemented below.
 
 The numeric artwork-management surface remains transitional. No document schema, library publication or project adoption semantics change in this slice.
 
@@ -500,3 +501,15 @@ Shared-palette validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` 
 See [decision 0057](decisions/0057-row-specific-table-layout.md).
 
 Row-layout validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (71 browser workflows), and `cargo xtask desktop` passed. Browser regressions include dynamic row fields, explicit removal acknowledgement, cancellation/no-op history, repeated fitted columns and control placement beside lower-row selections. Native Windows/Linux interaction remains unverified.
+
+
+### Portable pictures — first shared slice
+
+- [x] PNG browsing and local-copy insertion for schematics, template artwork and individual table cells; no dependency on the source file after import.
+- [x] Shared import/property controls and renderer, including transparency, exact placement dimensions and contain/cover/stretch fit; contextual replacement/removal and coherent history.
+- [x] Schematic movement and exact undo; template artwork movement and cell-bound resizing use existing geometry workflows. Unsupported schematic rotation/mirroring is disabled centrally.
+- [x] Versioned, content-addressed embedded asset tables: project v14 for schematic pictures, nested template v5 for pictures. Older bodies retain their existing encoding.
+- [x] Codec bounds/corruption checks, deduplication, old-schema rejection, save/reopen, stale/invalid/no-op edits, removal/undo, cell splitting and publication regressions.
+- [ ] JPEG/SVG, clipboard/drop, click placement, crop handles, rotation, opacity/locking, asset-handle transport and binary-sidecar packaging.
+
+See [decision 0058](decisions/0058-portable-pictures.md) for scope, budgets and packaging tradeoffs.

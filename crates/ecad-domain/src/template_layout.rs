@@ -68,13 +68,14 @@ impl TemplateLayout {
                 }
             }
         }
-        Ok(Self {
+        Self {
             paper,
             content,
             tables,
             graphics: Vec::new(),
             text_defaults: Default::default(),
-        })
+        }
+        .with_graphics(Vec::new())
     }
     /// Set separate caption/content defaults without changing cell overrides.
     /// # Errors
@@ -110,11 +111,26 @@ impl TemplateLayout {
             }
         }
         self.graphics = graphics;
+        let assets: std::collections::BTreeSet<_> =
+            self.pictures().map(|p| p.asset.bytes()).collect();
+        if assets.len() > 64 || assets.iter().map(|b| b.len()).sum::<usize>() > 16 * 1024 * 1024 {
+            return Err(TemplateError::Graphic);
+        }
         Ok(self)
     }
     /// Retained artwork in paint order, behind title-block tables.
     pub fn graphics(&self) -> &[crate::TemplateGraphic] {
         &self.graphics
+    }
+    /// Pictures referenced by cells and free artwork, including repeated asset uses.
+    pub fn pictures(&self) -> impl Iterator<Item = &crate::Picture> {
+        self.tables
+            .iter()
+            .flat_map(|t| t.cells().iter().filter_map(|c| c.picture.as_ref()))
+            .chain(self.graphics.iter().filter_map(|g| match &g.shape {
+                crate::TemplateGraphicShape::Picture(p) => Some(p),
+                _ => None,
+            }))
     }
     /// Exact oriented dimensions and guide margins in micrometres.
     pub fn paper(&self) -> &SheetPaper {

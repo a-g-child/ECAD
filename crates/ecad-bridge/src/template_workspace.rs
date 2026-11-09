@@ -214,6 +214,11 @@ impl DesktopBridge {
                 );
                 return Ok(response);
             }
+            TemplateActionOutcome::Request(TemplateOperation::Picture) => {
+                let mut response = self.snapshot();
+                response.request = Some("picture".into());
+                return Ok(response);
+            }
             TemplateActionOutcome::Request(TemplateOperation::Artwork) => {
                 let mut response = self.snapshot();
                 response.request = Some("template_artwork".into());

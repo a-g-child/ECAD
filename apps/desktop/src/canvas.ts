@@ -1,3 +1,4 @@
+import { renderPicture } from './picture-render';
 /** SVG view state is transient; scene rendering never writes domain coordinates. */
 import type { DrawingListRow, FrameRow, SceneRow, SheetRow, Target } from './types';
 import { keyOf } from './types';
@@ -175,7 +176,24 @@ export class DrawingCanvas {
       const title = make('title', {});
       title.textContent = row.label;
       group.append(title);
-      if (row.shape === 'path') {
+      if (row.shape === 'picture' && row.picture) {
+        const [x, y] = row.points[0],
+          [right, bottom] = row.points[1];
+        renderPicture(group, row.picture.picture, { x, y, width: right - x, height: bottom - y });
+        group.append(
+          make('rect', {
+            x,
+            y,
+            width: right - x,
+            height: bottom - y,
+            fill: 'transparent',
+            stroke: 'none',
+            'stroke-width': 2,
+            'vector-effect': 'non-scaling-stroke',
+            class: 'ink picture-bounds',
+          }),
+        );
+      } else if (row.shape === 'path') {
         const points = row.points.map((p) => p.join(',')).join(' ');
         group.append(
           make('polyline', {

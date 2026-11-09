@@ -71,6 +71,18 @@ impl DrawingDocument {
             return self.resolve(target, property);
         }
         let value = match (target, property) {
+            (ObjectRef::Picture(id), PropertyId::DrawingPosition) => PropertyValue::Point(
+                self.picture(id)
+                    .ok_or(DrawingError::MissingPicture(id))?
+                    .position,
+            ),
+            (ObjectRef::Picture(id), PropertyId::DrawingView) => {
+                PropertyValue::Object(ObjectRef::View(
+                    self.picture(id)
+                        .ok_or(DrawingError::MissingPicture(id))?
+                        .view,
+                ))
+            }
             (ObjectRef::Anchor(id), PropertyId::AnchorTerminal) => {
                 PropertyValue::Object(ObjectRef::Terminal(
                     self.terminal_anchor(id)
@@ -299,6 +311,18 @@ impl DrawingDocument {
             .into());
         }
         match target {
+            ObjectRef::Picture(id) => {
+                let mut object = self
+                    .picture(id)
+                    .ok_or(DrawingError::MissingPicture(id))?
+                    .clone();
+                match value {
+                    PropertyValue::Point(point) => object.position = point,
+                    PropertyValue::Object(ObjectRef::View(view)) => object.view = view,
+                    _ => unreachable!("descriptor validated picture field"),
+                }
+                self.replace_picture(object)?;
+            }
             ObjectRef::Route(id) => {
                 let mut object = self
                     .routes

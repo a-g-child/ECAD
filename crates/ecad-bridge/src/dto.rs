@@ -64,6 +64,7 @@ impl Target {
             "conductor" => parse!(Conductor),
             "cable" => parse!(Cable),
             "view" => parse!(View),
+            "picture" => parse!(Picture),
             "label" => parse!(Label),
             "polyline" => parse!(Polyline),
             "anchor" => parse!(Anchor),
@@ -75,6 +76,7 @@ impl Target {
 impl From<ObjectRef> for Target {
     fn from(o: ObjectRef) -> Self {
         let (kind, id) = match o {
+            ObjectRef::Picture(id) => ("picture", id.to_string()),
             ObjectRef::Device(id) => ("device", id.to_string()),
             ObjectRef::Terminal(id) => ("terminal", id.to_string()),
             ObjectRef::Subsystem(id) => ("subsystem", id.to_string()),
@@ -110,6 +112,22 @@ pub(crate) struct Context {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    /// Decode a portable PNG for review without changing document/history.
+    ImportPicture {
+        /// Base64 PNG content, never a file path or arbitrary URL.
+        png: String,
+    },
+    /// Commit a complete picture edit through the shared registered action.
+    EditPicture {
+        /// Captured document/view/selection revision.
+        context: serde_json::Value,
+        /// Existing picture identity; None creates a new picture.
+        id: Option<String>,
+        /// Exact placement and asset; None removes an existing picture.
+        values: Option<serde_json::Value>,
+        /// Shared monotonic input identity.
+        input: String,
+    },
     /// Query shared Split/Merge availability for captured selection without changing state.
     TemplateActions {
         /// Original editor revision and selected identities.
@@ -418,6 +436,7 @@ pub enum Request {
 /// One bridge-v1 response. Fields are transport data, never mutable authoritative model access.
 #[derive(Clone, Debug, Serialize, Default)]
 pub struct Response {
+    pub(crate) imported_picture: Option<crate::picture_rows::ImportedPictureRow>,
     pub(crate) template_actions: Option<std::collections::BTreeMap<String, bool>>,
     pub(crate) table_preview: Option<crate::template_table_preview::TablePreviewRow>,
     pub(crate) snapshot: Option<Snapshot>,
@@ -471,6 +490,8 @@ pub(crate) struct TreeRow {
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct SceneRow {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub picture: Option<crate::picture_rows::PlacementRow>,
     pub target: Target,
     pub view: String,
     pub label: String,

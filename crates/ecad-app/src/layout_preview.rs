@@ -7,6 +7,8 @@ use std::collections::BTreeSet;
 /// Exact proposed drawing record; projections contain no authoritative mutable state.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PreviewObject {
+    /// Picture placement with its exact dimensions and content.
+    Picture(DrawingPicture),
     /// Selected annotation with its complete text and style intent.
     Label(DrawingLabel),
     /// Selected retained graphical path.
@@ -88,6 +90,9 @@ pub fn preview_layout(
     let objects = represented
         .into_iter()
         .map(|target| match target {
+            ObjectRef::Picture(id) => {
+                PreviewObject::Picture(drawing.picture(id).expect("validated picture").clone())
+            }
             ObjectRef::Anchor(id) => PreviewObject::Anchor(
                 drawing
                     .terminal_anchor(id)

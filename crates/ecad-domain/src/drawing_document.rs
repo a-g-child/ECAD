@@ -15,6 +15,7 @@ use std::collections::{BTreeMap, BTreeSet};
 /// Project-owned drawing views, styles, annotations, and graphical paths.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DrawingDocument {
+    pub(crate) pictures: BTreeMap<PictureId, DrawingPicture>,
     settings: DrawingSettings,
     anchors: BTreeMap<AnchorId, TerminalAnchor>,
     routes: BTreeMap<RouteId, DrawingRoute>,
@@ -103,7 +104,8 @@ impl DrawingDocument {
     /// # Errors
     /// Rejects missing views or any remaining annotation/path membership.
     pub fn remove_view(&mut self, id: ViewId) -> Result<DrawingView, DrawingError> {
-        if self.anchors.values().any(|o| o.view == id)
+        if self.pictures.values().any(|o| o.view == id)
+            || self.anchors.values().any(|o| o.view == id)
             || self.routes.values().any(|o| o.view == id)
             || self.labels.values().any(|o| o.view == id)
             || self.polylines.values().any(|o| o.view == id)
@@ -257,6 +259,12 @@ impl DrawingDocument {
     /// # Errors
     /// Returns the first invalid reference, role, or object value.
     pub fn validate(&self) -> Result<(), ModelError> {
+        for picture in self.pictures.values() {
+            picture.validate()?;
+            if !self.views.contains_key(&picture.view) {
+                return Err(DrawingError::MissingView(picture.view).into());
+            }
+        }
         self.check_appearance(&self.settings.text_creation, DrawingRole::Text)?;
         self.check_appearance(&self.settings.stroke_creation, DrawingRole::Stroke)?;
         self.check_appearance(&self.settings.route_creation, DrawingRole::Stroke)?;

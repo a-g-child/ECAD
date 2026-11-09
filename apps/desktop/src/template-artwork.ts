@@ -1,3 +1,4 @@
+import { PictureFields } from './picture-controls';
 /** Draft artwork properties: one Apply commits the complete validated template edit. */
 import { dimensionPoints, dimension, readDimension } from './dimensions';
 import type { TemplateGraphic, TemplateVariant } from './types';
@@ -13,6 +14,7 @@ export class TemplateArtwork {
     private model: TemplateVariant,
     private changed: () => void,
     private selectedId?: string,
+    private complete: () => void = () => {},
   ) {
     this.graphics = structuredClone(model.graphics);
     this.render();
@@ -92,10 +94,24 @@ export class TemplateArtwork {
       details.dataset.artworkId = g.id;
       details.open = !!this.selectedId;
       details.append(element('summary', '', `${i + 1} · ${g.kind}`));
-      (g.kind === 'text' ? ['X', 'Y'] : ['X', 'Y', 'Width', 'Height']).forEach((label, n) =>
+      (g.kind === 'picture'
+        ? []
+        : g.kind === 'text'
+          ? ['X', 'Y']
+          : ['X', 'Y', 'Width', 'Height']
+      ).forEach((label, n) =>
         this.field(details, `Artwork ${label} (µm)`, g.bounds[n], (v) => (g.bounds[n] = v)),
       );
-      if (g.kind === 'text') {
+      if (g.kind === 'picture' && g.picture) {
+        details.append(
+          new PictureFields(
+            { bounds: g.bounds, picture: g.picture },
+            true,
+            this.changed,
+            this.complete,
+          ).root,
+        );
+      } else if (g.kind === 'text') {
         const style = { font: g.font, height: g.text_height, colour: g.colour };
         details.append(
           new FontPalette(

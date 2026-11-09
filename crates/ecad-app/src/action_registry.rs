@@ -6,6 +6,8 @@ use std::collections::BTreeMap;
 /// Implemented action handler families. Feature business logic remains in commands/services.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionHandler {
+    /// Browse, place and edit portable drawing pictures.
+    Picture,
     /// Open the independent drawing-template library workspace.
     TemplateLibrary,
     /// Template editor operation, independent of the electrical document.
@@ -314,6 +316,18 @@ impl ActionRegistry {
                 if context.selection.is_empty() {
                     return Some(ActionDisabled::NoSelection);
                 }
+                if matches!(
+                    handler,
+                    ActionHandler::RotateSelection | ActionHandler::MirrorSelection
+                ) && let Some(target) = context
+                    .selection
+                    .iter()
+                    .find(|target| matches!(target, ecad_domain::ObjectRef::Picture(_)))
+                {
+                    return Some(ActionDisabled::Layout(LayoutError::UnsupportedTarget(
+                        *target,
+                    )));
+                }
                 match crate::layout::layout_origins(
                     session.project(),
                     context.selection.iter().copied(),
@@ -334,6 +348,7 @@ impl ActionRegistry {
                 (context.focus != ActionFocus::Canvas).then_some(ActionDisabled::CanvasRequired)
             }
             ActionHandler::FitDrawing
+            | ActionHandler::Picture
             | ActionHandler::CreateLabel
             | ActionHandler::CreatePolyline
             | ActionHandler::CreateRoute => {

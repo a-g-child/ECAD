@@ -4,6 +4,8 @@ use ecad_domain::{TemplateRevisionId, TemplateVariantRef};
 /// Operations available in the template workspace; property values remain command parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TemplateOperation {
+    /// Shared picture browsing and placement controls.
+    Picture,
     /// Place a primitive with a pointer, or translate an existing artwork object for None.
     Draw(Option<ecad_domain::TemplatePrimitive>),
     /// Focus retained text and vector artwork property controls.

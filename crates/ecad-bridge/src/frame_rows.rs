@@ -33,6 +33,7 @@ impl From<FrameRect> for RectRow {
 }
 #[derive(Clone, Debug, Serialize)]
 struct CellRow {
+    picture: Option<crate::picture_rows::PictureRow>,
     key: String,
     caption: String,
     text_styles: crate::template_text_styles::StylesRow,
@@ -54,6 +55,7 @@ impl FrameRow {
                 .cells
                 .iter()
                 .map(|c| CellRow {
+                    picture: c.picture.as_ref().map(Into::into),
                     key: c
                         .field
                         .map(|f| f.key().to_owned())

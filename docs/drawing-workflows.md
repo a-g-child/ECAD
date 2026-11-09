@@ -114,7 +114,7 @@ Crowded crossings, overlapping collinear routes, and crossings too close to term
 
 Users can insert images through file selection, paste, or drag-and-drop. Choose supported formats during requirements work. An attached reference image has no electrical connectivity.
 
-The default proposal is to copy the original image asset into the project and keep its placement as a separate text-based object. Reference one asset from several placements without duplicating its bytes. Git can track the image as a binary asset while reviewing position, crop, and other placement changes as text.
+Copy the original image asset into the project and keep its placement as a separate text-based object. The initial PNG slice embeds a deduplicated asset table in atomic JSON saves; binary sidecars remain a future packaging change ([decision 0058](decisions/0058-portable-pictures.md)). Reference one asset from several placements without duplicating its bytes. With future sidecar packaging, Git can track the image as a binary asset while reviewing position, crop, and other placement changes as text.
 
 Support aspect-preserving resizing, numeric dimensions and rotation, non-destructive cropping, opacity, stacking order, locking, and visibility. Distinguish crop from resize in the handles and properties. Replacing an image should retain its placement and explicitly define whether its size or aspect ratio is preserved.
 
@@ -151,3 +151,5 @@ These are sequencing proposals, not a commitment to include every tool in the fi
 - How do anchoring, array membership, grouping, and styles compose without circular dependencies?
 - Which geometry and hit-testing services are shared between interactive rendering and export?
 - How does a preview remain responsive while the committed operation passes through the authoritative command and validation model?
+
+The current shared PNG slice supports browsing, exact placement properties, fit/fill/stretch, replacement/removal and translation in schematics and templates, plus cell-bound pictures. The broader image workflow above remains target scope; paste/drop, rotation, explicit crop handles, anchoring/locking and output parity are not yet implemented.

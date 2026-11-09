@@ -177,3 +177,8 @@ identity!(
     TemplateGraphicId,
     "Identity of a retained template artwork object."
 );
+
+identity!(
+    PictureId,
+    "Stable identity of a graphical picture placement."
+);

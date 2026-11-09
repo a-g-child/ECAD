@@ -163,3 +163,30 @@ impl Project {
         Ok(previous)
     }
 }
+
+impl Project {
+    /// Insert a validated graphical picture without changing electrical content.
+    /// # Errors
+    /// Propagates drawing identity/view/geometry/budget errors without mutation.
+    pub fn insert_drawing_picture(&mut self, picture: DrawingPicture) -> Result<(), DrawingError> {
+        self.drawing.insert_picture(picture)
+    }
+    /// Replace one graphical picture with exact prior state returned for undo.
+    /// # Errors
+    /// Propagates drawing identity/view/geometry/budget errors without mutation.
+    pub fn replace_drawing_picture(
+        &mut self,
+        picture: DrawingPicture,
+    ) -> Result<DrawingPicture, DrawingError> {
+        self.drawing.replace_picture(picture)
+    }
+    /// Remove a graphical picture while retaining all other placements.
+    /// # Errors
+    /// Rejects a missing identity.
+    pub fn remove_drawing_picture(
+        &mut self,
+        id: PictureId,
+    ) -> Result<DrawingPicture, DrawingError> {
+        self.drawing.remove_picture(id)
+    }
+}

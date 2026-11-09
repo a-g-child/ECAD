@@ -4,6 +4,8 @@ use crate::{FrameRect, TemplateError, TemplateGraphicId, TemplateTextRun};
 /// Geometry in integer paper micrometres. Polylines remain a single editable object.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TemplateGraphicShape {
+    /// Portable raster mapped into the object bounds.
+    Picture(crate::Picture),
     /// Multiline text composed of literal and typed variable runs.
     Text(Vec<TemplateTextRun>),
     /// Unfilled rectangular outline.

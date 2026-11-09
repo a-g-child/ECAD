@@ -10,7 +10,8 @@ use crate::{
 impl ObjectRef {
     fn owned(self) -> Option<OwnedObject> {
         Some(match self {
-            Self::Anchor(_)
+            Self::Picture(_)
+            | Self::Anchor(_)
             | Self::Route(_)
             | Self::View(_)
             | Self::Label(_)
@@ -30,6 +31,9 @@ impl Project {
     /// Returns the matching typed missing-object error, never an unsupported-property result.
     pub fn require_object(&self, target: ObjectRef) -> Result<(), ModelError> {
         match target {
+            ObjectRef::Picture(id) if self.drawing.picture(id).is_none() => {
+                return Err(crate::DrawingError::MissingPicture(id).into());
+            }
             ObjectRef::Anchor(id) if self.drawing.terminal_anchor(id).is_none() => {
                 return Err(crate::RouteError::MissingAnchor(id).into());
             }
@@ -80,6 +84,7 @@ impl Project {
             ObjectRef::Anchor(_)
                 | ObjectRef::Route(_)
                 | ObjectRef::View(_)
+                | ObjectRef::Picture(_)
                 | ObjectRef::Label(_)
                 | ObjectRef::Polyline(_)
         ) {
@@ -215,6 +220,7 @@ impl Project {
             ObjectRef::Anchor(_)
                 | ObjectRef::Route(_)
                 | ObjectRef::View(_)
+                | ObjectRef::Picture(_)
                 | ObjectRef::Label(_)
                 | ObjectRef::Polyline(_)
         ) {

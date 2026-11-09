@@ -1,3 +1,4 @@
+import type { Picture, PicturePlacement } from './picture-controls';
 /** Bridge-v1 read DTOs. Coordinates in the scene are approximate display millimetres only. */
 export interface Target {
   kind: string;
@@ -26,6 +27,7 @@ export interface TreeRow {
   view: string | null;
 }
 export interface SceneRow {
+  picture?: PicturePlacement;
   target: Target;
   view: string;
   label: string;
@@ -178,6 +180,7 @@ export interface FrameRow {
   border: { x: number; y: number; width: number; height: number };
   graphics: TemplateGraphic[];
   cells: {
+    picture?: Picture | null;
     key: string;
     caption: string;
     value: string | null;
@@ -221,6 +224,7 @@ export interface SheetPreview {
   scene: SceneRow[];
 }
 export interface Reply {
+  imported_picture?: { picture: Picture; pixels: [string, string] };
   template_actions?: Record<string, boolean>;
   table_preview?: {
     token: string;
@@ -293,6 +297,7 @@ export interface TemplateTextStyles {
   content: TemplateTextStyle;
 }
 export interface TemplateCell {
+  picture?: Picture | null;
   id: string;
   caption: string;
   bounds: string[];
@@ -305,8 +310,9 @@ export interface TemplateTable {
   cells: TemplateCell[];
 }
 export interface TemplateGraphic {
+  picture?: Picture;
   id: string;
-  kind: 'text' | 'rectangle' | 'ellipse' | 'polyline';
+  kind: 'text' | 'rectangle' | 'ellipse' | 'polyline' | 'picture';
   bounds: string[];
   contents: TemplateRun[];
   points: string[][];

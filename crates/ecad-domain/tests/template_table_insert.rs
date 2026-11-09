@@ -17,6 +17,7 @@ fn base() -> TemplateTable {
         rect(100, 100, 100, 100),
         vec![
             TemplateCell {
+                picture: None,
                 text_styles: Default::default(),
                 id: id(1),
                 bounds: rect(0, 0, 50, 100),
@@ -26,6 +27,7 @@ fn base() -> TemplateTable {
                 )],
             },
             TemplateCell {
+                picture: None,
                 text_styles: Default::default(),
                 id: id(2),
                 bounds: rect(50, 0, 50, 50),
@@ -33,6 +35,7 @@ fn base() -> TemplateTable {
                 contents: vec![],
             },
             TemplateCell {
+                picture: None,
                 text_styles: Default::default(),
                 id: id(3),
                 bounds: rect(50, 50, 50, 50),

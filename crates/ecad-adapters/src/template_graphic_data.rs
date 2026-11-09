@@ -22,6 +22,7 @@ pub(crate) struct GraphicData {
     deny_unknown_fields
 )]
 enum ShapeData {
+    Picture(crate::picture_data::PictureData),
     Text(Vec<RunData>),
     Rectangle,
     Ellipse,
@@ -37,6 +38,7 @@ impl From<&TemplateGraphic> for GraphicData {
             stroke_width_um: g.stroke_width,
             colour: g.colour,
             shape: match &g.shape {
+                TemplateGraphicShape::Picture(p) => ShapeData::Picture(p.into()),
                 TemplateGraphicShape::Text(runs) => {
                     ShapeData::Text(runs.iter().map(RunData::from).collect())
                 }
@@ -47,10 +49,13 @@ impl From<&TemplateGraphic> for GraphicData {
         }
     }
 }
-impl TryFrom<GraphicData> for TemplateGraphic {
-    type Error = TemplateFileError;
-    fn try_from(g: GraphicData) -> Result<Self, Self::Error> {
-        Ok(Self {
+impl GraphicData {
+    pub(crate) fn resolve(
+        self,
+        assets: &std::collections::BTreeMap<String, PictureAsset>,
+    ) -> Result<TemplateGraphic, TemplateFileError> {
+        let g = self;
+        Ok(TemplateGraphic {
             id: g.id.parse()?,
             bounds: rect(g.bounds_um),
             font: g.font,
@@ -58,6 +63,7 @@ impl TryFrom<GraphicData> for TemplateGraphic {
             stroke_width: g.stroke_width_um,
             colour: g.colour,
             shape: match g.shape {
+                ShapeData::Picture(p) => TemplateGraphicShape::Picture(p.resolve(assets)?),
                 ShapeData::Text(runs) => TemplateGraphicShape::Text(
                     runs.into_iter()
                         .map(TemplateTextRun::try_from)

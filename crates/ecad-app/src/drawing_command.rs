@@ -5,6 +5,12 @@ use ecad_domain::*;
 /// One committed drawing operation, independent of interactive tools or rendering.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DrawingCommand {
+    /// Insert a picture with its portable asset.
+    InsertPicture(DrawingPicture),
+    /// Replace exact picture state.
+    ReplacePicture(DrawingPicture),
+    /// Remove a picture placement.
+    RemovePicture(PictureId),
     /// Set portable project fallbacks and future-object creation presets.
     Settings(DrawingSettings),
     /// Insert a named style.
@@ -55,6 +61,18 @@ pub enum DrawingCommand {
 impl DrawingCommand {
     pub(crate) fn apply(&self, project: &mut Project) -> Result<Option<Self>, ModelError> {
         let inverse = match self {
+            Self::InsertPicture(picture) => {
+                project.insert_drawing_picture(picture.clone())?;
+                Self::RemovePicture(picture.id)
+            }
+            Self::ReplacePicture(picture) => {
+                let old = project.replace_drawing_picture(picture.clone())?;
+                if old == *picture {
+                    return Ok(None);
+                }
+                Self::ReplacePicture(old)
+            }
+            Self::RemovePicture(id) => Self::InsertPicture(project.remove_drawing_picture(*id)?),
             Self::Settings(settings) => {
                 let old = project.set_drawing_settings(settings.clone())?;
                 if old == *settings {

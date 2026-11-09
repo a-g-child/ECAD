@@ -139,3 +139,12 @@ mod template_cell_selection;
 
 mod template_text_style;
 pub use template_text_style::{TemplateTextStyle, TemplateTextStyles};
+
+mod picture;
+pub use picture::{
+    MAX_PICTURE_BYTES, MAX_PICTURE_PIXELS, Picture, PictureAsset, PictureError, PictureFit,
+};
+
+pub use identity::PictureId;
+mod drawing_pictures;
+pub use drawing_pictures::DrawingPicture;

@@ -1,4 +1,4 @@
-//! Strict v13 saved assignments; v12 normalization is temporary and all choices restore atomically.
+//! Strict v13 assignments and optional v14 pictures; normalize older fields only during loading.
 use crate::{
     ProjectFileError,
     schema_documents::{TemplateData, TemplatedDocumentData},
@@ -39,6 +39,8 @@ impl From<&DrawingSheet> for AssignedSheetData {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct AssignedProjectData {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pictures: Option<crate::drawing_picture_data::PicturesData>,
     schema_version: u32,
     project_id: String,
     metadata: crate::schema_metadata::MetadataData,
@@ -66,7 +68,12 @@ impl From<&Project> for AssignedProjectData {
             .collect();
         sheets.sort_by(|a, b| a.id.cmp(&b.id));
         Self {
-            schema_version: 13,
+            pictures: (project.drawing().pictures().len() > 0).then(|| project.drawing().into()),
+            schema_version: if project.drawing().pictures().len() > 0 {
+                14
+            } else {
+                13
+            },
             project_id: b.project_id,
             metadata: b.metadata,
             template_defaults: b.template_defaults,
@@ -88,7 +95,10 @@ impl From<&Project> for AssignedProjectData {
 impl TryFrom<AssignedProjectData> for Project {
     type Error = ProjectFileError;
     fn try_from(mut b: AssignedProjectData) -> Result<Self, Self::Error> {
-        if b.schema_version != 13 {
+        if ![13, 14].contains(&b.schema_version)
+            || (b.schema_version == 13 && b.pictures.is_some())
+            || (b.schema_version == 14 && b.pictures.is_none())
+        {
             return Err(ProjectFileError::UnsupportedVersion(b.schema_version));
         }
         let defaults = DrawingTemplateDefaults {
@@ -165,6 +175,9 @@ impl TryFrom<AssignedProjectData> for Project {
             row.inherited_variant = variant.map(|v| v.parse()).transpose()?;
         }
         project.replace_template_assignments(value)?;
+        if let Some(pictures) = b.pictures {
+            pictures.install(&mut project)?;
+        }
         Ok(project)
     }
 }

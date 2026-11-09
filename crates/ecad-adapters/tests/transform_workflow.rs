@@ -90,6 +90,7 @@ fn assert_projection(project: &Project, preview: &LayoutPreview) {
                 assert_eq!(project.drawing().terminal_anchor(a.id), Some(a))
             }
             PreviewObject::Route(r) => assert_eq!(project.drawing().route(r.id), Some(r)),
+            PreviewObject::Picture(p) => assert_eq!(project.drawing().picture(p.id), Some(p)),
             PreviewObject::Label(l) => assert_eq!(project.drawing().label(l.id), Some(l)),
             PreviewObject::Polyline(l) => assert_eq!(project.drawing().polyline(l.id), Some(l)),
         }

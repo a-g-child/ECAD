@@ -71,7 +71,8 @@ impl Project {
                 )?;
                 self.cables.insert(id, replacement);
             }
-            ObjectRef::Anchor(_)
+            ObjectRef::Picture(_)
+            | ObjectRef::Anchor(_)
             | ObjectRef::Route(_)
             | ObjectRef::View(_)
             | ObjectRef::Label(_)

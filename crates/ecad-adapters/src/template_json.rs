@@ -57,6 +57,12 @@ impl From<TemplateError> for TemplateFileError {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct VariantData {
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::picture_data::optional_assets"
+    )]
+    assets: Option<std::collections::BTreeMap<String, String>>,
     schema_version: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     new_assignments: Option<bool>,
@@ -83,6 +89,8 @@ struct TableData {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct CellData {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    picture: Option<crate::picture_data::PictureData>,
     id: String,
     bounds_um: [u32; 4],
     caption: String,
@@ -131,9 +139,13 @@ impl From<&SavedTemplateVariant> for VariantData {
                     .iter()
                     .any(|c| c.text_styles != TemplateTextStyles::default())
             });
+        let assets = crate::picture_data::asset_table(value.layout().pictures());
         Self {
+            assets: (!assets.is_empty()).then_some(assets.clone()),
             text_defaults: styled.then(|| value.layout().text_defaults().into()),
-            schema_version: if styled {
+            schema_version: if !assets.is_empty() {
+                5
+            } else if styled {
                 4
             } else if !value.layout().graphics().is_empty() {
                 3
@@ -163,6 +175,7 @@ impl From<&SavedTemplateVariant> for VariantData {
                         .cells()
                         .iter()
                         .map(|cell| CellData {
+                            picture: cell.picture.as_ref().map(Into::into),
                             id: cell.id.to_string(),
                             bounds_um: coords(cell.bounds),
                             caption: cell.caption.clone(),
@@ -194,7 +207,7 @@ impl From<&SavedTemplateVariant> for VariantData {
 /// Reading a body has no publication, project migration or filesystem side effects.
 pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, TemplateFileError> {
     let version: crate::schema::VersionEnvelope = serde_json::from_str(text)?;
-    if ![1, 2, 3, 4].contains(&version.schema_version) {
+    if ![1, 2, 3, 4, 5].contains(&version.schema_version) {
         return Err(TemplateFileError::Version(version.schema_version));
     }
     let data: VariantData = serde_json::from_str(text)?;
@@ -203,7 +216,7 @@ pub fn decode_template_variant(text: &str) -> Result<SavedTemplateVariant, Templ
 impl TryFrom<VariantData> for SavedTemplateVariant {
     type Error = TemplateFileError;
     fn try_from(data: VariantData) -> Result<Self, Self::Error> {
-        if ![1, 2, 3, 4].contains(&data.schema_version) {
+        if ![1, 2, 3, 4, 5].contains(&data.schema_version) {
             return Err(TemplateFileError::Version(data.schema_version));
         }
         if (data.schema_version == 1 && data.new_assignments.is_some())
@@ -230,6 +243,17 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
         {
             return Err(TemplateFileError::Version(data.schema_version));
         }
+        if (data.schema_version < 5
+            && (data.assets.is_some()
+                || data
+                    .tables
+                    .iter()
+                    .any(|t| t.cells.iter().any(|c| c.picture.is_some()))))
+            || (data.schema_version == 5 && data.assets.is_none())
+        {
+            return Err(TemplateFileError::Version(data.schema_version));
+        }
+        let assets = crate::picture_data::decode_assets(data.assets.unwrap_or_default())?;
         let retained = data.new_assignments == Some(false);
         let paper = SheetPaper {
             width: data.paper_um[0],
@@ -258,6 +282,7 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
                             })
                             .collect::<Result<Vec<_>, _>>()?;
                         Ok::<_, TemplateFileError>(TemplateCell {
+                            picture: cell.picture.map(|p| p.resolve(&assets)).transpose()?,
                             text_styles: cell.text_styles.map(Into::into).unwrap_or_default(),
                             id: cell.id.parse()?,
                             bounds: rect(cell.bounds_um),
@@ -277,9 +302,15 @@ impl TryFrom<VariantData> for SavedTemplateVariant {
             data.graphics
                 .unwrap_or_default()
                 .into_iter()
-                .map(TemplateGraphic::try_from)
+                .map(|g| g.resolve(&assets))
                 .collect::<Result<_, _>>()?,
         )?;
+        if crate::picture_data::asset_table(layout.pictures())
+            .keys()
+            .ne(assets.keys())
+        {
+            return Err(TemplateError::Graphic.into());
+        }
         let layout =
             layout.with_text_defaults(data.text_defaults.map(Into::into).unwrap_or_default())?;
         if retained && !layout.tables().is_empty() {

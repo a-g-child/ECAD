@@ -40,7 +40,7 @@ Insert Text takes an anchor click, then edits multiline text/variables inline be
 | Separate schematic click-path and template drag-shape workflows | Shared tool state machines behind coordinate/command adapters. |
 | Explicit artwork appearance versus inherited schematic styles | Common controls/types with owner-specific write semantics. |
 | Border is always derived/rendered from margins | Separate visible border intent from geometric margin guides. |
-| No portable image asset model | Define asset references, durable storage and transitive bundling together. |
+| Portable PNG assets implemented | Shared controls/rendering, versioned embedded asset tables and transitive template bundling; click placement and advanced transforms remain follow-up. |
 
 ## Verification gates
 
@@ -61,3 +61,5 @@ Schematic font/height changes use a strict `edit_appearance` bridge request: str
 ### Row-specific table layout integration
 
 The Tables ribbon now uses **Layout** instead of Resize: row count dynamically creates per-row column inputs, with explicit removal acknowledgement. This is a registered action with captured template revision and one core-validated layout/history replacement. Size changes remain pointer operations or the numeric Resize command. Contextual column insertion fits inside the existing width, resolving margin rejection for wide cells. See [decision 0057](decisions/0057-row-specific-table-layout.md); this supersedes earlier ribbon Resize and growing-column behavior.
+
+Portable pictures now share browsing/property controls and rendering across schematic placements, template artwork and cells. Initial insertion reviews a placement dialog, then uses existing drag movement; click-to-place remains planned. See [decision 0058](decisions/0058-portable-pictures.md).

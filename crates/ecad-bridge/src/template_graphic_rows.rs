@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct GraphicRow {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    picture: Option<crate::picture_rows::PictureRow>,
     id: String,
     kind: String,
     bounds: [String; 4],
@@ -18,6 +20,7 @@ pub(crate) struct GraphicRow {
 impl From<&TemplateGraphic> for GraphicRow {
     fn from(g: &TemplateGraphic) -> Self {
         let (kind, contents, points) = match &g.shape {
+            TemplateGraphicShape::Picture(_) => ("picture", vec![], vec![]),
             TemplateGraphicShape::Text(r) => ("text", r.iter().map(RunRow::from).collect(), vec![]),
             TemplateGraphicShape::Polyline(p) => (
                 "polyline",
@@ -28,6 +31,10 @@ impl From<&TemplateGraphic> for GraphicRow {
             TemplateGraphicShape::Ellipse => ("ellipse", vec![], vec![]),
         };
         Self {
+            picture: match &g.shape {
+                TemplateGraphicShape::Picture(p) => Some(p.into()),
+                _ => None,
+            },
             id: g.id.to_string(),
             kind: kind.into(),
             bounds: [g.bounds.x, g.bounds.y, g.bounds.width, g.bounds.height]
@@ -70,7 +77,11 @@ impl TryFrom<GraphicRow> for TemplateGraphic {
         {
             return Err(error());
         }
+        if g.kind != "picture" && g.picture.is_some() {
+            return Err(error());
+        }
         let shape = match g.kind.as_str() {
+            "picture" => TemplateGraphicShape::Picture(g.picture.ok_or_else(error)?.try_into()?),
             "text" => TemplateGraphicShape::Text(
                 g.contents
                     .into_iter()

@@ -1,3 +1,4 @@
+import type { PictureTarget } from './picture-dialog';
 /** Separate library workspace; project panes/camera stay mounted behind the bounded editor surface. */
 import { dimensionSummary } from './dimensions';
 import type {
@@ -436,6 +437,61 @@ export class TemplateEditor {
     this.preview.render(this.variant, reset);
     this.refreshActions();
     document.title = `${view.dirty || view.pending || this.fieldsPending ? '● ' : ''}${this.variant.name} — Template — ECAD`;
+  }
+  pictureTarget(): PictureTarget | null {
+    if (!this.variant || this.fieldsPending || this.working) return null;
+    const context = structuredClone(this.context());
+    const values = structuredClone(this.form.proposal());
+    const cell = values.cell && this.selectedCells.length === 1 ? this.selection?.cell : null;
+    const selected = this.selected;
+    const graphic =
+      selected.kind === 'artwork'
+        ? this.variant.graphics.find((g) => g.id === selected.id && g.kind === 'picture')
+        : null;
+    const picture = structuredClone(
+      cell?.picture ?? graphic?.picture ?? { png: '', fit: 'contain' as const },
+    );
+    const bounds = cell
+      ? cell.bounds
+      : graphic
+        ? graphic.bounds
+        : [this.variant.paper[2], this.variant.paper[4], '40000', '15000'];
+    const id = graphic?.id ?? crypto.randomUUID().replaceAll('-', '');
+    return {
+      value: { picture, bounds: [...bounds] },
+      cell: !!cell,
+      existing: !!(cell?.picture || graphic),
+      save: async (value) => {
+        const proposal = structuredClone(values);
+        if (cell && proposal.cell) proposal.cell.picture = value?.picture ?? null;
+        else {
+          proposal.graphics = proposal.graphics.filter((g) => g.id !== id);
+          if (value)
+            proposal.graphics.push({
+              id,
+              kind: 'picture',
+              bounds: value.bounds,
+              picture: value.picture,
+              contents: [],
+              points: [],
+              font: 'sans-serif',
+              text_height: '3500',
+              stroke_width: '250',
+              colour: '#283c46',
+            });
+        }
+        const reply = await send({
+          type: 'template_operation',
+          context,
+          action: 'template.properties.apply',
+          source: null,
+          values: proposal,
+          input: inputId(),
+        });
+        await this.apply(reply);
+        if (!cell && value) this.selectArtwork(id, false);
+      },
+    };
   }
   commitProperties(): Promise<void> {
     if (this.propertyCommit) return this.propertyCommit;

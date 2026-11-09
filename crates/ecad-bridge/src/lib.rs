@@ -34,3 +34,5 @@ mod captured_context;
 mod template_selection;
 
 mod template_text_styles;
+
+mod picture_rows;

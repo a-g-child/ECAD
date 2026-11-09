@@ -93,6 +93,7 @@ impl TemplateTable {
                 let mut cell = source
                     .map(|cell| (*cell).clone())
                     .unwrap_or_else(|| TemplateCell {
+                        picture: None,
                         id: *ids.next().expect("validated fresh count"),
                         bounds,
                         caption: String::new(),

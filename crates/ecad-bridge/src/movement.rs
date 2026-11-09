@@ -22,6 +22,7 @@ impl Movement {
         let drawing = session.project().drawing();
         let position = match reference {
             ObjectRef::Anchor(id) => drawing.terminal_anchor(id).map(|a| a.position),
+            ObjectRef::Picture(id) => drawing.picture(id).map(|a| a.position),
             ObjectRef::Label(id) => drawing.label(id).map(|a| a.position),
             ObjectRef::Polyline(id) => drawing.polyline(id).and_then(|a| a.points.first().copied()),
             _ => None,

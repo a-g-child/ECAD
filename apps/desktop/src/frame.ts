@@ -1,3 +1,4 @@
+import { renderPicture } from './picture-render';
 /** Paper-unit frame rendering. Literal values stay intact; overflowing text is clipped and flagged. */
 import type { FrameRow } from './types';
 import { renderText } from './text';
@@ -101,6 +102,7 @@ export function renderFrame(svg: SVGElement, frame: Omit<FrameRow, 'sheet'>) {
       class: 'frame-value',
     });
     renderText(text, cell.value ?? '', valueAt.x, valueAt.y, valueStyle.size);
+    if (cell.picture) renderPicture(container, cell.picture, { x, y, width, height });
     container.append(title, box, caption, clip, text);
     group.append(container);
     const b = text.getBBox();

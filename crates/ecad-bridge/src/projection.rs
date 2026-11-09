@@ -85,6 +85,15 @@ pub(crate) fn snapshot(
             Some(v.id),
         ));
     }
+    for p in drawing.pictures() {
+        objects.push(tree(
+            ObjectRef::Picture(p.id),
+            "Picture".into(),
+            Some(ObjectRef::View(p.view)),
+            Some(p.view),
+        ));
+        scene.push(picture(p));
+    }
     for l in drawing.labels() {
         let target = ObjectRef::Label(l.id);
         objects.push(tree(
@@ -116,6 +125,7 @@ pub(crate) fn snapshot(
         ));
         let (colour, width) = properties::stroke(project, target);
         scene.push(SceneRow {
+            picture: None,
             target: target.into(),
             view: r.view.to_string(),
             label,
@@ -148,6 +158,7 @@ pub(crate) fn snapshot(
             Some(a.view),
         ));
         scene.push(SceneRow {
+            picture: None,
             target: target.into(),
             view: a.view.to_string(),
             label,
@@ -177,6 +188,7 @@ pub(crate) fn snapshot(
                     | ActionHandler::CompanyProfiles
                     | ActionHandler::ProjectMetadata
                     | ActionHandler::DrawingSettings
+                    | ActionHandler::Picture
                     | ActionHandler::CreateLabel
                     | ActionHandler::CreatePolyline
                     | ActionHandler::FitDrawing
@@ -397,6 +409,7 @@ pub(crate) fn label(project: &Project, l: &DrawingLabel) -> SceneRow {
         _ => "sans-serif".into(),
     };
     SceneRow {
+        picture: None,
         target: target.into(),
         view: l.view.to_string(),
         label: l.text.clone(),
@@ -413,6 +426,7 @@ pub(crate) fn polyline(project: &Project, p: &DrawingPolyline) -> SceneRow {
     let target = ObjectRef::Polyline(p.id);
     let (colour, width) = properties::stroke(project, target);
     SceneRow {
+        picture: None,
         target: target.into(),
         view: p.view.to_string(),
         label: "Graphical path".into(),
@@ -420,6 +434,27 @@ pub(crate) fn polyline(project: &Project, p: &DrawingPolyline) -> SceneRow {
         points: p.points.iter().copied().map(mm).collect(),
         colour,
         width,
+        text_height: 0.0,
+        font: String::new(),
+    }
+}
+
+pub(crate) fn picture(p: &DrawingPicture) -> SceneRow {
+    SceneRow {
+        picture: Some(crate::picture_rows::PlacementRow::from(p)),
+        target: ObjectRef::Picture(p.id).into(),
+        view: p.view.to_string(),
+        label: "Picture".into(),
+        shape: "picture".into(),
+        points: vec![
+            mm(p.position),
+            mm(DrawingPoint {
+                x: p.position.x + i64::from(p.width),
+                y: p.position.y + i64::from(p.height),
+            }),
+        ],
+        colour: "#000000".into(),
+        width: 0.0,
         text_height: 0.0,
         font: String::new(),
     }

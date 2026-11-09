@@ -5,6 +5,8 @@ use crate::{CableId, ConductorId, DeviceId, InterfacePortId, SubsystemId, Termin
 /// An addressable existing electrical object; IDs of different kinds remain distinct.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ObjectRef {
+    /// Graphical picture without electrical connectivity.
+    Picture(crate::PictureId),
     /// Placed real-terminal anchor.
     Anchor(crate::AnchorId),
     /// Whole conductor route.

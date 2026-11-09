@@ -34,6 +34,7 @@ pub(crate) struct TableRow {
 }
 #[derive(Clone, Debug, Serialize)]
 pub(crate) struct CellRow {
+    pub picture: Option<crate::picture_rows::PictureRow>,
     pub id: String,
     pub caption: String,
     pub bounds: [String; 4],
@@ -66,6 +67,8 @@ pub(crate) struct TemplateEditRow {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct CellEdit {
+    #[serde(default, deserialize_with = "picture_update")]
+    picture: Option<Option<crate::picture_rows::PictureRow>>,
     table: String,
     id: String,
     caption: String,
@@ -163,6 +166,9 @@ impl TemplateEditRow {
                 .iter_mut()
                 .find(|c| c.id == cell)
                 .ok_or_else(|| BridgeError::new("template", "Selected cell is unavailable"))?;
+            if let Some(picture) = edit.picture {
+                target.picture = picture.map(Picture::try_from).transpose()?;
+            }
             target.caption = edit.caption;
             target.contents = edit
                 .contents
@@ -257,6 +263,7 @@ impl TableRow {
                 .iter()
                 .map(|c| CellRow {
                     id: c.id.to_string(),
+                    picture: c.picture.as_ref().map(Into::into),
                     caption: c.caption.clone(),
                     text_styles: (&c.text_styles).into(),
                     bounds: strings(c.bounds),
@@ -278,4 +285,11 @@ impl TableRow {
                 .collect(),
         }
     }
+}
+
+// Missing leaves the picture intact; explicit null removes it.
+fn picture_update<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<Option<crate::picture_rows::PictureRow>>, D::Error> {
+    Option::deserialize(deserializer).map(Some)
 }

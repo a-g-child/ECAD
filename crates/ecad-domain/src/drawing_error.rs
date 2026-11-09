@@ -6,6 +6,12 @@ use std::{error::Error, fmt};
 /// A drawing proposal violates units, identity, references, or role applicability.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DrawingError {
+    /// Picture identity is unavailable.
+    MissingPicture(crate::PictureId),
+    /// Picture identity already exists.
+    DuplicatePicture(crate::PictureId),
+    /// Picture asset budget exceeded.
+    PictureBudget,
     /// A requested coordinate or offset exceeds the signed document range.
     CoordinateOverflow,
     /// Text sizes and stroke widths must be positive.
@@ -42,6 +48,11 @@ pub enum DrawingError {
 impl fmt::Display for DrawingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::MissingPicture(id) => write!(f, "Picture {id} is unavailable"),
+            Self::DuplicatePicture(id) => write!(f, "Picture {id} already exists"),
+            Self::PictureBudget => {
+                f.write_str("Use at most 64 picture assets and 16 MiB of PNG data per drawing")
+            }
             Self::CoordinateOverflow => {
                 f.write_str("drawing coordinate exceeds the signed document range")
             }

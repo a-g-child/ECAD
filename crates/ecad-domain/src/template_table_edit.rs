@@ -24,6 +24,8 @@ pub enum MergeContents {
 /// Invalid structural edit; the source table always remains unchanged.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TableEditError {
+    /// Multiple cell pictures cannot be combined into one retained placement.
+    Pictures,
     /// Selection contains unavailable, repeated or insufficient cell identities.
     Selection,
     /// Selected cells do not form one complete rectangle.
@@ -38,6 +40,9 @@ pub enum TableEditError {
 impl fmt::Display for TableEditError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Pictures => {
+                f.write_str("Pictures cannot be combined; choose Keep first cell contents")
+            }
             Self::Selection => f.write_str("Select existing distinct cells in one table"),
             Self::Rectangle => f.write_str("Merged cells must fill one rectangle without gaps"),
             Self::Geometry => f.write_str(
@@ -95,6 +100,7 @@ impl TemplateTable {
                     source.clone()
                 } else {
                     TemplateCell {
+                        picture: None,
                         text_styles: source.text_styles.clone(),
                         id: *next.next().expect("validated fresh count"),
                         bounds: source.bounds,
@@ -178,6 +184,12 @@ impl TemplateTable {
             height: bottom - y,
         };
         if contents == MergeContents::Combine {
+            if chosen
+                .iter()
+                .any(|c| c.id != primary && c.picture.is_some())
+            {
+                return Err(TableEditError::Pictures);
+            }
             chosen.sort_by_key(|c| (c.bounds.y, c.bounds.x, c.id));
             merged.caption = chosen
                 .iter()

@@ -50,6 +50,7 @@ impl DesktopBridge {
                         ActionRequestKind::OpenProject => "open",
                         ActionRequestKind::FitDrawing => "fit",
                         ActionRequestKind::MoveSelection => "move",
+                        ActionRequestKind::Picture => "picture",
                         ActionRequestKind::LabelPlacement => "annotation",
                         ActionRequestKind::PolylinePlacement => "path",
                         ActionRequestKind::RotateSelection => "rotate",

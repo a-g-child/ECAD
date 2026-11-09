@@ -1,3 +1,5 @@
+import { PictureDialog } from './picture-dialog';
+import { pictureProperties } from './schematic-picture-properties';
 import './style.css';
 import { createShell } from './shell';
 import { DrawingCanvas } from './canvas';
@@ -66,6 +68,7 @@ path = new PathTool(
     void action('placement.cancel');
   },
 );
+const pictures = new PictureDialog(shell.app);
 const defaults = new DefaultsDialog(shell, apply, status);
 const metadata = new MetadataDialog(shell, apply, status);
 const profiles = new ProfilesDialog(shell, apply, status);
@@ -114,7 +117,7 @@ function clearTools() {
 }
 drawing.startMove = async (target, point) => {
   if (!snapshot || busy || toolActive()) return null;
-  if (selection.some((t) => !['anchor', 'label', 'polyline'].includes(t.kind))) {
+  if (selection.some((t) => !['anchor', 'label', 'polyline', 'picture'].includes(t.kind))) {
     status(
       'Drag terminal anchors to move connected routes. Labels and graphical paths can be dragged directly.',
       true,
@@ -169,12 +172,18 @@ function availableAction(id: string, enabled: boolean) {
   if (id === 'drawing.view.fit' && !paper.id) return false;
   if (id.startsWith('workspace.explorer.') && drawing.gestureActive) return false;
   if (id === 'selection.properties') return selection.length > 0;
+  if (
+    ['drawing.selection.rotate', 'drawing.selection.mirror'].includes(id) &&
+    selection.some((t) => t.kind === 'picture')
+  )
+    return false;
   if (layoutActions.has(id))
     return (
       selection.length >= (id === 'drawing.selection.distribute' ? 3 : 1) &&
       selection.every(
         (t) =>
-          ['anchor', 'label', 'polyline'].includes(t.kind) && objectViews.get(keyOf(t)) === view,
+          ['anchor', 'label', 'polyline', 'picture'].includes(t.kind) &&
+          objectViews.get(keyOf(t)) === view,
       )
     );
   return true;
@@ -281,11 +290,12 @@ async function apply(reply: Reply) {
   }
   if (reply.properties) {
     shell.panes.show('properties');
-    renderProperties(shell, reply.properties, selection.length, edit, editFonts);
+    renderInspector(reply.properties);
   }
   if (reply.report) renderReport(shell, reply.report);
   if (reply.message) status(reply.message);
   if (reply.request === 'path') await path?.begin(context());
+  if (reply.request === 'picture') openPicture();
   if (reply.request === 'annotation') await annotation?.begin(context());
   if (reply.request === 'move') await movement?.begin(context());
   if (reply.request && ['rotate', 'mirror', 'align', 'distribute'].includes(reply.request))
@@ -355,8 +365,7 @@ async function inspect() {
   const serial = ++selectionSequence;
   const captured = context();
   const reply = await send({ type: 'inspect', context: captured });
-  if (serial === selectionSequence && reply.properties)
-    renderProperties(shell, reply.properties, selection.length, edit, editFonts);
+  if (serial === selectionSequence && reply.properties) renderInspector(reply.properties);
 }
 function choose(target: Target | null, add: boolean) {
   if (!snapshot || busy || toolActive()) return;
@@ -465,6 +474,78 @@ async function edit(property: string, value: string) {
     status('Property updated · one undo operation');
   });
 }
+function openPicture() {
+  if (templateEditor.active) {
+    const target = templateEditor.pictureTarget();
+    if (target) pictures.open(target);
+    return;
+  }
+  if (!snapshot) return;
+  const captured = { ...context(), focus: 'canvas' };
+  const existing =
+    selection.length === 1 && selection[0].kind === 'picture'
+      ? snapshot.scene.find((r) => r.target.kind === 'picture' && r.target.id === selection[0].id)
+      : undefined;
+  pictures.open({
+    existing: !!existing,
+    value: structuredClone(
+      existing?.picture ?? {
+        bounds: ['0', '0', '40000', '15000'],
+        picture: { png: '', fit: 'contain' },
+      },
+    ),
+    save: async (values) => {
+      await apply(
+        await send({
+          type: 'edit_picture',
+          context: captured,
+          id: existing?.target.id ?? null,
+          values,
+          input: inputId(),
+        }),
+      );
+      status('Picture updated · one undo operation');
+    },
+  });
+}
+function renderInspector(rows: import('./types').PropertyRow[]) {
+  const picture =
+    selection.length === 1 && selection[0].kind === 'picture'
+      ? snapshot?.scene.find((r) => r.target.kind === 'picture' && r.target.id === selection[0].id)
+      : undefined;
+  renderProperties(
+    shell,
+    picture ? rows.filter((r) => r.key !== 'drawing_position') : rows,
+    selection.length,
+    edit,
+    editFonts,
+  );
+  if (!picture?.picture) return;
+  const captured = { ...context(), focus: 'canvas' };
+  pictureProperties(
+    shell.inspector,
+    picture.picture,
+    async (values) => {
+      let okay = false;
+      await run(async () => {
+        await apply(
+          await send({
+            type: 'edit_picture',
+            context: captured,
+            id: picture.target.id,
+            values,
+            input: inputId(),
+          }),
+        );
+        okay = true;
+        status('Picture updated · one undo operation');
+      });
+      return okay;
+    },
+    inspect,
+    () => busy,
+  );
+}
 async function editFonts(changes: Record<string, string | null>) {
   if (!snapshot || toolActive()) return;
   const captured = context();
@@ -525,6 +606,7 @@ document.addEventListener('keydown', (event) => {
     event.isComposing ||
     target.matches('input,textarea,select,button,[contenteditable="true"]') ||
     shell.palette.open ||
+    pictures.active ||
     defaults.active ||
     metadata.active ||
     profiles.active ||

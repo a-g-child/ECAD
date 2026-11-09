@@ -1,3 +1,4 @@
+import { registerPictureTests } from './pictures.mjs';
 import { registerTableTextUnits } from './table-text-units.mjs';
 import { registerInlineVariables } from './inline-variables.mjs';
 import { registerWorkspacePaneTests } from './workspace-panes.mjs';
@@ -42,6 +43,7 @@ const processes = [];
 let browser;
 let directory;
 let project;
+let initialProject;
 let backendLog;
 const hostBinary = resolve(
   root,
@@ -97,6 +99,7 @@ before(async () => {
     ),
   );
   initial.template_revisions.push(...templates.revisions);
+  initialProject = structuredClone(initial);
   await replaceProject(initial);
 
   const frontendLog = start(
@@ -582,3 +585,13 @@ registerTemplateAppearanceTests({ page, button, until });
 registerInlineVariables({ page, button, until, root });
 
 registerTableTextUnits({ page, button, until });
+
+registerPictureTests({
+  page,
+  button,
+  until,
+  root,
+  project: () => project,
+  replaceProject,
+  baseline: () => initialProject,
+});

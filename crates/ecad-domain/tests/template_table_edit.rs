@@ -16,6 +16,7 @@ fn table(width: u32, height: u32) -> TemplateTable {
         TemplateTableId::new(1).unwrap(),
         rect(0, 0, width, height),
         vec![TemplateCell {
+            picture: None,
             text_styles: Default::default(),
             id: id(1),
             bounds: rect(0, 0, width, height),

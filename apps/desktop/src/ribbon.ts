@@ -75,6 +75,7 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
       {
         title: 'Create',
         commands: [
+          command('Picture', 'Insert picture', 'blocks', 'drawing.picture'),
           command('Text', 'Create annotation · T', 'text', 'drawing.label.create'),
           command('Path', 'Create graphical path · P', 'path', 'drawing.polyline.create'),
           command('Wire', 'Route conductor · W', 'wire', 'drawing.route.create'),
@@ -164,6 +165,7 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
       {
         title: 'Draw',
         commands: [
+          command('Picture', 'Insert template picture', 'blocks', 'template.picture'),
           command('Text', 'Draw template text', 'properties', 'template.draw.text'),
           command('Line', 'Draw template line', 'move', 'template.draw.line'),
           command('Path', 'Draw template path', 'move', 'template.draw.polyline'),

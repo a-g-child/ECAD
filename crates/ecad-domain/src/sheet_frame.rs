@@ -137,6 +137,8 @@ impl FrameField {
 /// One resolved cell; an absent optional value stays absent rather than becoming fake metadata.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FrameCell {
+    /// Portable cell picture, fitted by the renderer without changing content.
+    pub picture: Option<crate::Picture>,
     /// Stable template-cell identity, independent of its value/binding.
     pub id: crate::TemplateCellId,
     /// Single typed binding, or None for literal/composed text; distinct from cell identity.
@@ -202,6 +204,7 @@ impl Project {
                 };
                 let resolved = cell.resolve(resolve_field);
                 cells.push(FrameCell {
+                    picture: cell.picture.clone(),
                     id: cell.id,
                     field,
                     caption: cell.caption.clone(),

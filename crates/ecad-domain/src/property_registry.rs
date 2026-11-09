@@ -279,7 +279,10 @@ impl PropertyId {
             Self::RouteConductor | Self::RouteAnchorA | Self::RouteAnchorB | Self::RouteMode => {
                 matches!(target, Object::Route(_))
             }
-            Self::DrawingPosition => matches!(target, Object::Label(_) | Object::Anchor(_)),
+            Self::DrawingPosition => matches!(
+                target,
+                Object::Picture(_) | Object::Label(_) | Object::Anchor(_)
+            ),
             Self::FontFamily | Self::TextHeight | Self::DrawingText => {
                 matches!(target, Object::Label(_))
             }
@@ -288,7 +291,11 @@ impl PropertyId {
             }
             Self::DrawingView => matches!(
                 target,
-                Object::Label(_) | Object::Polyline(_) | Object::Route(_) | Object::Anchor(_)
+                Object::Picture(_)
+                    | Object::Label(_)
+                    | Object::Polyline(_)
+                    | Object::Route(_)
+                    | Object::Anchor(_)
             ),
             Self::DrawingColour | Self::DrawingStyle => {
                 matches!(

@@ -13,6 +13,8 @@ pub enum TemplateTextRun {
 /// A retained cell. Bounds are relative to its table's upper-left corner, in µm.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TemplateCell {
+    /// Optional picture fitted to the whole cell, behind caption/content and borders.
+    pub picture: Option<crate::Picture>,
     /// Stable identity, separate from caption, binding and position.
     pub id: TemplateCellId,
     /// Positive local rectangle forming part of the table partition.

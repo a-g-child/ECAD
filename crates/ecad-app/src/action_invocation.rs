@@ -36,6 +36,13 @@ pub enum InvocationSource {
 /// Concrete parameters; missing placement data becomes a request, not inferred geometry.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ActionParameters {
+    /// Insert, replace or remove a picture through captured view/selection and history.
+    Picture {
+        /// Existing identity for replacement/removal; None creates a fresh placement.
+        target: Option<ecad_domain::PictureId>,
+        /// Complete validated placement, or None to remove the captured target.
+        value: Option<Box<ecad_domain::DrawingPicture>>,
+    },
     /// Exact saved source chosen in the template library.
     TemplateSource(ecad_domain::TemplateVariantRef),
     /// Complete validated template variant edit, at its captured editor revision.
@@ -133,6 +140,8 @@ pub struct ActionInvocation {
 /// A typed UI interaction request; actual native controls/tools remain host responsibilities.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ActionRequestKind {
+    /// Shared picture browsing and placement controls.
+    Picture,
     /// Open the separate template library/editor workspace.
     TemplateLibrary,
     /// Request a typed sheet draft with captured project context.

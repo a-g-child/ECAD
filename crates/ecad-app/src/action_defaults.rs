@@ -27,6 +27,26 @@ impl ActionRegistry {
         use BindingScope as Scope;
         let entries = [
             (
+                "drawing.picture",
+                "Insert picture",
+                "Drawing",
+                "Browse and place a portable picture",
+                Handler::Picture,
+                Scope::Canvas,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
+                "template.picture",
+                "Insert template picture",
+                "Templates",
+                "Browse and place a portable picture in artwork or a selected cell",
+                Handler::Template(crate::TemplateOperation::Picture),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "template.artwork.edit",
                 "Template text and graphics",
                 "Templates",

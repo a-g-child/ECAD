@@ -268,6 +268,51 @@ impl ActionDispatcher {
                     )
                     .map_err(ActionDispatchError::Edit)?,
             ),
+            (ActionHandler::Picture, ActionParameters::None) => {
+                request(ActionRequestKind::Picture, None)
+            }
+            (ActionHandler::Picture, ActionParameters::Picture { target, value }) => {
+                use ecad_domain::ObjectRef;
+                if target.is_some_and(|id| {
+                    invocation.context.selection
+                        != std::collections::BTreeSet::from([ObjectRef::Picture(id)])
+                }) {
+                    return Err(ActionDispatchError::WrongParameters);
+                }
+                let command = match (target, value) {
+                    (None, Some(p)) if Some(p.view) == invocation.context.view => {
+                        DrawingCommand::InsertPicture(*p)
+                    }
+                    (Some(id), Some(p))
+                        if id == p.id
+                            && Some(p.view) == invocation.context.view
+                            && document
+                                .session()
+                                .project()
+                                .drawing()
+                                .picture(id)
+                                .is_some_and(|old| old.view == p.view) =>
+                    {
+                        DrawingCommand::ReplacePicture(*p)
+                    }
+                    (Some(id), None)
+                        if document
+                            .session()
+                            .project()
+                            .drawing()
+                            .picture(id)
+                            .is_some_and(|p| Some(p.view) == invocation.context.view) =>
+                    {
+                        DrawingCommand::RemovePicture(id)
+                    }
+                    _ => return Err(ActionDispatchError::WrongParameters),
+                };
+                ActionOutcome::Edited(
+                    document
+                        .execute(revision, Command::Drawing(command))
+                        .map_err(ActionDispatchError::Edit)?,
+                )
+            }
             (ActionHandler::CreateLabel, ActionParameters::None) => {
                 request(ActionRequestKind::LabelPlacement, None)
             }

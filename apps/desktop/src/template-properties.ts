@@ -1,3 +1,4 @@
+import { PictureFields } from './picture-controls';
 /** Exact local fields form one closed property proposal; typing never edits a project. */
 import { unitPicker } from './unit-picker';
 import type { TemplateVariant, TemplateCell, TemplateTable, TemplateRun } from './types';
@@ -11,6 +12,7 @@ import { TemplateArtwork } from './template-artwork';
 export class TemplateProperties {
   readonly root = element('form', 'template-properties inspector');
   private blanket = false;
+  private cellPicture: PictureFields | null = null;
   private textDefaults: TemplateTextProperties | null = null;
   private cellStyles: { id: string; styles: import('./types').TemplateTextStyles }[] = [];
   private paperFields = element('div');
@@ -142,8 +144,11 @@ export class TemplateProperties {
     );
     this.paperFields.append(this.textDefaults.root, unitPicker());
     this.cellStyles = cells.map((c) => ({ id: c.id, styles: structuredClone(c.text_styles) }));
-    this.artwork = new TemplateArtwork(model, this.changed, artworkId);
+    this.artwork = new TemplateArtwork(model, this.changed, artworkId, () => {
+      if (!this.catalog) this.apply();
+    });
     if (artworkId || catalog) this.root.append(this.artwork.root);
+    this.cellPicture = null;
     this.runs = [];
     if (selection) {
       this.root.append(
@@ -156,6 +161,26 @@ export class TemplateProperties {
         this.root.append(dimensionSummary(selection.cell.bounds, 'Cell bounds · '));
         this.runs = selection.cell.contents.map((r) => ({ ...r }));
         this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
+        this.cellPicture = new PictureFields(
+          {
+            bounds: selection.cell.bounds,
+            picture: structuredClone(selection.cell.picture ?? { png: '', fit: 'contain' }),
+          },
+          false,
+          this.changed,
+          this.apply,
+        );
+        this.root.append(this.cellPicture.root);
+        if (selection.cell.picture) {
+          const remove = element('button', 'plain', 'Remove cell picture');
+          remove.type = 'button';
+          remove.addEventListener('click', () => {
+            this.cellPicture!.value.picture.png = '';
+            this.changed();
+            this.apply();
+          });
+          this.cellPicture.root.append(remove);
+        }
       }
       if (!this.cellStyles.length)
         this.cellStyles = [
@@ -189,6 +214,7 @@ export class TemplateProperties {
           ? {
               table: this.selected.table.id,
               id: this.selected.cell.id,
+              picture: this.cellPicture?.value.picture.png ? this.cellPicture.value.picture : null,
               caption: this.caption.value,
               contents: this.runs,
             }
