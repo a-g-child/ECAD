@@ -417,3 +417,7 @@ Path validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (62 browse
 See [decision 0051](decisions/0051-shared-appearance-controls.md). Font weight/style, advanced colour selection, table-cell typography and native font/output parity remain pending.
 
 Appearance validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (64 browser workflows), and `cargo xtask desktop` passed. The inline overlay regression now waits for its resize-observer layout before checking bounds. Desktop checks cover host build/lint; native interaction automation and Windows/Linux runtime validation remain pending.
+
+- [x] Merge defaults to retaining the top-left cell’s caption and contents, including blanks; combining other contents is opt-in. Browser regression covers the default, reverse selection, explicit combine and exact undo.
+
+Merge-default validation: `cargo xtask full`, `cargo xtask ui` (64 workflows), and `cargo xtask desktop` passed on macOS/aarch64.

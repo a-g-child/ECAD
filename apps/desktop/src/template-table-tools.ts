@@ -179,17 +179,19 @@ export class TemplateTableTools {
         ),
       );
     } else if (this.operation === 'merge') {
-      const populated = this.selectedCells.filter((c) => c.caption.length || c.contents.length);
-      if (populated.length > 1)
+      const otherContents = this.selectedCells
+        .slice(1)
+        .some((c) => c.caption.length || c.contents.length);
+      if (otherContents)
         this.select('Merged contents', [
-          ['combine', 'Combine all captions and contents in reading order'],
           ['keep_primary', 'Keep only the first cell’s contents'],
+          ['combine', 'Combine all captions and contents in reading order'],
         ]);
       this.body.append(
         element(
           'p',
           'settings-note',
-          `${this.selectedCells.length} selected cells form one rectangle. The top-left identity survives. ${populated.length <= 1 ? 'Existing contents are preserved.' : 'Choose how to retain contents.'} Undo restores the original cells exactly.`,
+          `${this.selectedCells.length} selected cells form one rectangle. The top-left identity survives. The first (top-left) cell’s caption and contents are kept by default, even if blank. Undo restores the original cells exactly.`,
         ),
       );
     } else {
@@ -262,7 +264,9 @@ export class TemplateTableTools {
           operation: 'merge',
           cells: this.selectedCells.map((c) => c.id),
           primary: this.selectedCells[0].id,
-          contents: this.controls.has('Merged contents') ? value('Merged contents') : 'combine',
+          contents: this.controls.has('Merged contents')
+            ? value('Merged contents')
+            : 'keep_primary',
         };
         break;
       default:

@@ -54,6 +54,10 @@ export function registerTemplateTableTests({ page, button, until, project, root 
     const original = await readFile(project(), 'utf8');
     await open(p);
     const ids = await cells(p).evaluateAll((nodes) => nodes.map((n) => n.dataset.templateCell));
+    const firstContents = await editor(p)
+      .locator('.frame-value')
+      .first()
+      .getAttribute('aria-label');
     await cells(p).first().click();
     let d = await tool(p, 'Split title-block cell');
     await d.getByRole('spinbutton', { name: 'Columns', exact: true }).fill('0');
@@ -111,8 +115,21 @@ export function registerTemplateTableTests({ page, button, until, project, root 
     assert.equal(await d.getByRole('checkbox').count(), 0);
     assert.equal(
       await d.getByRole('combobox', { name: 'Merged contents', exact: true }).inputValue(),
-      'combine',
+      'keep_primary',
     );
+    await apply(d);
+    assert.equal(
+      await editor(p).locator('.frame-value').first().getAttribute('aria-label'),
+      firstContents,
+    );
+    await command(p, 'Undo');
+    assert.deepEqual(
+      await cells(p).evaluateAll((nodes) => nodes.map((n) => n.dataset.templateCell)),
+      splitIds,
+    );
+    await range(p, 5, 0); // Reverse selection still keeps spatial reading order.
+    d = await tool(p, 'Merge title-block cells');
+    await d.getByRole('combobox', { name: 'Merged contents', exact: true }).selectOption('combine');
     await apply(d);
     assert.deepEqual(
       await cells(p).evaluateAll((nodes) => nodes.map((n) => n.dataset.templateCell)),
