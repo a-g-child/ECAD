@@ -120,6 +120,7 @@ export function registerTemplateEditorTests({ page, button, until, project, root
     const original = await readFile(project(), 'utf8');
     await open(p);
     await command(p, 'New template', 'New template draft');
+    await editor(p).getByText('Advanced paper settings', { exact: true }).click();
     await field(p, 'Paper width (µm)').fill('0');
     await editor(p).getByRole('button', { name: 'Apply properties', exact: true }).click();
     await until(async () => (await editor(p).getByRole('alert').innerText()).includes('positive'));

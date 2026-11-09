@@ -30,3 +30,5 @@ mod template_table_preview;
 mod template_workspace;
 
 mod captured_context;
+
+mod template_selection;

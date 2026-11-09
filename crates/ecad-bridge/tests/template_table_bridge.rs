@@ -13,8 +13,11 @@ fn call(b: &mut DesktopBridge, v: Value) -> Result<Value, ecad_bridge::BridgeErr
         .map(|r| serde_json::to_value(r).unwrap())
 }
 fn action(b: &mut DesktopBridge, id: &str) -> Result<Value, ecad_bridge::BridgeError> {
-    let v =
-        json!({"type":"action","action":id,"context":context(b),"input":snapshot(b)["next_input"]});
+    let mut ctx = context(b);
+    if id == "template.cell.split" {
+        ctx["template_selection"] = json!({"kind":"cells","variant":variant(b)["id"],"table":table(b)["id"],"cells":[table(b)["cells"][0]["id"]]});
+    }
+    let v = json!({"type":"action","action":id,"context":ctx,"input":snapshot(b)["next_input"]});
     call(b, v)
 }
 fn variant(b: &DesktopBridge) -> Value {
@@ -24,14 +27,28 @@ fn table(b: &DesktopBridge) -> Value {
     variant(b)["tables"][0].clone()
 }
 fn request(b: &DesktopBridge, id: &str, edit: Value) -> Value {
-    json!({"type":"template_operation","context":context(b),"action":id,"input":snapshot(b)["next_input"],"source":null,"values":{"variant":variant(b)["id"],"table":table(b)["id"],"edit":edit}})
+    let mut ctx = context(b);
+    if id == "template.cell.split" || id == "template.cells.merge" {
+        let cells = if edit["cells"].is_array() {
+            edit["cells"].clone()
+        } else {
+            json!([edit["cell"]])
+        };
+        ctx["template_selection"] =
+            json!({"kind":"cells","variant":variant(b)["id"],"table":table(b)["id"],"cells":cells});
+    }
+    json!({"type":"template_operation","context":ctx,"action":id,"input":snapshot(b)["next_input"],"source":null,"values":{"variant":variant(b)["id"],"table":table(b)["id"],"edit":edit}})
 }
 fn edit(b: &mut DesktopBridge, id: &str, value: Value) -> Result<Value, ecad_bridge::BridgeError> {
     let v = request(b, id, value);
     call(b, v)
 }
 fn pending(b: &mut DesktopBridge, id: Option<&str>) -> Result<Value, ecad_bridge::BridgeError> {
-    let v = json!({"type":"template_pending","context":context(b),"table_action":id,"input":snapshot(b)["next_input"]});
+    let mut ctx = context(b);
+    if id == Some("template.cell.split") {
+        ctx["template_selection"] = json!({"kind":"cells","variant":variant(b)["id"],"table":table(b)["id"],"cells":[table(b)["cells"][0]["id"]]});
+    }
+    let v = json!({"type":"template_pending","context":ctx,"table_action":id,"input":snapshot(b)["next_input"]});
     call(b, v)
 }
 #[test]
@@ -187,4 +204,60 @@ fn invalid_payloads_pending_ownership_and_missing_targets_preserve_the_complete_
     action(&mut b, "template.properties.revert").unwrap();
     assert_eq!(snapshot(&b)["template_editor"], before);
     assert!(!b.is_dirty());
+}
+
+#[test]
+fn contextual_eligibility_target_checks_and_column_edits_share_exact_history() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut b = DesktopBridge::demo().unwrap();
+    b.configure_template_store(dir.path().join("templates.json"))
+        .unwrap();
+    action(&mut b, "library.templates").unwrap();
+    let before = variant(&b);
+    let cells = table(&b)["cells"].as_array().unwrap().clone();
+    let selected = json!([cells[0]["id"], cells[2]["id"]]);
+    let mut ctx = context(&b);
+    ctx["template_selection"] = json!({"kind":"cells","variant":variant(&b)["id"],"table":table(&b)["id"],"cells":selected});
+    let states = call(&mut b, json!({"type":"template_actions","context":ctx})).unwrap();
+    assert_eq!(states["template_actions"]["template.cell.split"], true);
+    assert_eq!(states["template_actions"]["template.cells.merge"], true);
+    let none = context(&b);
+    let states = call(&mut b, json!({"type":"template_actions","context":none})).unwrap();
+    assert_eq!(states["template_actions"]["template.cell.split"], false);
+    let mut mismatch = request(
+        &b,
+        "template.cell.split",
+        json!({"operation":"split","cell":cells[0]["id"],"columns":"2","rows":"1"}),
+    );
+    mismatch["context"] = ctx.clone();
+    assert!(call(&mut b, mismatch).is_err());
+    assert_eq!(variant(&b), before);
+    edit(
+        &mut b,
+        "template.cell.split",
+        json!({"operation":"split","cells":selected,"columns":"2","rows":"1"}),
+    )
+    .unwrap();
+    let split = variant(&b);
+    assert_eq!(split["tables"][0]["cells"].as_array().unwrap().len(), 10);
+    assert!(call(&mut b, json!({"type":"template_actions","context":ctx})).is_err());
+    action(&mut b, "document.undo").unwrap();
+    assert_eq!(variant(&b), before);
+    action(&mut b, "document.redo").unwrap();
+    assert_eq!(variant(&b), split);
+    // A valid but diagonal selection cannot merge or split; the same registry rejects invocation.
+    let mut ctx = context(&b);
+    let c = table(&b)["cells"].as_array().unwrap().clone();
+    ctx["template_selection"] = json!({"kind":"cells","variant":variant(&b)["id"],"table":table(&b)["id"],"cells":[c[0]["id"],c[5]["id"]]});
+    let states = call(&mut b, json!({"type":"template_actions","context":ctx})).unwrap();
+    assert_eq!(states["template_actions"]["template.cells.merge"], false);
+    let input = snapshot(&b)["next_input"].clone();
+    assert!(
+        call(
+            &mut b,
+            json!({"type":"action","action":"template.cells.merge","context":ctx,"input":input})
+        )
+        .is_err()
+    );
+    assert_eq!(variant(&b), split);
 }

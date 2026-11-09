@@ -329,8 +329,10 @@ Pointer-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (5
 - [x] Explicit full-cell template hit areas protect table selection over background artwork.
 - [x] Stable-ID reconciliation after undo/delete/reopen; pending property edits remain protected.
 - [x] Add shared contextual field completion with captured proposals, validation recovery and selection handoff.
-- [ ] Add typed core selection/action eligibility and retire transitional Apply/Revert/catalog surfaces.
-- [ ] Simplify Split/Merge and paper presets, extract shared drawing/text modules, then add table/border/image insertion with persistence support.
+- [x] Add typed template selection and shared core Split/Merge eligibility.
+- [ ] Retire transitional Apply/Revert/catalog surfaces as insertion tools replace them.
+- [x] Simplify Split/Merge and paper presets.
+- [ ] Extract shared drawing/text modules, then add table/border/image insertion with persistence support.
 
 The numeric artwork-management surface remains transitional. No document schema, library publication or project adoption semantics change in this slice.
 
@@ -348,3 +350,16 @@ Contextual-selection validation (macOS/aarch64): `cargo xtask full`, `cargo xtas
 Coverage: [field completion workflow](../apps/desktop/tests/template-property-completion.mjs) and updated [contextual selection regression](../apps/desktop/tests/template-selection.mjs). Shared schematic adoption and selection-aware Rust action eligibility remain later work; persistence and publication contracts are unchanged.
 
 Field-completion validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (55 browser workflows), and `cargo xtask desktop` passed. New coverage includes Enter/Tab completion, multiline/IME protection, invalid-selection recovery, redo retention and delayed commits with rapid target changes. Native host checks build/lint only; Windows/Linux runtime validation remains pending.
+
+
+### Contextual structural tools and paper presets
+
+- [x] Separate typed template selection in action context; read-only Rust availability drives ribbon/palette and dispatch revalidates targets.
+- [x] Single-cell/contiguous-column splits commit atomically; bounded subdivision counts preserve exact identities, contents and undo.
+- [x] Rectangular-only merge, deterministic spatial survivor, selected targets without redundant selectors, and content choices only when needed.
+- [x] Paper family/size/orientation/general margin controls; exact custom geometry and individual margins under Advanced, with no drawing scaling.
+- [x] Domain/bridge/browser regressions for invalid selections, stale/mismatched targets, column history, preset/custom preservation and library reopen.
+
+See [decision 0047](decisions/0047-contextual-table-actions-and-paper-presets.md). Existing property Apply/Revert fallback, artwork management and numeric table placement remain available. Standardized margin profiles and native Windows/Linux execution remain pending.
+
+Contextual-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (57 browser workflows), and `cargo xtask desktop` passed. Desktop checks are host build/lint checks, not native interaction automation or Windows/Linux runtime validation.

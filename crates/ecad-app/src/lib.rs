@@ -152,3 +152,6 @@ mod template_actions;
 pub use template_actions::{
     TableOperation, TemplateActionOutcome, TemplateDispatchError, TemplateOperation,
 };
+
+mod template_selection;
+pub use template_selection::TemplateSelection;

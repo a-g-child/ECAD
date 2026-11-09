@@ -73,6 +73,7 @@ impl DesktopBridge {
                     TemplateOperation::Table(op) => {
                         let row: TableEditRow = serde_json::from_value(values)
                             .map_err(|e| BridgeError::new("template", e))?;
+                        row.validate_selection(&context)?;
                         (
                             row.target(),
                             row.proposal_with_snap(doc, op).map(|(p, s)| (Some(p), s)),

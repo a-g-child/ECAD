@@ -9,6 +9,10 @@ export interface Revision {
 }
 export interface Context {
   editor?: Revision | null;
+  template_selection?:
+    | { kind: 'paper' }
+    | { kind: 'cells'; variant: string; table: string; cells: string[] }
+    | { kind: 'artwork'; variant: string; id: string };
   revision: Revision;
   selection: Target[];
   view: string | null;
@@ -211,6 +215,7 @@ export interface SheetPreview {
   scene: SceneRow[];
 }
 export interface Reply {
+  template_actions?: Record<string, boolean>;
   table_preview?: {
     token: string;
     tables: TemplateTable[];

@@ -10,7 +10,7 @@ export function registerTemplateArtworkTests({ page, button, until }) {
       until(
         async () =>
           !(await ribbon
-            .getByRole('button', { name: 'Split title-block cell', exact: true })
+            .getByRole('button', { name: 'Draw template text', exact: true })
             .isDisabled()),
       );
     const command = async (name) => {

@@ -259,6 +259,7 @@ impl DesktopBridge {
                     | Request::Snapshot {}
                     | Request::TemplateOperation { .. }
                     | Request::TemplatePending { .. }
+                    | Request::TemplateActions { .. }
                     | Request::TemplateTablePreview { .. }
                     | Request::TemplateTableCommit { .. }
             )
@@ -269,6 +270,7 @@ impl DesktopBridge {
             ));
         }
         match request {
+            Request::TemplateActions { context } => self.template_actions(context),
             request @ (Request::TemplateTablePreview { .. }
             | Request::TemplateTableCommit { .. }) => self.template_table_request(request),
             request @ (Request::TemplateOperation { .. } | Request::TemplatePending { .. }) => {

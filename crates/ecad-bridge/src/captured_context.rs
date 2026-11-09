@@ -39,12 +39,29 @@ impl DesktopBridge {
                 "workspace" => ActionFocus::Workspace,
                 _ => return Err(BridgeError::new("focus", "Unknown input focus")),
             };
+            let selection = ctx
+                .template_selection
+                .map(crate::template_selection::SelectionRow::selection)
+                .transpose()?;
+            if selection.as_ref().is_some_and(|s| !s.exists(editor)) {
+                return Err(BridgeError::new(
+                    "selection",
+                    "Template selection is unavailable",
+                ));
+            }
             return Ok(ActionContext {
+                template_selection: selection,
                 editor: Some(editor.revision()),
                 tool_active: self.templates.gesture.is_some(),
                 focus,
                 ..ActionContext::default()
             });
+        }
+        if ctx.template_selection.is_some() {
+            return Err(BridgeError::new(
+                "selection",
+                "Template selection requires an editor context",
+            ));
         }
         if self.templates.editor.is_some() {
             return Err(BridgeError::new(

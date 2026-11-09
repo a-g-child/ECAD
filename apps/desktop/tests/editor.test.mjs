@@ -1,3 +1,4 @@
+import { registerTemplateContextualTools } from './template-contextual-tools.mjs';
 import { registerPropertyCompletionTests } from './template-property-completion.mjs';
 import { registerTemplateSelectionTests } from './template-selection.mjs';
 import { registerTemplateArtworkPointerTests } from './template-artwork-pointer.mjs';
@@ -553,3 +554,5 @@ registerTemplateArtworkPointerTests({ page, button, until });
 registerTemplateSelectionTests({ page, button, until });
 
 registerPropertyCompletionTests({ page, button, until });
+
+registerTemplateContextualTools({ page, button, until });

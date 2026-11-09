@@ -17,7 +17,7 @@ export function registerTemplateMarginTests({ page, button, until, project, root
     await until(
       async () =>
         !(await ribbon(p)
-          .getByRole('button', { name: 'Split title-block cell', exact: true })
+          .getByRole('button', { name: 'Draw template text', exact: true })
           .isDisabled()),
     );
   }
@@ -72,6 +72,7 @@ export function registerTemplateMarginTests({ page, button, until, project, root
     const p = await page({ electrical: false });
     const originalProject = await readFile(project(), 'utf8');
     await open(p);
+    await editor(p).getByText('Advanced paper settings', { exact: true }).click();
     const original = await box(p);
     assert.equal(await field(p, 'General margin (µm)').inputValue(), '10000');
     await field(p, 'General margin (µm)').fill('20000');

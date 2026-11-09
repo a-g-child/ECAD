@@ -135,6 +135,7 @@ function context(): Context {
     return {
       revision: snapshot.revision,
       editor: snapshot.template_editor.revision,
+      template_selection: templateEditor.selectionContext,
       selection: [],
       view: null,
       sheet: null,
@@ -156,8 +157,8 @@ const layoutActions = new Set([
   'drawing.selection.distribute',
 ]);
 function availableAction(id: string, enabled: boolean) {
+  if (snapshot?.template_editor) return templateEditor.actionEnabled(id, enabled);
   if (!enabled || (id === 'document.open' && !native)) return false;
-  if (snapshot?.template_editor) return true;
   if (
     !view &&
     id.startsWith('drawing.') &&

@@ -98,6 +98,8 @@ impl From<ObjectRef> for Target {
 pub(crate) struct Context {
     #[serde(default)]
     pub editor: Option<Token>,
+    #[serde(default)]
+    pub template_selection: Option<crate::template_selection::SelectionRow>,
     pub revision: Token,
     pub selection: Vec<Target>,
     pub view: Option<String>,
@@ -108,6 +110,11 @@ pub(crate) struct Context {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
+    /// Query shared Split/Merge availability for captured selection without changing state.
+    TemplateActions {
+        /// Original editor revision and selected identities.
+        context: serde_json::Value,
+    },
     /// Commit or invoke an explicitly targeted template editor operation.
     TemplateOperation {
         /// Captured project and independent editor context.
@@ -404,6 +411,7 @@ pub enum Request {
 /// One bridge-v1 response. Fields are transport data, never mutable authoritative model access.
 #[derive(Clone, Debug, Serialize, Default)]
 pub struct Response {
+    pub(crate) template_actions: Option<std::collections::BTreeMap<String, bool>>,
     pub(crate) table_preview: Option<crate::template_table_preview::TablePreviewRow>,
     pub(crate) snapshot: Option<Snapshot>,
     pub(crate) properties: Option<Vec<PropertyRow>>,

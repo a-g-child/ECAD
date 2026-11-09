@@ -142,6 +142,8 @@ impl BindingScope {
 pub struct ActionContext {
     /// Separate template-editor epoch/revision; never a project revision or sheet identity.
     pub editor: Option<Revision>,
+    /// Captured template selection, separate from electrical occurrence identities.
+    pub template_selection: Option<crate::TemplateSelection>,
     /// Observed document/session revision, never replaced silently during invocation.
     pub revision: Option<Revision>,
     /// Original target focus, not the transient popup's focus.
@@ -172,6 +174,7 @@ impl ActionContext {
     }
     pub(crate) fn same_sequence_target(&self, other: &Self) -> bool {
         self.editor == other.editor
+            && self.template_selection == other.template_selection
             && self.revision == other.revision
             && self.focus == other.focus
             && self.selection == other.selection
@@ -186,6 +189,8 @@ impl ActionContext {
 /// Typed unavailability, shared by palette, menus, shortcuts, and execution.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActionDisabled {
+    /// Selected template cells cannot participate in the requested structural edit.
+    TemplateSelection,
     /// Save or explicitly discard the template draft before this operation.
     UnsavedTemplate,
     /// Selection cannot participate in this drawing layout action.

@@ -24,7 +24,7 @@ export class TemplateTableTools {
   private pending = false;
   private dirty = false;
   private controls = new Map<string, HTMLInputElement | HTMLSelectElement>();
-  private choices: HTMLInputElement[] = [];
+  private selectedCells: TemplateCell[] = [];
   get active() {
     return this.dialog.open;
   }
@@ -64,6 +64,19 @@ export class TemplateTableTools {
     selectedCells: string[] = [],
   ) {
     if (this.active || !actions[operation]) return;
+    if (['split', 'merge'].includes(operation) && !selection) return;
+    this.selectedCells = selection
+      ? selection.table.cells
+          .filter((c) => selectedCells.includes(c.id))
+          .sort((a, b) => {
+            for (const i of [1, 0]) {
+              const delta = BigInt(a.bounds[i]) - BigInt(b.bounds[i]);
+              if (delta) return delta < 0n ? -1 : 1;
+            }
+            return a.id.localeCompare(b.id);
+          })
+      : [];
+    this.tableSelect.hidden = ['split', 'merge'].includes(operation);
     this.context = structuredClone(context);
     this.variant = variant;
     this.operation = operation;
@@ -79,10 +92,7 @@ export class TemplateTableTools {
       }),
     );
     if (selection) this.tableSelect.value = selection.table.id;
-    this.populate(selection?.cell.id);
-    if (operation === 'merge' && selectedCells.length)
-      for (const checkbox of this.choices)
-        checkbox.checked = selectedCells.includes(checkbox.value);
+    this.populate();
     this.dialog.showModal();
     this.changed();
   }
@@ -115,10 +125,9 @@ export class TemplateTableTools {
     if (selected) select.value = selected;
     return this.field(name, select);
   }
-  private populate(selected?: string) {
+  private populate() {
     this.body.replaceChildren();
     this.controls.clear();
-    this.choices = [];
     const table = this.table();
     this.applyButton.disabled = !table;
     if (!table) {
@@ -152,57 +161,37 @@ export class TemplateTableTools {
         ),
       );
     } else if (this.operation === 'split') {
-      this.select(
-        'Cell to split',
-        table.cells.map((c) => [c.id, c.caption || 'Blank cell']),
-        selected,
-      );
-      this.number('Columns', '2');
-      this.number('Rows', '1');
+      for (const [name, value] of [
+        ['Columns', '2'],
+        ['Rows', '1'],
+      ]) {
+        const input = this.number(name, value) as HTMLInputElement;
+        input.type = 'number';
+        input.min = '1';
+        input.max = '4096';
+        input.step = '1';
+      }
       this.body.append(
         element(
           'p',
           'settings-note',
-          'The upper-left cell keeps its identity and contents. Additional cells are blank. Split a different row separately for unequal subdivisions.',
+          `${this.selectedCells.length} selected cell(s). Each original upper-left cell retains its contents; new cells are blank. The complete split is one undo operation.`,
         ),
       );
     } else if (this.operation === 'merge') {
-      this.select(
-        'Surviving cell',
-        table.cells.map((c) => [c.id, c.caption || 'Blank cell']),
-        selected,
-      );
-      this.select('Merged contents', [
-        ['combine', 'Combine all captions and contents in reading order'],
-        ['keep_primary', 'Keep only the surviving cell’s contents'],
-      ]);
+      const populated = this.selectedCells.filter((c) => c.caption.length || c.contents.length);
+      if (populated.length > 1)
+        this.select('Merged contents', [
+          ['combine', 'Combine all captions and contents in reading order'],
+          ['keep_primary', 'Keep only the first cell’s contents'],
+        ]);
       this.body.append(
         element(
           'p',
           'settings-note',
-          'Select cells forming one rectangle. The surviving identity remains; other identities are removed in this draft. Undo restores them exactly.',
+          `${this.selectedCells.length} selected cells form one rectangle. The top-left identity survives. ${populated.length <= 1 ? 'Existing contents are preserved.' : 'Choose how to retain contents.'} Undo restores the original cells exactly.`,
         ),
       );
-      const list = element('div', 'template-merge-cells');
-      for (const cell of table.cells) {
-        const input = element('input');
-        input.type = 'checkbox';
-        input.value = cell.id;
-        input.checked = cell.id === selected;
-        input.setAttribute('aria-label', `Merge ${cell.caption || 'blank cell'} ${cell.id}`);
-        this.choices.push(input);
-        const label = element('label');
-        label.append(
-          input,
-          element(
-            'span',
-            '',
-            `${cell.caption || 'Blank cell'}\n${cell.contents.map((r) => (r.kind === 'literal' ? r.value : `{${r.value}}`)).join('')}`,
-          ),
-        );
-        list.append(label);
-      }
-      this.body.append(list);
     } else {
       this.select('Boundary axis', [
         ['x', 'Vertical boundary (X)'],
@@ -263,7 +252,7 @@ export class TemplateTableTools {
       case 'split':
         edit = {
           operation: 'split',
-          cell: value('Cell to split'),
+          cells: this.selectedCells.map((c) => c.id),
           columns: value('Columns'),
           rows: value('Rows'),
         };
@@ -271,9 +260,9 @@ export class TemplateTableTools {
       case 'merge':
         edit = {
           operation: 'merge',
-          cells: this.choices.filter((c) => c.checked).map((c) => c.value),
-          primary: value('Surviving cell'),
-          contents: value('Merged contents'),
+          cells: this.selectedCells.map((c) => c.id),
+          primary: this.selectedCells[0].id,
+          contents: this.controls.has('Merged contents') ? value('Merged contents') : 'combine',
         };
         break;
       default:

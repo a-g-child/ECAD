@@ -31,7 +31,9 @@ enum Edit {
         bounds: [String; 4],
     },
     Split {
-        cell: String,
+        cell: Option<String>,
+        #[serde(default)]
+        cells: Vec<String>,
         columns: String,
         rows: String,
     },
@@ -85,6 +87,42 @@ fn cell(s: &str) -> Result<TemplateCellId, BridgeError> {
     s.parse().map_err(error)
 }
 impl TableEditRow {
+    pub(crate) fn validate_selection(
+        &self,
+        context: &ecad_app::ActionContext,
+    ) -> Result<(), BridgeError> {
+        let requested = match &self.edit {
+            Edit::Split { cell, cells, .. } => {
+                if cell.is_some() && !cells.is_empty() {
+                    return Err(error("Choose one split target representation"));
+                }
+                cell.iter().chain(cells.iter()).cloned().collect::<Vec<_>>()
+            }
+            Edit::Merge { cells, .. } => cells.clone(),
+            _ => return Ok(()),
+        };
+        let Some(ecad_app::TemplateSelection::Cells {
+            variant,
+            table,
+            cells,
+        }) = &context.template_selection
+        else {
+            return Err(error("Select cells before using Split or Merge"));
+        };
+        let requested_ids = requested
+            .iter()
+            .map(|s| cell(s))
+            .collect::<Result<std::collections::BTreeSet<_>, _>>()?;
+        if self.variant != variant.to_string()
+            || self.table != table.to_string()
+            || requested_ids.len() != requested.len()
+            || requested_ids != cells.iter().copied().collect()
+        {
+            return Err(error("Table proposal differs from the captured selection"));
+        }
+        Ok(())
+    }
+
     pub(crate) fn target(&self) -> Vec<String> {
         let mut target = vec![self.variant.clone(), self.table.clone()];
         match &self.edit {
@@ -101,7 +139,11 @@ impl TableEditRow {
             Edit::Insert {
                 axis, at, anchor, ..
             } => target.extend(["insert".into(), axis.clone(), at.clone(), anchor.clone()]),
-            Edit::Split { cell, .. } => target.extend(["split".into(), cell.clone()]),
+            Edit::Split { cell, cells, .. } => {
+                target.push("split".into());
+                target.extend(cell.iter().cloned());
+                target.extend(cells.iter().cloned());
+            }
             Edit::Merge { cells, primary, .. } => {
                 target.extend(["merge".into(), primary.clone()]);
                 let mut cells = cells.clone();
@@ -217,14 +259,24 @@ impl TableEditRow {
                 TableOperation::Split,
                 Edit::Split {
                     cell: target,
+                    cells,
                     columns,
                     rows,
                 },
             ) => {
                 let columns = number(&columns)?;
                 let rows = number(&rows)?;
-                let count = u64::from(columns) * u64::from(rows);
-                if !(2..=MAX_SPLIT_CELLS).contains(&count) {
+                let targets = target
+                    .iter()
+                    .chain(cells.iter())
+                    .map(|s| cell(s))
+                    .collect::<Result<Vec<_>, _>>()?;
+                old.split_column(&targets).map_err(error)?;
+                let per = u64::from(columns) * u64::from(rows);
+                let count = per
+                    .checked_mul(targets.len() as u64)
+                    .ok_or_else(|| error("Split is too large"))?;
+                if per < 2 || !(2..=MAX_SPLIT_CELLS).contains(&count) {
                     return Err(error("A split must create between 2 and 4096 cells"));
                 }
                 let mut fresh = Vec::new();
@@ -234,14 +286,14 @@ impl TableEditRow {
                     .iter()
                     .flat_map(|t| t.cells().iter().map(|c| c.id))
                     .collect();
-                for _ in 1..count {
+                for _ in 0..count - targets.len() as u64 {
                     let id = RandomIds::template_cell().map_err(error)?;
                     if !used.insert(id) {
                         return Err(error("Generated cell identity already exists; retry"));
                     }
                     fresh.push(id);
                 }
-                old.split_cell(cell(&target)?, columns, rows, &fresh)
+                old.split_cells(&targets, columns, rows, &fresh)
             }
             (
                 TableOperation::Merge,
@@ -264,7 +316,17 @@ impl TableEditRow {
                         ));
                     }
                 };
-                old.merge_cells(&selected, cell(&primary)?, policy)
+                let survivor = old
+                    .cells()
+                    .iter()
+                    .filter(|c| selected.contains(&c.id))
+                    .min_by_key(|c| (c.bounds.y, c.bounds.x, c.id))
+                    .ok_or_else(|| error("Select cells to merge"))?
+                    .id;
+                if cell(&primary)? != survivor {
+                    return Err(error("Merge retains the first cell in reading order"));
+                }
+                old.merge_cells(&selected, survivor, policy)
             }
             (TableOperation::Boundary, Edit::Boundary { axis, from, to }) => {
                 let axis = match axis.as_str() {

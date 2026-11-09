@@ -133,3 +133,5 @@ mod template_assignment;
 pub use template_assignment::{
     SheetTemplateAssignment, TemplateAssignmentError, TemplateAssignments,
 };
+
+mod template_cell_selection;

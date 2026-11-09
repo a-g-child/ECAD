@@ -2,6 +2,7 @@
 import type { TemplateVariant, TemplateCell, TemplateTable, TemplateRun } from './types';
 import { element } from './ui';
 import { textEditor } from './text';
+import { paperPresets } from './paper-presets';
 import { TemplateRuns } from './template-runs';
 import { TemplateArtwork } from './template-artwork';
 export class TemplateProperties {
@@ -9,6 +10,7 @@ export class TemplateProperties {
   private paperFields = element('div');
   private artworkId: string | undefined;
   private catalog = false;
+  private advancedPaper = false;
   private name = textEditor('property-input property-text', 2);
   private paper: HTMLInputElement[] = [];
   private content: HTMLInputElement[] = [];
@@ -106,8 +108,19 @@ export class TemplateProperties {
       element(
         'p',
         'inspector-note',
-        'Custom paper/layout · border standards and anchoring tools are pending. Preview uses placeholders, never personal or project values.',
+        'Paper sizes are exact; contents are not scaled. Margin profiles and border styles remain separate from paper size.',
       ),
+    );
+    paperPresets(
+      this.paperFields,
+      this.paper,
+      this.content,
+      this.fitMargins,
+      this.changed,
+      this.advancedPaper,
+      (open) => {
+        this.advancedPaper = open;
+      },
     );
     this.artwork = new TemplateArtwork(model, this.changed, artworkId);
     if (artworkId || catalog) this.root.append(this.artwork.root);

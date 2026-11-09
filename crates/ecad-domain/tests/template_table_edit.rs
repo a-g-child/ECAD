@@ -159,3 +159,39 @@ fn extreme_geometry_and_bad_split_ids_fail_without_mutating_the_source() {
     assert!(t.split_cell(id(99), 2, 1, &[id(2)]).is_err());
     assert_eq!(t.cells()[0].bounds, rect(0, 0, u32::MAX, u32::MAX));
 }
+
+#[test]
+fn column_split_is_order_independent_and_rejects_gaps_width_changes_and_late_failure() {
+    let column = table(101, 103)
+        .split_cell(id(1), 1, 3, &[id(2), id(3)])
+        .unwrap();
+    let fresh = [id(10), id(11), id(12)];
+    let split = column
+        .split_cells(&[id(3), id(1), id(2)], 2, 1, &fresh)
+        .unwrap();
+    assert_eq!(
+        split,
+        column
+            .split_cells(&[id(1), id(2), id(3)], 2, 1, &fresh)
+            .unwrap()
+    );
+    assert_eq!(split.cells().len(), 6);
+    assert_eq!(split.cells()[0].contents, column.cells()[0].contents);
+    assert!(column.split_column(&[id(1), id(3)]).is_err());
+    assert!(split.split_column(&[id(1), id(10)]).is_err());
+    assert!(column.split_column(&[id(1), id(1)]).is_err());
+    assert!(
+        column
+            .split_cells(&[id(1), id(2)], 2, 1, &[id(10), id(10)])
+            .is_err()
+    );
+    // First cell is tall enough, second is not: no partial replacement escapes.
+    let short_last = column.move_boundary(TableAxis::Y, 68, 102).unwrap();
+    let before = short_last.clone();
+    assert!(
+        short_last
+            .split_cells(&[id(2), id(3)], 1, 2, &[id(10), id(11)])
+            .is_err()
+    );
+    assert_eq!(short_last, before);
+}

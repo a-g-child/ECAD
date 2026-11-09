@@ -26,7 +26,7 @@ export function registerTemplateTableInteractionTests({ page, button, until, pro
         async () =>
           (await editor(p).locator('.table-control[tabindex="0"]').count()) > 0 &&
           !(await ribbon(p)
-            .getByRole('button', { name: 'Split title-block cell', exact: true })
+            .getByRole('button', { name: 'Draw template text', exact: true })
             .isDisabled()),
       );
     } catch (e) {
@@ -47,7 +47,7 @@ export function registerTemplateTableInteractionTests({ page, button, until, pro
     await until(
       async () =>
         !(await ribbon(p)
-          .getByRole('button', { name: 'Split title-block cell', exact: true })
+          .getByRole('button', { name: 'Draw template text', exact: true })
           .isDisabled()),
     );
     const at = await point(rectangles(p).first());
@@ -99,7 +99,8 @@ export function registerTemplateTableInteractionTests({ page, button, until, pro
     await ribbon(p).getByRole('button', { name: 'Merge title-block cells', exact: true }).click();
     const d = p.getByRole('dialog', { name: 'Merge title-block cells', exact: true });
     await d.waitFor();
-    assert.equal(await d.locator('input[type="checkbox"]:checked').count(), 4);
+    assert.equal(await d.getByRole('checkbox').count(), 0);
+    assert.match(await d.innerText(), /4 selected cells/);
     await d.getByRole('button', { name: 'Apply table edit', exact: true }).click();
     await d.waitFor({ state: 'hidden' });
     await ready(p);

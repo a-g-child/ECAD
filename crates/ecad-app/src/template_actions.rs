@@ -78,6 +78,15 @@ impl ActionRegistry {
         }
         let handler = self.get(id).expect("registered action").handler;
         state.disabled = match handler {
+            ActionHandler::Template(TemplateOperation::Table(
+                op @ (TableOperation::Split | TableOperation::Merge),
+            )) if !context
+                .template_selection
+                .as_ref()
+                .is_some_and(|s| s.allows(document, op)) =>
+            {
+                Some(ActionDisabled::TemplateSelection)
+            }
             ActionHandler::CancelPlacement if !context.tool_active => {
                 Some(ActionDisabled::NoActiveTool)
             }

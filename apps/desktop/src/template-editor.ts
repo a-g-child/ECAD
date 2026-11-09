@@ -17,6 +17,7 @@ import {
   selectionAt,
   type TemplateSelection,
 } from './template-selection';
+import { TemplateActionState } from './template-action-state';
 import { PropertyCompletion } from './property-completion';
 import { TemplateProperties } from './template-properties';
 import { TemplateTableTools } from './template-table-tools';
@@ -60,6 +61,19 @@ export class TemplateEditor {
   private propertyCommit: Promise<void> | null = null;
   private completion: PropertyCompletion;
   private selectionRequest = 0;
+  private actionState: TemplateActionState;
+  get selectionContext(): Context['template_selection'] {
+    if (!this.variant || this.selected.kind === 'paper' || this.selected.kind === 'artwork-catalog')
+      return { kind: 'paper' };
+    return { ...this.selected, variant: this.variant.id };
+  }
+  actionEnabled(id: string, fallback: boolean) {
+    return this.actionState.enabled(id, fallback);
+  }
+  private refreshActions() {
+    if (this.active) this.actionState.refresh(this.context(), this.fieldsPending);
+  }
+
   private operating = false;
   private uiBusy = false;
   private captured: Context | null = null;
@@ -80,6 +94,7 @@ export class TemplateEditor {
     private action: (id: string) => void,
     private controls: () => void,
   ) {
+    this.actionState = new TemplateActionState(controls);
     this.tableTools = new TemplateTableTools(shell.app, apply, controls);
     this.root.hidden = true;
     this.root.setAttribute('aria-label', 'Drawing template editor');
@@ -251,6 +266,7 @@ export class TemplateEditor {
       );
   }
   private paintSelection() {
+    this.refreshActions();
     for (const node of this.preview.svg.querySelectorAll<SVGElement>('[data-template-graphic]')) {
       node.toggleAttribute(
         'data-artwork-selected',
@@ -288,6 +304,7 @@ export class TemplateEditor {
     );
     this.header.textContent = `${this.variant?.name ?? 'Template'} •`;
     document.title = `● ${this.variant?.name ?? 'Template'} — Template — ECAD`;
+    this.refreshActions();
     this.controls();
   }
   private selectGroup(table: TemplateTable, cells: TemplateCell[]) {
@@ -383,6 +400,7 @@ export class TemplateEditor {
     );
     this.artworkInteraction.update(this.variant);
     this.preview.render(this.variant, reset);
+    this.refreshActions();
     document.title = `${view.dirty || view.pending || this.fieldsPending ? '● ' : ''}${this.variant.name} — Template — ECAD`;
   }
   commitProperties(): Promise<void> {

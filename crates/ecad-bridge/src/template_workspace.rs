@@ -11,6 +11,7 @@ pub(crate) struct TemplateWorkspace {
     pub gesture: Option<crate::template_table_preview::TableGesture>,
     pub pending: bool,
     pub pending_table: Option<TableOperation>,
+    pub pending_selection: Option<TemplateSelection>,
     pub path: Option<PathBuf>,
     publisher: Option<TemplatePublisher<TemplateLibraryFile>>,
 }
@@ -224,6 +225,7 @@ impl DesktopBridge {
             TemplateActionOutcome::Changed => {
                 self.templates.pending = false;
                 self.templates.pending_table = None;
+                self.templates.pending_selection = None;
                 if handler == ActionHandler::Save {
                     "Template revision saved"
                 } else {
@@ -307,12 +309,14 @@ impl DesktopBridge {
                 self.templates.selected = None;
                 self.templates.pending = false;
                 self.templates.pending_table = None;
+                self.templates.pending_selection = None;
                 self.router.cancel_pending();
                 "Template editor closed"
             }
             TemplateActionOutcome::Request(TemplateOperation::Revert) => {
                 self.templates.pending = false;
                 self.templates.pending_table = None;
+                self.templates.pending_selection = None;
                 "Template fields reverted"
             }
             TemplateActionOutcome::Request(TemplateOperation::Import) => {
@@ -380,7 +384,7 @@ impl DesktopBridge {
                 table_action,
                 ..
             } => {
-                self.context(context)?;
+                let context = self.context(context)?;
                 if self.templates.gesture.is_some() {
                     return Err(BridgeError::new(
                         "template",
@@ -402,7 +406,28 @@ impl DesktopBridge {
                         "Another set of template fields is pending",
                     ));
                 }
+                if matches!(
+                    operation,
+                    Some(TableOperation::Split | TableOperation::Merge)
+                ) {
+                    let valid = context.template_selection.as_ref().is_some_and(|s| {
+                        s.allows(
+                            self.templates.editor.as_ref().expect("checked editor"),
+                            operation.expect("checked operation"),
+                        )
+                    });
+                    if !valid
+                        || (self.templates.pending
+                            && self.templates.pending_selection != context.template_selection)
+                    {
+                        return Err(BridgeError::new(
+                            "selection",
+                            "Keep the original eligible table selection while editing",
+                        ));
+                    }
+                }
                 self.templates.pending = true;
+                self.templates.pending_selection = context.template_selection;
                 self.templates.pending_table = operation;
                 Ok(Response::default())
             }
@@ -414,6 +439,14 @@ impl DesktopBridge {
                 input,
             } => {
                 let context = self.context(context)?;
+                if self.templates.pending_table.is_some()
+                    && self.templates.pending_selection != context.template_selection
+                {
+                    return Err(BridgeError::new(
+                        "selection",
+                        "The pending table selection changed",
+                    ));
+                }
                 let params = if let Some(values) = values {
                     if let Some(ActionHandler::Template(TemplateOperation::Table(op))) = self
                         .registry
@@ -426,6 +459,7 @@ impl DesktopBridge {
                         let row: crate::template_table_edit::TableEditRow =
                             serde_json::from_value(values)
                                 .map_err(|e| BridgeError::new("template", e))?;
+                        row.validate_selection(&context)?;
                         row.proposal(self.templates.editor.as_ref().expect("checked editor"), op)?
                     } else {
                         let row: TemplateEditRow = serde_json::from_value(values)

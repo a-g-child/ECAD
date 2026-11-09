@@ -22,6 +22,7 @@ export function registerPropertyCompletionTests({ page, button, until }) {
     await button(p, 'Drawing templates').click();
     await editor.waitFor();
     await command('New template');
+    await editor.getByText('Advanced paper settings', { exact: true }).click();
     const original = await field('General margin (µm)').inputValue();
     await field('General margin (µm)').fill('15000');
     await field('General margin (µm)').press('Enter');
