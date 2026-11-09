@@ -27,7 +27,7 @@ fn format_value(v: &PropertyValue) -> String {
             .map(|o| format_value(&PropertyValue::Object(*o)))
             .collect::<Vec<_>>()
             .join(", "),
-        PropertyValue::Style(id) => id.map_or_else(|| "Inherited".into(), |id| id.to_string()),
+        PropertyValue::Style(id) => id.map_or_else(|| "Default".into(), |id| id.to_string()),
         PropertyValue::RouteMode(mode) => format!("{mode:?}"),
     }
 }

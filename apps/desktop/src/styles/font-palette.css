@@ -57,7 +57,7 @@
 }
 .font-palette-alignment {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 64px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 80px;
   gap: 5px;
 }
 .font-palette-colour {

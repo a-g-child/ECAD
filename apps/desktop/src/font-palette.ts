@@ -57,7 +57,7 @@ export class FontPalette {
     alignment.append(
       this.choice('horizontal', 'horizontal alignment', ['left', 'center', 'right']),
       this.choice('vertical', 'vertical alignment', ['top', 'middle', 'bottom']),
-      this.reset(),
+      this.defaults(),
     );
     this.root.append(familyRow, tools, alignment);
   }
@@ -73,7 +73,7 @@ export class FontPalette {
     const field = element('input', 'property-input');
     const state = this.state(key);
     field.value = state.mixed || state.value == null ? '' : String(state.value);
-    field.placeholder = state.mixed ? 'Mixed' : 'Inherited';
+    field.placeholder = state.mixed ? 'Mixed' : 'Default';
     field.setAttribute('aria-label', name);
     field.addEventListener('input', () => {
       const value = key === 'height' ? readDimension(field) : field.value;
@@ -85,7 +85,7 @@ export class FontPalette {
     const select = element('select', 'property-input');
     select.setAttribute('aria-label', `${this.title} font style`);
     for (const [value, label] of [
-      ['inherit', 'Inherited'],
+      ['inherit', 'Default'],
       ['regular', 'Regular'],
       ['bold', 'Bold'],
       ['italic', 'Italic'],
@@ -123,7 +123,7 @@ export class FontPalette {
     button.setAttribute('aria-label', `${this.title} ${key}`);
     const state = this.state(key);
     button.setAttribute('aria-pressed', state.mixed ? 'mixed' : String(state.value === true));
-    button.title = `${this.title} ${key}${state.mixed ? ' · Mixed' : state.value == null ? ' · Inherited' : ''}`;
+    button.title = `${this.title} ${key}${state.mixed ? ' · Mixed' : state.value == null ? ' · Default' : ''}`;
     button.addEventListener('click', () => {
       const current = this.state(key);
       const next = current.mixed || current.value !== true;
@@ -138,22 +138,29 @@ export class FontPalette {
     select.setAttribute('aria-label', `${this.title} ${name}`);
     select.title = `${this.title} ${name}`;
     const state = this.state(key);
-    const inherited = element('option', '', state.mixed ? 'Mixed' : 'Inherited');
-    inherited.value = '';
-    select.append(inherited);
+    if (state.mixed) {
+      const mixed = element('option', '', 'Mixed');
+      mixed.value = 'mixed';
+      mixed.disabled = true;
+      select.append(mixed);
+    }
+    const fallback = element('option', '', 'Default');
+    fallback.value = '';
+    select.append(fallback);
     for (const value of choices) {
       const option = element('option', '', value[0].toUpperCase() + value.slice(1));
       option.value = value;
       select.append(option);
     }
-    select.value = state.mixed || state.value == null ? '' : String(state.value);
+    select.value = state.mixed ? 'mixed' : state.value == null ? '' : String(state.value);
     select.addEventListener('change', () => this.set(key, select.value || null));
     return select;
   }
-  private reset() {
+  private defaults() {
     const select = element('select', 'property-input font-reset');
-    select.setAttribute('aria-label', `Reset ${this.title.toLowerCase()} formatting`);
-    const prompt = element('option', '', 'Reset…');
+    select.setAttribute('aria-label', `Use default ${this.title.toLowerCase()} formatting`);
+    select.title = 'Choose a property to use its default; other properties stay unchanged.';
+    const prompt = element('option', '', 'Default…');
     prompt.value = '';
     select.append(prompt);
     for (const [value, label] of [

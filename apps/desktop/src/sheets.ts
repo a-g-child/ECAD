@@ -207,7 +207,7 @@ export class SheetsDialog {
       (v) => v.new_assignments || v.key === row.template,
     );
     this.options(this.template, [
-      ['', 'Inherit document template'],
+      ['', 'Default document template'],
       ...choices.map((v) => [v.key, v.label] as [string, string]),
     ]);
     for (const v of choices)

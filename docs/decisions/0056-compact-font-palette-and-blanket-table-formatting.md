@@ -9,3 +9,5 @@ The explorer provides an explicit whole-table selection entry, also usable by ri
 No domain, storage or history contract changes. The existing v4 cell-style proposal commits complete selections atomically, and existing validation, stale-target protection, inheritance and exact undo remain authoritative. The shared palette receives style references and owner callbacks, keeping it independent of template command dispatch.
 
 Verification covers mixed ranges, both-channel size changes, whole-table font/style edits, preservation of content/unrelated properties, reset, undo/redo and saved revision reopening. Native font chooser/colour-picker behavior still requires platform-specific checks.
+
+User-facing terminology is **Default**, including placeholders, font-style/alignment choices and the per-property **Default…** menu. The stored null/override semantics remain unchanged. Mixed alignment is a separate disabled display option, so Default remains an actual selectable option. Default choices apply only to properties with an existing fallback; no default is manufactured for literal geometry or text content.

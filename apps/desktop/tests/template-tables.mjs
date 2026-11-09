@@ -14,6 +14,11 @@ export function registerTemplateTableTests({ page, button, until, project, root 
     await button(p, 'Drawing templates').click();
     await editor(p).waitFor();
     await ribbon(p).getByRole('button', { name: 'New template', exact: true }).click();
+    // An already-open saved template can also have eight cells. Wait for the new draft,
+    // not merely the old projection's count, before capturing its stable identities.
+    await p.waitForFunction(
+      () => document.querySelector('.status-message')?.textContent === 'New template draft',
+    );
     await until(async () => (await cells(p).count()) === 8);
   }
   async function range(p, first, last) {

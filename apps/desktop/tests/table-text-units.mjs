@@ -117,6 +117,22 @@ export function registerTableTextUnits({ page, button, until }) {
     await p.mouse.up();
     await ready();
     assert.equal(await field('Text height (mm)').getAttribute('placeholder'), 'Mixed');
+    const horizontal = editor.getByRole('combobox', {
+      name: 'Text horizontal alignment',
+      exact: true,
+    });
+    assert.equal(await horizontal.inputValue(), 'mixed');
+    await horizontal.selectOption({ label: 'Default' });
+    await ready();
+    for (const n of [0, 1])
+      for (const anchor of await cells
+        .nth(n)
+        .locator('text')
+        .evaluateAll((nodes) => nodes.map((t) => t.getAttribute('text-anchor'))))
+        assert.equal(anchor, 'start');
+    await command('Undo');
+    assert.equal(await cells.first().locator('.frame-value').getAttribute('text-anchor'), 'end');
+
     await edit('Text height (mm)', '3');
     for (const n of [0, 1])
       assert.equal(await cells.nth(n).locator('.frame-value').getAttribute('font-size'), '3');
@@ -125,7 +141,7 @@ export function registerTableTextUnits({ page, button, until }) {
     assert.equal(await cells.nth(1).locator('.frame-value').getAttribute('font-size'), '2.5');
     await command('Redo');
     await editor
-      .getByRole('combobox', { name: 'Reset text formatting', exact: true })
+      .getByRole('combobox', { name: 'Use default text formatting', exact: true })
       .selectOption('height');
     await ready();
     for (const n of [0, 1])
@@ -158,6 +174,25 @@ export function registerTableTextUnits({ page, button, until }) {
       assert.deepEqual(style, ['bold', 'italic']);
     assert.deepEqual(await cells.locator('text').allTextContents(), textBefore);
     await command('Undo');
+    await command('Undo');
+    assert.equal(await cells.first().locator('text').first().getAttribute('font-family'), 'serif');
+    // Every palette property can independently return to its default, without flattening other overrides.
+    const defaults = editor.getByRole('combobox', {
+      name: 'Use default text formatting',
+      exact: true,
+    });
+    assert.deepEqual(
+      await defaults.locator('option').evaluateAll((nodes) => nodes.map((n) => n.value)),
+      ['', 'all', 'font', 'height', 'bold', 'italic', 'colour', 'horizontal', 'vertical'],
+    );
+    await defaults.selectOption('font');
+    await ready();
+    assert.equal(await field('Text font').getAttribute('placeholder'), 'Default');
+    for (const font of await cells
+      .locator('.frame-value')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('font-family'))))
+      assert.equal(font, 'monospace');
+    assert.equal(await cells.first().locator('text').first().getAttribute('font-weight'), 'bold');
     await command('Undo');
     assert.equal(await cells.first().locator('text').first().getAttribute('font-family'), 'serif');
     await p.screenshot({ path: '../../target/ui/font-palette.png' });

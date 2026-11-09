@@ -32,7 +32,7 @@ export class DefaultsDialog {
       element(
         'p',
         'settings-note',
-        'Project fallbacks update inherited drawing properties. Object, view and named-style overrides take precedence.',
+        'Project defaults update drawing properties that use the default. Object, view and named-style overrides take precedence.',
       ),
     );
     const definitions: [keyof DrawingDefaults, string][] = [

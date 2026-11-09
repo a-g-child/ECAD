@@ -476,3 +476,7 @@ See [decision 0055](decisions/0055-table-text-styles-and-measurement-units.md). 
 See [decision 0056](decisions/0056-compact-font-palette-and-blanket-table-formatting.md).
 
 Palette validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. Final focused coverage also verifies whole-table merge-to-one-cell/undo and final frontend type checking. Native Windows/Linux picker behavior remains unverified.
+
+- [x] Use **Default** in interface text instead of **Inherited**; offer each palette property through **Default…**, and keep explicit Default choices available alongside mixed style/alignment states. Regression checks cover individual font/alignment defaults and exact undo without changing other formatting.
+
+Default-label validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. The table structural regression now waits for the new draft before capturing identities, rather than accepting the previous template’s identical cell count.
