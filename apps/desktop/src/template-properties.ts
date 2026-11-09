@@ -26,7 +26,7 @@ export class TemplateProperties {
     this.root.addEventListener('submit', (e) => e.preventDefault());
     this.root.addEventListener('keydown', (e) => {
       if (e.isComposing) return;
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      if (this.catalog && e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         apply();
       }

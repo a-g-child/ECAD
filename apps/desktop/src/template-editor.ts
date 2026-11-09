@@ -11,7 +11,13 @@ import type { Shell } from './shell';
 import { element } from './ui';
 import { send, inputId, errorText } from './transport';
 import { TemplatePreview } from './template-preview';
-import { selectedTable, reconcileSelection, type TemplateSelection } from './template-selection';
+import {
+  selectedTable,
+  reconcileSelection,
+  selectionAt,
+  type TemplateSelection,
+} from './template-selection';
+import { PropertyCompletion } from './property-completion';
 import { TemplateProperties } from './template-properties';
 import { TemplateTableTools } from './template-table-tools';
 import { TemplateArtworkInteraction } from './template-artwork-interaction';
@@ -51,6 +57,9 @@ export class TemplateEditor {
   private variant: TemplateVariant | null = null;
 
   private fieldsPending = false;
+  private propertyCommit: Promise<void> | null = null;
+  private completion: PropertyCompletion;
+  private selectionRequest = 0;
   private operating = false;
   private uiBusy = false;
   private captured: Context | null = null;
@@ -58,7 +67,7 @@ export class TemplateEditor {
     return this.model !== null;
   }
   get working() {
-    return this.operating || this.tableActive || this.gestureActive;
+    return this.operating || !!this.propertyCommit || this.tableActive || this.gestureActive;
   }
   get pending() {
     return this.fieldsPending;
@@ -103,6 +112,15 @@ export class TemplateEditor {
       () => this.changed(),
       () => void this.work(() => this.commitProperties()),
     );
+    this.completion = new PropertyCompletion(
+      this.form.root,
+      () => this.selected.kind !== 'artwork-catalog',
+      () => this.fieldsPending,
+      () => this.operating || !!this.propertyCommit || this.uiBusy,
+      () => this.finishFields(),
+      () => this.work(() => this.operation('template.properties.revert')),
+    );
+    this.root.addEventListener('pointerdown', (e) => this.transferSelection(e), true);
     const buttons = element('div', 'template-property-actions');
     for (const [name, id] of [
       ['Apply properties', 'template.properties.apply'],
@@ -181,6 +199,47 @@ export class TemplateEditor {
     this.canvas.append(this.preview.svg);
     this.root.append(left, center, right);
     shell.workspace.append(this.root);
+  }
+  private transferSelection(event: PointerEvent) {
+    if (
+      !this.fieldsPending ||
+      !this.variant ||
+      this.selected.kind === 'artwork-catalog' ||
+      this.form.root.contains(event.target as Node)
+    )
+      return;
+    if (event.button !== 0 && event.button !== 2) return;
+    const selection = selectionAt(this.variant, event.target as Element);
+    if (!selection) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (this.completion.isComposing) return;
+    const request = ++this.selectionRequest;
+    const epoch = this.model?.revision.epoch;
+    void this.finishFields().then((ok) => {
+      if (
+        !ok ||
+        request !== this.selectionRequest ||
+        this.model?.revision.epoch !== epoch ||
+        !this.variant
+      )
+        return;
+      this.selected = reconcileSelection(this.variant, selection);
+      this.interaction.update(this.variant, selectedTable(this.variant, this.selected));
+      this.renderProperties();
+      this.paintSelection();
+      this.preview.svg.focus();
+    });
+  }
+  private async finishFields() {
+    try {
+      await this.commitProperties();
+      return true;
+    } catch (error) {
+      this.note.textContent = errorText(error);
+      this.status(errorText(error), true);
+      return false;
+    }
   }
   private renderProperties() {
     if (this.variant)
@@ -287,6 +346,7 @@ export class TemplateEditor {
     }
     this.structure.replaceChildren();
     const props = element('button', 'tree-item', 'Template properties');
+    props.dataset.templatePaper = '';
     props.addEventListener('click', () => {
       if (this.clearSelection()) this.form.focus();
     });
@@ -309,6 +369,7 @@ export class TemplateEditor {
     }
     for (const [i, graphic] of this.variant.graphics.entries()) {
       const item = element('button', 'tree-item', `Artwork ${i + 1} · ${graphic.kind}`);
+      item.dataset.templateArtwork = graphic.id;
       item.addEventListener('click', () => {
         if (!this.fieldsPending && !this.working && !this.uiBusy)
           this.selectArtwork(graphic.id, true);
@@ -324,19 +385,32 @@ export class TemplateEditor {
     this.preview.render(this.variant, reset);
     document.title = `${view.dirty || view.pending || this.fieldsPending ? '● ' : ''}${this.variant.name} — Template — ECAD`;
   }
-  async commitProperties() {
-    if (!this.active) return;
-    const reply = await send({
-      type: 'template_operation',
-      context: this.captured ?? this.context(),
-      action: 'template.properties.apply',
-      source: null,
-      values: this.form.proposal(),
-      input: inputId(),
-    });
-    this.fieldsPending = false;
-    this.captured = null;
-    await this.apply(reply);
+  commitProperties(): Promise<void> {
+    if (this.propertyCommit) return this.propertyCommit;
+    if (!this.active || !this.fieldsPending) return Promise.resolve();
+    // Close the exact proposal before awaiting anything; a later selection cannot retarget it.
+    const context = structuredClone(this.captured ?? this.context());
+    const values = structuredClone(this.form.proposal());
+    this.propertyCommit = Promise.resolve()
+      .then(async () => {
+        const reply = await send({
+          type: 'template_operation',
+          context,
+          action: 'template.properties.apply',
+          source: null,
+          values,
+          input: inputId(),
+        });
+        this.fieldsPending = false;
+        this.captured = null;
+        await this.apply(reply);
+      })
+      .finally(() => {
+        this.propertyCommit = null;
+        this.controls();
+      });
+    this.controls();
+    return this.propertyCommit;
   }
   async operation(id: string, source?: string) {
     const reply = await send({
@@ -358,7 +432,7 @@ export class TemplateEditor {
     for (const input of this.root.querySelectorAll<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement
     >('input,textarea,select,button'))
-      input.disabled = busy || this.operating || this.gestureActive;
+      input.disabled = busy || this.operating || !!this.propertyCommit || this.gestureActive;
   }
   focus() {
     this.preview.svg.focus();

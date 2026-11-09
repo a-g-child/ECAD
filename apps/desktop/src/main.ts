@@ -487,7 +487,8 @@ document.addEventListener('keydown', (event) => {
     profiles.active ||
     sheets.active ||
     projectMenu.active ||
-    templateEditor.tableActive
+    templateEditor.tableActive ||
+    (templateEditor.working && !templateEditor.gestureActive)
   )
     return;
   if (templateEditor.gestureActive) {

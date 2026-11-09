@@ -80,10 +80,8 @@ export function registerTemplateSelectionTests({ page, button, until }) {
     assert.equal(await editor.locator('[data-artwork-selected]').count(), 0);
     assert.equal(await editor.locator('[data-selected-cell]').count(), 1);
     await field('Cell caption').fill('Contextual cell');
-    await click(40, 60); // Pending edits are protected, never silently discarded.
-    assert.equal(await field('Cell caption').inputValue(), 'Contextual cell');
-    await editor.getByRole('button', { name: 'Apply properties', exact: true }).click();
-    await ready();
+    await click(40, 60); // Complete the original cell edit before selecting paper.
+    await until(async () => (await field('Template name').count()) === 1);
     await editor
       .locator('.template-structure')
       .getByRole('button', { name: 'Artwork 1 · rectangle', exact: true })

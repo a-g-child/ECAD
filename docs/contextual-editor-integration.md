@@ -1,6 +1,6 @@
 # Contextual editor integration roadmap
 
-Status: accepted direction, replacing the form-heavy template workflow. The initial implementation slice is selection ownership, hit priority and contextual inspection. Later stages below are requirements, not shipped capabilities. See the implementation checklist for verification.
+Status: accepted direction, replacing the form-heavy template workflow. Selection ownership, hit priority, contextual inspection and the first field-completion slice are implemented. Later stages below are requirements, not shipped capabilities. See the implementation checklist for verification.
 
 ## User workflow
 
@@ -34,7 +34,7 @@ Insert Text takes an anchor click, then edits multiline text/variables inline be
 | Separate artwork selection and table/editor selection | One editor selection; controllers read it or receive projections. |
 | Unfilled table interiors let underlying artwork receive pointer hits | Explicit full-cell hit areas in template view, consistent with paint order. |
 | Complete template/artwork/cell form displayed together | Contextual sections with automatic visibility and stable pane bounds. |
-| Whole-layout Apply blocks other actions while fields are pending | Keep temporarily; replace with target/revision-bound field transactions before removing guards. |
+| Whole-layout Apply blocks other actions while fields are pending | Contextual fields now complete through captured target/revision-bound proposals; retain explicit fallback and guards for structural/catalog operations. |
 | Template action context has no selected cells/artwork | Add typed template selection and shared Rust eligibility queries. |
 | Split/merge dialogs repeat object selectors and expose IDs | Derive targets from selection; retain only necessary parameters/content decisions. |
 | Separate schematic click-path and template drag-shape workflows | Shared tool state machines behind coordinate/command adapters. |
@@ -48,4 +48,4 @@ Regression workflows must cover artwork → cells → artwork → blank paper, o
 
 ## Initial slice boundary
 
-The first slice supplies contextual selection and inspector routing while retaining explicit Apply/Revert. A temporary artwork-management view remains available for numeric insertion/removal. Paper presets, shared field transactions, selection-aware core actions, new insertion workflows and shared tool extraction are still pending. Historical decisions 0041–0046 describe delivered prototypes; this roadmap supersedes their future UI direction where it differs.
+The first slice supplies contextual selection and inspector routing. The next slice completes contextual fields on Enter (Ctrl/Cmd+Enter for multiline), Tab/blur and choice changes, and completes valid edits before pointer selection changes. Invalid edits remain visible; Escape reverts pending fields. Apply/Revert remain as fallback. A temporary artwork-management view remains available for numeric insertion/removal. The reusable field-completion module supplies DOM input policy; template commands still own validation/history. Numeric artwork catalog edits remain explicitly staged. A pointer used to finish pending fields selects its destination; it does not also start a drag. Selection-aware core actions, paper presets, new insertion workflows and shared tool extraction are still pending. Historical decisions 0041–0046 describe delivered prototypes; this roadmap supersedes their future UI direction where it differs.

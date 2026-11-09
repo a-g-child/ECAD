@@ -328,9 +328,23 @@ Pointer-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (5
 - [x] Automatic contextual inspector; selecting artwork clears table handles, selecting cells clears artwork highlight, blank paper/canvas Escape clears selection.
 - [x] Explicit full-cell template hit areas protect table selection over background artwork.
 - [x] Stable-ID reconciliation after undo/delete/reopen; pending property edits remain protected.
-- [ ] Replace Apply/Revert with shared field transactions and typed core selection/action eligibility.
+- [x] Add shared contextual field completion with captured proposals, validation recovery and selection handoff.
+- [ ] Add typed core selection/action eligibility and retire transitional Apply/Revert/catalog surfaces.
 - [ ] Simplify Split/Merge and paper presets, extract shared drawing/text modules, then add table/border/image insertion with persistence support.
 
 The numeric artwork-management surface remains transitional. No document schema, library publication or project adoption semantics change in this slice.
 
 Contextual-selection validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (54 browser workflows), and `cargo xtask desktop` passed. The new browser reproducer covers cell interiors overlapping artwork, automatic inspector switching, explorer/right-click targeting, blank-paper/Escape deselection, pending-field protection and unchanged undo semantics. A final focused run also verified cancellation of a cell-range gesture restores the previous artwork selection. Native interaction automation and Windows/Linux runtime checks remain pending.
+
+
+### Contextual property completion
+
+- [x] Complete contextual fields on Enter, Tab/blur, select and checkbox changes; preserve multiline Enter and IME composition.
+- [x] Capture exact proposal/target/revision before asynchronous commit; deduplicate commits and defer pointer selection until validation succeeds.
+- [x] Preserve invalid fields and the original selection; Escape reverts staged fields without changing committed history.
+- [x] Restore inspector focus after completion and protect global shortcuts while controls are locked.
+- [x] Keep numeric artwork catalog structural edits staged and explicit Apply/Revert available as fallback.
+
+Coverage: [field completion workflow](../apps/desktop/tests/template-property-completion.mjs) and updated [contextual selection regression](../apps/desktop/tests/template-selection.mjs). Shared schematic adoption and selection-aware Rust action eligibility remain later work; persistence and publication contracts are unchanged.
+
+Field-completion validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (55 browser workflows), and `cargo xtask desktop` passed. New coverage includes Enter/Tab completion, multiline/IME protection, invalid-selection recovery, redo retention and delayed commits with rapid target changes. Native host checks build/lint only; Windows/Linux runtime validation remains pending.

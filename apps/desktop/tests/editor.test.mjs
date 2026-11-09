@@ -1,3 +1,4 @@
+import { registerPropertyCompletionTests } from './template-property-completion.mjs';
 import { registerTemplateSelectionTests } from './template-selection.mjs';
 import { registerTemplateArtworkPointerTests } from './template-artwork-pointer.mjs';
 import { registerTemplateArtworkTests } from './template-artwork.mjs';
@@ -550,3 +551,5 @@ registerTemplateArtworkTests({ page, button, until });
 registerTemplateArtworkPointerTests({ page, button, until });
 
 registerTemplateSelectionTests({ page, button, until });
+
+registerPropertyCompletionTests({ page, button, until });
