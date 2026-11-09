@@ -37,6 +37,16 @@ export function registerCellPropertiesPanelTests({ page, button, until, root }) 
       ['cell-text', 'cell-layout', 'cell-style'],
     );
     assert.equal(await form.locator('.picture-properties').count(), 0);
+    assert.equal(await form.locator('.template-text-hint,.inspector-note').count(), 0);
+    const variables = editor.getByRole('textbox', { name: 'Text and variables', exact: true });
+    assert.match(await variables.getAttribute('title'), /Variables use \{\{field\}\}/);
+    assert.match(await variables.getAttribute('aria-description'), /Enter/);
+    assert.match(
+      await editor
+        .getByRole('button', { name: 'Insert variable', exact: true })
+        .getAttribute('title'),
+      /caret/,
+    );
     const caption = editor.getByRole('textbox', { name: 'Cell caption', exact: true });
     const metrics = await form.evaluate((form) => {
       const caption = form.querySelector('[aria-label="Cell caption"]').getBoundingClientRect();
@@ -87,6 +97,13 @@ export function registerCellPropertiesPanelTests({ page, button, until, root }) 
     await dialog.waitFor({ state: 'hidden' });
     await ready();
     assert.equal(await section('cell-picture').count(), 1);
+    assert.equal(await section('cell-picture').locator('.settings-note').count(), 0);
+    assert.match(
+      await section('cell-picture')
+        .getByRole('button', { name: 'Browse image…', exact: true })
+        .getAttribute('title'),
+      /local copy/,
+    );
     assert.equal(await section('cell-text').count(), 0);
     assert.equal(await section('cell-layout').count(), 0);
     assert.equal(await section('cell-style').count(), 0);

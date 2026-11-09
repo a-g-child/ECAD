@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Row-count and per-row column inputs. The core owns repartitioning and identity retention. */
 import type { TemplateTable } from './types';
 import { element } from './ui';
@@ -31,16 +32,11 @@ export class TableLayoutFields {
     this.acknowledge.setAttribute('aria-label', 'Remove surplus cells and their contents');
     this.removal.append(this.acknowledge, element('span'));
     this.rows.addEventListener('change', () => this.renderColumns());
-    this.root.append(
-      rowLabel,
-      this.columns,
-      element(
-        'p',
-        'settings-note',
-        'Outer table size stays fixed. Existing cells retain their contents and formatting by row and column. Added cells are blank. Changed rows use equal column widths; changing row count uses equal row heights. Spanning cells become ordinary row cells when the layout changes. Undo restores the complete previous layout.',
-      ),
-      this.removal,
+    controlHelp(
+      this.rows,
+      'Outer table size stays fixed. Existing cells retain their contents and formatting by row and column. Added cells are blank. Changed rows use equal column widths; changing row count uses equal row heights. Spanning cells become ordinary row cells when the layout changes. Undo restores the complete previous layout.',
     );
+    this.root.append(rowLabel, this.columns, this.removal);
     this.renderColumns();
   }
   private renderColumns() {
@@ -48,6 +44,10 @@ export class TableLayoutFields {
     for (let i = 0; i < Number(this.rows.value); i++) {
       const input = element('input', 'property-input');
       input.type = 'number';
+      controlHelp(
+        input,
+        'Set the number of columns in this row. Outer table bounds stay fixed; removed cells require acknowledgement.',
+      );
       input.min = '1';
       input.max = '4096';
       input.step = '1';

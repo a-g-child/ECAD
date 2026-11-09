@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Project fallbacks are reviewed locally; Apply submits one guarded settings command. */
 import { unitPicker } from './unit-picker';
 import { dimension, readDimension, writeDimension } from './dimensions';
@@ -29,16 +30,13 @@ export class DefaultsDialog {
     private status: (message: string, error?: boolean) => void,
   ) {
     const heading = element('h2', '', 'Drawing defaults');
+    controlHelp(
+      heading,
+      'Project defaults update drawing properties that use the default. Object, view and named-style overrides take precedence.',
+    );
     heading.id = 'drawing-defaults-heading';
     this.dialog.setAttribute('aria-labelledby', heading.id);
-    this.form.append(
-      heading,
-      element(
-        'p',
-        'settings-note',
-        'Project defaults update drawing properties that use the default. Object, view and named-style overrides take precedence.',
-      ),
-    );
+    this.form.append(heading);
     this.form.append(this.fontHost);
     const definitions: [keyof DrawingDefaults, string][] = [
       ['stroke_width', 'Default stroke width (µm)'],
@@ -49,6 +47,10 @@ export class DefaultsDialog {
       const field = element('input', 'property-input');
       field.setAttribute('aria-label', caption);
       if (key === 'text_height' || key === 'stroke_width') field.inputMode = 'numeric';
+      controlHelp(
+        field,
+        'Lengths use the selected units (0.001 mm internal precision); colour uses #rrggbb. Font availability depends on the system. Creation presets and named styles are retained; their editors are planned.',
+      );
       this.fields.set(key, field);
       label.append(
         element('span', '', caption),
@@ -58,13 +60,6 @@ export class DefaultsDialog {
       if (key === 'text_height' || key === 'stroke_width')
         dimension(field, caption, label.firstElementChild as HTMLElement);
     }
-    this.form.append(
-      element(
-        'p',
-        'settings-note',
-        'Lengths use the selected units (0.001 mm internal precision); colour uses #rrggbb. Font availability depends on the system. Creation presets and named styles are retained; their editors are planned.',
-      ),
-    );
     this.form.append(unitPicker());
     this.error.setAttribute('role', 'alert');
     this.error.setAttribute('aria-live', 'polite');

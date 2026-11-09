@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 import { PropertySections } from './property-sections';
 /** Selection adapter: one palette for ranges, independent caption/content palettes for one cell. */
 import { CellTextLayoutProperties } from './cell-text-layout-properties';
@@ -46,12 +47,9 @@ export class TemplateTextProperties {
           options,
         ).root,
       );
-      style.body.append(
-        element(
-          'p',
-          'inspector-note',
-          'Formatting applies to captions and contents in every selected cell. Other properties keep their existing values.',
-        ),
+      controlHelp(
+        style.root.querySelector('summary')!,
+        'Formatting applies to captions and contents in every selected text cell. Other properties keep their existing values.',
       );
     } else {
       for (const channel of ['caption', 'content'] as const) {

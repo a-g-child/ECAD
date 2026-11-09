@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Captured structural table edits; the Rust core owns geometry, identity allocation and history. */
 import { TableLayoutFields } from './template-table-layout';
 import { dimension, readDimension } from './dimensions';
@@ -134,6 +135,8 @@ export class TemplateTableTools {
   }
   private populate() {
     this.body.replaceChildren();
+    this.applyButton.removeAttribute('title');
+    this.applyButton.removeAttribute('aria-description');
     this.controls.clear();
     this.layoutFields = null;
     const table = this.table();
@@ -153,25 +156,22 @@ export class TemplateTableTools {
         ['end', 'Keep bottom/right edge'],
         ['start', 'Keep top/left edge'],
       ]);
-      this.body.append(
-        element(
-          'p',
-          'settings-note',
-          'Blank cells follow adjacent divisions. Cells spanning the insertion boundary extend across it. The complete table must fit within the paper margins.',
-        ),
+      controlHelp(
+        this.applyButton,
+        'Blank cells follow adjacent divisions. Cells spanning the insertion boundary extend across it. The complete table must fit within the paper margins.',
       );
     } else if (this.operation === 'resize') {
       ['Table X (µm)', 'Table Y (µm)', 'Table width (µm)', 'Table height (µm)'].forEach((name, i) =>
         this.number(name, table.bounds[i]),
       );
-      this.body.append(
-        element(
-          'p',
-          'settings-note',
-          'Shared edges scale together. Cell identities, captions and variables are retained. The table must fit inside the paper margins.',
-        ),
+      controlHelp(
+        this.applyButton,
+        'Shared edges scale together. Cell identities, captions and variables are retained. The table must fit inside the paper margins.',
       );
     } else if (this.operation === 'split') {
+      this.body.append(
+        element('p', 'settings-note', `${this.selectedCells.length} selected cell(s)`),
+      );
       for (const [name, value] of [
         ['Columns', '2'],
         ['Rows', '1'],
@@ -182,14 +182,14 @@ export class TemplateTableTools {
         input.max = '4096';
         input.step = '1';
       }
-      this.body.append(
-        element(
-          'p',
-          'settings-note',
-          `${this.selectedCells.length} selected cell(s). Each original upper-left cell retains its contents; new cells are blank. The complete split is one undo operation.`,
-        ),
+      controlHelp(
+        this.applyButton,
+        `${this.selectedCells.length} selected cell(s). Each original upper-left cell retains its contents; new cells are blank. The complete split is one undo operation.`,
       );
     } else if (this.operation === 'merge') {
+      this.body.append(
+        element('p', 'settings-note', `${this.selectedCells.length} selected cells`),
+      );
       const otherContents = this.selectedCells
         .slice(1)
         .some((c) => c.caption.length || c.contents.length || c.picture);
@@ -198,12 +198,9 @@ export class TemplateTableTools {
           ['keep_primary', 'Keep only the first cell’s contents'],
           ['combine', 'Combine all captions and contents in reading order'],
         ]);
-      this.body.append(
-        element(
-          'p',
-          'settings-note',
-          `${this.selectedCells.length} selected cells form one rectangle. The top-left identity survives. The first (top-left) cell’s caption and contents are kept by default, even if blank. Undo restores the original cells exactly.`,
-        ),
+      controlHelp(
+        this.applyButton,
+        `${this.selectedCells.length} selected cells form one rectangle. The top-left identity survives. The first (top-left) cell’s caption and contents are kept by default, even if blank. Undo restores the original cells exactly.`,
       );
     } else {
       this.select('Boundary axis', [
@@ -216,12 +213,9 @@ export class TemplateTableTools {
       const x = first ? String(BigInt(first.bounds[0]) + BigInt(first.bounds[2])) : '0';
       this.number('Boundary from (µm)', x);
       this.number('Boundary to (µm)', x);
-      this.body.append(
-        element(
-          'p',
-          'settings-note',
-          'Coordinates are local to the table. All cell edges aligned at this coordinate move together; spanning cells stay intact. Boundaries cannot cross or collapse other coordinates.',
-        ),
+      controlHelp(
+        this.applyButton,
+        'Coordinates are local to the table. All cell edges aligned at this coordinate move together; spanning cells stay intact. Boundaries cannot cross or collapse other coordinates.',
       );
     }
   }

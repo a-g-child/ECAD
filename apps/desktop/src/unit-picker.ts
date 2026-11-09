@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** User measurement preference; never part of a document edit or undo transaction. */
 import { element } from './ui';
 import { lengthUnit, setLengthUnit, type LengthUnit } from './dimensions';
@@ -34,14 +35,7 @@ export function unitPicker() {
   });
   select.addEventListener('input', (e) => e.stopPropagation());
   label.append(element('span', '', 'Measurement units · user preference'), select);
-  group.append(
-    label,
-    element(
-      'p',
-      'inspector-note',
-      'Units save immediately for this user, independently of project changes.',
-    ),
-    error,
-  );
+  controlHelp(select, 'Units save immediately for this user, independently of project changes.');
+  group.append(label, error);
   return group;
 }

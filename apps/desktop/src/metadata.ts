@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Portable project information; profile import and sheet placement are separate future workflows. */
 import type { Context, MetadataRow, Reply, TemplateCatalog } from './types';
 import type { Shell } from './shell';
@@ -32,17 +33,11 @@ export class MetadataDialog {
     this.applyButton.type = 'submit';
     this.cancel.type = 'button';
     actions.append(this.cancel, this.applyButton);
-    this.form.append(
+    controlHelp(
       title,
-      element(
-        'p',
-        'settings-note',
-        'These values travel with this project. Engineer/contact is separate from drawn, checked or approved responsibilities. Reusable defaults are available under File → Profiles; drawing template defaults apply to new sheets. Existing sheets retain their chosen template.',
-      ),
-      this.body,
-      this.error,
-      actions,
+      'These values travel with this project. Engineer/contact is separate from drawn, checked or approved responsibilities. Reusable defaults are available under File → Profiles; drawing template defaults apply to new sheets. Existing sheets retain their chosen template.',
     );
+    this.form.append(title, this.body, this.error, actions);
     this.dialog.append(this.form);
     shell.app.append(this.dialog);
     this.form.addEventListener('submit', (event) => {

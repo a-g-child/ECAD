@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 import { PropertySections } from './property-sections';
 import { PictureFields } from './picture-controls';
 /** Exact local fields form one closed property proposal; typing never edits a project. */
@@ -132,13 +133,12 @@ export class TemplateProperties {
       ['Content X (µm)', 'Content Y (µm)', 'Content width (µm)', 'Content height (µm)'],
       model.content,
     );
-    this.paperFields.append(
-      element(
-        'p',
-        'inspector-note',
+    for (const field of [...this.paper, ...this.content]) {
+      controlHelp(
+        field,
         'Paper sizes are exact; contents are not scaled. Margin profiles and border styles remain separate from paper size.',
-      ),
-    );
+      );
+    }
     paperPresets(
       this.paperFields,
       this.paper,

@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Shared image import, preview and exact placement fields; owners supply transaction boundaries. */
 import { element } from './ui';
 import { dimension, readDimension, writeDimension } from './dimensions';
@@ -30,6 +31,10 @@ export class PictureFields {
     this.error.setAttribute('role', 'alert');
     const browse = element('button', 'plain', 'Browse image…');
     browse.type = 'button';
+    controlHelp(
+      browse,
+      'A local copy is saved with the project or template. PNG, JPEG or self-contained SVG · up to 4 MiB and 4 megapixels.',
+    );
     const file = element('input');
     file.type = 'file';
     file.accept = 'image/png,image/jpeg,image/svg+xml,.png,.jpg,.jpeg,.svg';
@@ -97,6 +102,10 @@ export class PictureFields {
       });
     const fit = element('select', 'property-input');
     fit.setAttribute('aria-label', 'Picture fit');
+    controlHelp(
+      fit,
+      'Fit whole image preserves aspect ratio; Fill and crop fills the bounds; Stretch uses the exact bounds.',
+    );
     for (const [key, label] of [
       ['contain', 'Fit whole image'],
       ['cover', 'Fill and crop'],
@@ -114,15 +123,7 @@ export class PictureFields {
     });
     const fitLabel = element('label', 'settings-field');
     fitLabel.append(element('span', '', 'Picture fit'), fit);
-    this.root.append(
-      fitLabel,
-      element(
-        'p',
-        'settings-note',
-        'A local copy is saved with the project or template. PNG, JPEG or self-contained SVG · up to 4 MiB and 4 megapixels.',
-      ),
-      this.error,
-    );
+    this.root.append(fitLabel, this.error);
     this.show();
   }
   private show() {

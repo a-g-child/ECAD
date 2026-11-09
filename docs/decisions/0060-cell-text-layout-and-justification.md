@@ -72,3 +72,5 @@ inspector state, retained through same-target property completion without enteri
 undo or persistence. Sections start expanded and remain explicitly collapsible.
 Numeric/text validation, pending drafts, keyboard completion and exact proposals
 remain owned by the existing template editor.
+
+Static instructional copy is attached to controls as hover tips and accessible descriptions through `controlHelp`, rather than rendered as paragraph rows. Dynamic values, errors and content-removal decisions remain visible. The shared controls retain their validation/keyboard behaviour and reserve no extra layout space for ordinary help.

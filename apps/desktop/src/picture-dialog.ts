@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Shared modal browsing/placement transaction; cancellation never changes document data. */
 import { element } from './ui';
 import { errorText } from './transport';
@@ -73,12 +74,9 @@ export class PictureDialog {
     });
     form.append(heading);
     if (target.cell)
-      form.append(
-        element(
-          'p',
-          'settings-note',
-          'A picture replaces the cell caption and content. Undo restores the previous cell.',
-        ),
+      controlHelp(
+        apply,
+        'A picture replaces the cell caption and content. Undo restores the previous cell.',
       );
     form.append(fields.root, error, actions);
     this.dialog.replaceChildren(form);

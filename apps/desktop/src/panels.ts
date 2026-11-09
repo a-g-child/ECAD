@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Shared property rows and report tables stay inside shell-owned bounds. */
 import { dimension, dimensionSummary, readDimension, writeDimension } from './dimensions';
 import type { PropertyRow } from './types';
@@ -111,12 +112,12 @@ export function renderProperties(
     }
     shell.inspector.append(group);
   }
-  const hint = element(
-    'p',
-    'inspector-note',
-    'Text: Enter adds a line; Ctrl/Cmd+Enter or Apply commits one edit. Other fields use Enter.',
-  );
-  shell.inspector.append(hint);
+  for (const control of shell.inspector.querySelectorAll<HTMLElement>('input,textarea,select')) {
+    controlHelp(
+      control,
+      'Text: Enter adds a line; Ctrl/Cmd+Enter or Apply commits one edit. Other fields use Enter.',
+    );
+  }
   shell.inspector.scrollTop = scroll;
 }
 export function renderReport(shell: Shell, rows: string[][]) {

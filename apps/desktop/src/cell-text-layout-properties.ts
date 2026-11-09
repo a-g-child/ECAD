@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Shared cell-block controls over explicit style references, including range/default editing. */
 import type { TemplateCellTextLayout, TemplateTextStyles } from './types';
 import { element } from './ui';
@@ -57,6 +58,12 @@ export class CellTextLayoutProperties {
       ],
     ] as const) {
       const select = element('select', 'property-input');
+      controlHelp(
+        select,
+        key === 'caption_position'
+          ? 'Place the caption above the content or inline before it. Default uses the template setting.'
+          : 'Position the caption and content together within the cell. Default uses the template setting.',
+      );
       const { value, mixed } = state(key);
       for (const [v, text] of [
         ['', 'Default'],
@@ -83,8 +90,10 @@ export class CellTextLayoutProperties {
           ? 'Default (: )'
           : 'Default';
     separator.maxLength = 128;
-    separator.title =
-      'Used exactly as entered, including spaces. Only shown when both caption and content are present.';
+    controlHelp(
+      separator,
+      'Used exactly as entered, including spaces. Only shown when both caption and content are present.',
+    );
     separator.addEventListener('input', () => {
       separator.placeholder = 'No separator';
       set('separator', separator.value);

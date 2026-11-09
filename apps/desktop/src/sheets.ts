@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Sheet drafts are local strings; Rust validates and retains the exact reviewed paper edit. */
 import { dimension, readDimension, writeDimension } from './dimensions';
 import type { Context, Reply, SheetRow, SheetPreview, Snapshot } from './types';
@@ -94,18 +95,11 @@ export class SheetsDialog {
       this.label('Drawing document', this.owner),
       this.label('Sheet template', this.template),
     );
-    this.form.append(
-      title,
-      element(
-        'p',
-        'settings-note',
-        'Select a saved template. Paper and margins come from that layout. Scale is paper/model (1/2 is half size); placement changes do not resize source geometry.',
-      ),
-      this.select,
-      layout,
-      this.message,
-      actions,
+    controlHelp(
+      this.template,
+      'Select a saved template. Paper and margins come from that layout. Scale is paper/model (1/2 is half size); placement changes do not resize source geometry.',
     );
+    this.form.append(title, this.select, layout, this.message, actions);
     this.dialog.append(this.form);
     shell.app.append(this.dialog);
     this.message.setAttribute('role', 'alert');

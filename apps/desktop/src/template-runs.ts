@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** One multiline editor for cell/free text; inline placeholders map to typed stored runs. */
 import type { TemplateRun } from './types';
 import { element } from './ui';
@@ -13,7 +14,10 @@ export class TemplateRuns {
     this.runFields.dataset.variableEditor = '';
     const text = textEditor('property-input property-text template-text-input', 5);
     text.setAttribute('aria-label', 'Text and variables');
-    text.title = 'Multiline text with {{field}} variables. Right-click or use Insert variable.';
+    controlHelp(
+      text,
+      'Multiline text with {{field}} variables. Right-click or use Insert variable.',
+    );
     text.value = formatTemplateText(runs);
     const initialText = text.value;
     const initialRuns = structuredClone(runs);
@@ -62,11 +66,8 @@ export class TemplateRuns {
       e.stopPropagation();
       open();
     });
-    const hint = element(
-      'small',
-      'template-text-hint',
-      'Variables use {{field}}. Use \\{{ for literal braces.',
-    );
-    this.runFields.append(label, toolbar, hint, error, picker.dialog);
+    controlHelp(text, 'Variables use {{field}}. Use \\{{ for literal braces.');
+    controlHelp(insert, 'Choose a variable to insert at the caret or replace selected text.');
+    this.runFields.append(label, toolbar, error, picker.dialog);
   }
 }

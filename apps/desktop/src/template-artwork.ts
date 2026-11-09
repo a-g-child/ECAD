@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 import { PictureFields } from './picture-controls';
 /** Draft artwork properties: one Apply commits the complete validated template edit. */
 import { dimensionPoints, dimension, readDimension } from './dimensions';
@@ -48,14 +49,12 @@ export class TemplateArtwork {
   }
   private render() {
     this.root.replaceChildren(element('h3', '', 'Template artwork'));
-    if (!this.selectedId)
-      this.root.append(
-        element(
-          'p',
-          'inspector-note',
-          'Coordinates use the selected measurement units. Artwork may occupy margins. Apply properties commits changes.',
-        ),
-      );
+    this.root.removeAttribute('title');
+    this.root.removeAttribute('aria-description');
+    controlHelp(
+      this.root,
+      'Coordinates use the selected measurement units. Artwork may occupy margins. Apply properties commits changes.',
+    );
     for (const kind of this.selectedId
       ? []
       : (['text', 'polyline', 'rectangle', 'ellipse'] as const)) {

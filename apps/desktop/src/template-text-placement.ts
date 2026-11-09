@@ -1,3 +1,4 @@
+import { controlHelp } from './control-help';
 /** Canvas-local text draft; shared typed run controls never resolve project values here. */
 import type { TemplateRun } from './types';
 import { TemplateRuns } from './template-runs';
@@ -28,6 +29,8 @@ export class TemplateTextPlacement {
     const place = element('button', 'plain', 'Place text');
     const cancelButton = element('button', 'plain', 'Cancel text');
     place.type = cancelButton.type = 'button';
+    controlHelp(place, 'Enter adds a line; Ctrl/Cmd+Enter places text.');
+    controlHelp(cancelButton, 'Escape cancels this text placement.');
     place.addEventListener('click', () => void this.commit());
     cancelButton.addEventListener('click', () => {
       if (!this.busy) void this.cancel();
@@ -37,7 +40,6 @@ export class TemplateTextPlacement {
     this.root.append(
       element('strong', '', 'New template text'),
       controls.runFields,
-      element('p', 'inspector-note', 'Enter: newline · Ctrl/Cmd+Enter: place · Escape: cancel'),
       this.note,
       actions,
     );

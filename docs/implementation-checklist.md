@@ -538,3 +538,7 @@ Cell-layout validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (79
 - [x] Browser regression covers grouping, applicability, bounds, pending text, collapsed-state retention, image insertion/undo and scroll preservation; text/picture screenshots reviewed locally.
 
 Cell-inspector validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (80 browser workflows), and `cargo xtask desktop` passed. Text/picture screenshots were reviewed; native Windows/Linux interaction remains unverified.
+
+- [x] Move static control guidance to shared hover tips/accessibility descriptions; remove explanatory paragraphs from inspectors and related dialogs while preserving values, validation and content-loss decisions.
+
+Hover-help validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (80 browser workflows), and `cargo xtask desktop` passed. Regression checks verify removed hint rows, retained hover/accessibility guidance, selection summaries and existing edit/history behaviour.

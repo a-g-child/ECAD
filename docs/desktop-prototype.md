@@ -233,3 +233,5 @@ scrolling for longer values. Inspector scroll position survives edits to the sam
 selection, while selection changes start at the top. Group expansion is workspace
 state and creates no document/history change. Template text defaults use the same
 Layout/Style grouping.
+
+Static explanatory guidance in property controls and related dialogs is supplied through native hover tips, with accessible control descriptions. Labels, read-only values, selected-object counts, validation messages and content-loss acknowledgements stay visible. Shared text/variable, picture, formatting and table controls use the same help attachment convention.
