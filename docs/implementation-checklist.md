@@ -373,7 +373,8 @@ Contextual-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui`
 - [x] Regression workflows for delayed canvas clicks, delayed numeric/text finish, invalid final proposals, cancellation, exact history and anchor cleanup.
 - [x] Inline template text/variable placement.
 - [x] Successive-vertex template paths.
-- [ ] Shared appearance controls and further tool extraction.
+- [x] Shared font-family/colour controls for existing template artwork, schematic properties and defaults.
+- [ ] Further tool extraction and additional style capabilities.
 
 See [decision 0048](decisions/0048-shared-preview-queue-and-click-placement.md). Ordered schematic path intents remain separate from replaceable pointer previews. Persistence and electrical connectivity are unchanged.
 
@@ -404,3 +405,15 @@ Inline-text validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (61
 See [decision 0050](decisions/0050-template-multi-point-paths.md). Template snapping, numeric placement, orthogonal constraints and pointer vertex handles remain pending; these paths do not affect electrical topology.
 
 Path validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (62 browser workflows), and `cargo xtask desktop` passed. Desktop checks cover host build/lint; native interaction automation and Windows/Linux runtime validation remain pending.
+
+
+### Shared appearance controls
+
+- [x] Reuse generic font-family and named RGB choices alongside exact custom values across template artwork, schematic properties and drawing defaults.
+- [x] Preserve mixed selection, inherited/explicit ownership, existing validation and each owner's commit/undo rules.
+- [x] Treat exact/preset controls as one contextual focus group; preserve invalid drafts for correction.
+- [x] Keep multiline font requests and bounded pane layout; cover behavior through real Rust-backed browser workflows.
+
+See [decision 0051](decisions/0051-shared-appearance-controls.md). Font weight/style, advanced colour selection, table-cell typography and native font/output parity remain pending.
+
+Appearance validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (64 browser workflows), and `cargo xtask desktop` passed. The inline overlay regression now waits for its resize-observer layout before checking bounds. Desktop checks cover host build/lint; native interaction automation and Windows/Linux runtime validation remain pending.

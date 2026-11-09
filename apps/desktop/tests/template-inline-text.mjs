@@ -111,6 +111,17 @@ export function registerTemplateInlineText({ page, button, until }) {
       .selectOption('field');
     await until(async () => (await art.count()) === 1);
     await p.setViewportSize({ width: 960, height: 640 });
+    // ResizeObserver clamps the overlay on the next rendering frame.
+    await until(async () => {
+      const overlay = await inline.boundingBox();
+      const canvas = await editor.locator('.template-canvas').boundingBox();
+      return (
+        overlay.x >= canvas.x &&
+        overlay.y >= canvas.y &&
+        overlay.x + overlay.width <= canvas.x + canvas.width + 1 &&
+        overlay.y + overlay.height <= canvas.y + canvas.height + 1
+      );
+    });
     const overlay = await inline.boundingBox(),
       canvas = await editor.locator('.template-canvas').boundingBox();
     assert.ok(

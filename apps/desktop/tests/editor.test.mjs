@@ -1,3 +1,4 @@
+import { registerAppearanceTests, registerTemplateAppearanceTests } from './appearance.mjs';
 import { registerTemplatePaths } from './template-paths.mjs';
 import { registerTemplateInlineText } from './template-inline-text.mjs';
 import { registerTemplateClickPlacement } from './template-click-placement.mjs';
@@ -494,6 +495,8 @@ registerArrangementTests({
   project: () => project,
 });
 
+registerAppearanceTests({ page, button, until, bounds, pressAction });
+
 registerDefaultsTests({ page, button, until, bounds, root, project: () => project, pressAction });
 
 registerMetadataTests({ page, button, until, bounds, root, project: () => project, pressAction });
@@ -565,3 +568,5 @@ registerTemplateClickPlacement({ page, button, until });
 registerTemplateInlineText({ page, button, until });
 
 registerTemplatePaths({ page, button, until });
+
+registerTemplateAppearanceTests({ page, button, until });

@@ -145,3 +145,10 @@ Click placement starts with a 60 × 20 mm box limited by the remaining paper. Dr
 Choose **Path** in the Template ribbon (also **Draw template path** in command search). Click each vertex, use **Backspace** to revise, then **Enter** to create the whole path in one undo step. The hovering segment is only a guide. Click the initial point again to close an outline. **Escape** cancels without changing the template or redo history; invalid geometry stays in the draft for correction.
 
 Paths keep their ordered vertices through numeric properties, whole-object movement, undo/redo and library save/reopen. The limit is 4096 vertices. These are graphical paper-space paths; schematic snapping, orthogonal constraints and electrical connections are not implied. See [decision 0050](decisions/0050-template-multi-point-paths.md).
+
+
+### Shared appearance choices
+
+Template artwork properties, schematic drawing properties and Drawing defaults share generic font-family choices and a named colour palette. Keep using the adjacent exact field for custom fonts or #rrggbb colours. **Custom** retains the existing value; it does not reset inheritance. Font requests support multiple lines. Font availability and metrics depend on the host system.
+
+Template choices use contextual completion, schematic choices apply through the existing property command, and defaults wait for **Apply defaults**. Mixed schematic properties retain their applicable-subset behavior; undo restores inherited versus explicit values. Moving from a template's exact field to its preset selector keeps the field editable without an early blur commit. See [decision 0051](decisions/0051-shared-appearance-controls.md).

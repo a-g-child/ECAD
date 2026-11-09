@@ -34,6 +34,12 @@ export class PropertyCompletion {
     });
     root.addEventListener('focusout', (e) => {
       if (!field(e.target) || !this.enabled() || this.busy() || !this.pending()) return;
+      // Moving between an exact field and its choices is one composite field edit.
+      if (
+        e.relatedTarget instanceof Node &&
+        e.target.closest('.appearance-control')?.contains(e.relatedTarget)
+      )
+        return;
       // Buttons own explicit commands/structural edits; do not race their click handlers.
       if (e.relatedTarget instanceof Element && e.relatedTarget.closest('button')) return;
       if (this.composing) {

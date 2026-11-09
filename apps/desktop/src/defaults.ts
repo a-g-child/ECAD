@@ -2,6 +2,7 @@
 import type { Context, DrawingDefaults, Reply } from './types';
 import type { Shell } from './shell';
 import { element } from './ui';
+import { appearanceControl } from './appearance-controls';
 import { textEditor, applyTextKey } from './text';
 import { send, inputId, errorText } from './transport';
 export class DefaultsDialog {
@@ -47,7 +48,10 @@ export class DefaultsDialog {
       field.setAttribute('aria-label', caption);
       if (key === 'text_height' || key === 'stroke_width') field.inputMode = 'numeric';
       this.fields.set(key, field);
-      label.append(element('span', '', caption), field);
+      label.append(
+        element('span', '', caption),
+        key === 'font' || key === 'colour' ? appearanceControl(field, key) : field,
+      );
       this.form.append(label);
     }
     this.form.append(
@@ -85,7 +89,10 @@ export class DefaultsDialog {
   open(context: Context, values: DrawingDefaults) {
     this.captured = context;
     this.error.textContent = '';
-    for (const [key, field] of this.fields) field.value = values[key];
+    for (const [key, field] of this.fields) {
+      field.value = values[key];
+      field.dispatchEvent(new Event('input'));
+    }
     this.dialog.showModal();
     this.fields.get('font')!.focus();
   }
@@ -98,7 +105,8 @@ export class DefaultsDialog {
     if (this.pending || !this.captured) return;
     this.pending = true;
     this.error.textContent = '';
-    for (const field of this.fields.values()) field.disabled = true;
+    for (const field of this.form.querySelectorAll<HTMLInputElement>('input,textarea,select'))
+      field.disabled = true;
     this.applyButton.disabled = this.cancel.disabled = true;
     try {
       const defaults = Object.fromEntries(
@@ -117,7 +125,8 @@ export class DefaultsDialog {
       this.error.textContent = errorText(error);
     } finally {
       this.pending = false;
-      for (const field of this.fields.values()) field.disabled = false;
+      for (const field of this.form.querySelectorAll<HTMLInputElement>('input,textarea,select'))
+        field.disabled = false;
       this.applyButton.disabled = this.cancel.disabled = false;
     }
   }

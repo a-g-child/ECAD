@@ -1,6 +1,7 @@
 /** Shared property rows and report tables stay inside shell-owned bounds. */
 import type { PropertyRow } from './types';
 import { element } from './ui';
+import { appearanceControl } from './appearance-controls';
 import type { Shell } from './shell';
 import { textEditor, applyTextKey } from './text';
 export function renderProperties(
@@ -66,11 +67,18 @@ export function renderProperties(
         if (event.key === 'Escape') {
           event.stopPropagation();
           input.value = input.dataset.original ?? '';
+          input.dispatchEvent(new Event('input'));
           input.blur();
         }
       });
       const editor = element('div', 'property-editor');
-      editor.append(input);
+      editor.append(
+        row.key === 'font_family' || row.kind === 'colour'
+          ? appearanceControl(input, row.kind === 'colour' ? 'colour' : 'font', () => {
+              void edit(row.key, input.value);
+            })
+          : input,
+      );
       if (multiline) {
         const apply = element('button', 'plain property-apply', 'Apply');
         apply.setAttribute('aria-label', `Apply ${row.label}`);

@@ -1,6 +1,7 @@
 /** Draft artwork properties: one Apply commits the complete validated template edit. */
 import type { TemplateGraphic, TemplateVariant } from './types';
 import { element } from './ui';
+import { appearanceControl, type AppearanceKind } from './appearance-controls';
 import { textEditor } from './text';
 import { TemplateRuns } from './template-runs';
 export class TemplateArtwork {
@@ -20,6 +21,7 @@ export class TemplateArtwork {
     value: string,
     set: (v: string) => void,
     multiline = false,
+    appearance?: AppearanceKind,
   ) {
     const input = multiline
       ? textEditor('property-input property-text', 3)
@@ -27,7 +29,10 @@ export class TemplateArtwork {
     input.value = value;
     input.setAttribute('aria-label', name);
     const label = element('label', 'settings-field');
-    label.append(element('span', '', name), input);
+    label.append(
+      element('span', '', name),
+      appearance ? appearanceControl(input, appearance) : input,
+    );
     parent.append(label);
     input.addEventListener('input', () => {
       set(input.value);
@@ -85,9 +90,9 @@ export class TemplateArtwork {
       ['X', 'Y', 'Width', 'Height'].forEach((label, n) =>
         this.field(details, `Artwork ${label} (µm)`, g.bounds[n], (v) => (g.bounds[n] = v)),
       );
-      this.field(details, 'Artwork colour', g.colour, (v) => (g.colour = v));
+      this.field(details, 'Artwork colour', g.colour, (v) => (g.colour = v), false, 'colour');
       if (g.kind === 'text') {
-        this.field(details, 'Artwork font', g.font, (v) => (g.font = v));
+        this.field(details, 'Artwork font', g.font, (v) => (g.font = v), true, 'font');
         this.field(details, 'Artwork text height (µm)', g.text_height, (v) => (g.text_height = v));
         details.append(new TemplateRuns(g.contents, this.changed).runFields);
       } else {
