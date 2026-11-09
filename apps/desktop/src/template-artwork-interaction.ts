@@ -122,7 +122,7 @@ export class TemplateArtworkInteraction {
       kind === 'move'
         ? 'Drag the selected artwork · Escape cancels'
         : kind === 'text'
-          ? 'Click a text anchor or drag a text box · Escape cancels'
+          ? 'Click a text anchor · Escape cancels'
           : `Click start, then finish ${kind} · Drag also works · Escape cancels`,
     );
     this.preview.svg.focus();
@@ -216,25 +216,9 @@ export class TemplateArtworkInteraction {
         await this.finish(false);
         return;
       }
-      const b =
-        distance < 4
-          ? {
-              x: Math.min(a.x + 60000, Number(this.model.paper[0])),
-              y: Math.min(a.y + 20000, Number(this.model.paper[1])),
-            }
-          : p;
-      if (
-        b.x < 0 ||
-        b.y < 0 ||
-        b.x > Number(this.model.paper[0]) ||
-        b.y > Number(this.model.paper[1]) ||
-        b.x === a.x ||
-        b.y === a.y
-      ) {
-        await this.finish(false);
-        this.status('Place a positive text box inside the paper.', true);
-        return;
-      }
+      // A tiny retained extent keeps older files/readers structurally compatible.
+      // Actual text bounds are derived from its rendered content, never this hint.
+      const b = { x: a.x + 1, y: a.y + 1 };
       this.drag.pointer = null;
       if (this.preview.svg.hasPointerCapture(e.pointerId))
         this.preview.svg.releasePointerCapture(e.pointerId);

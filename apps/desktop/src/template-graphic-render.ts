@@ -1,8 +1,7 @@
 /** Shared artwork rendering for template placeholders and resolved project sheets. */
 import type { TemplateGraphic } from './types';
-import { renderText } from './text';
+import { renderText, reserveTextBounds } from './text';
 const ns = 'http://www.w3.org/2000/svg';
-let serial = 0;
 function node<K extends keyof SVGElementTagNameMap>(
   tag: K,
   attrs: Record<string, string | number>,
@@ -21,21 +20,15 @@ export function renderTemplateGraphics(parent: SVGElement, graphics: TemplateGra
       const value = g.contents
         .map((r) => (r.kind === 'literal' ? r.value : `{${r.value}}`))
         .join('');
-      const id = `template-artwork-${++serial}`;
-      const clip = node('clipPath', { id });
-      clip.append(node('rect', { x, y, width, height }));
       const text = node('text', {
         fill: g.colour,
         'font-family': g.font,
         'font-size': size,
-        'clip-path': `url(#${id})`,
       });
       renderText(text, value, x, y + size, size);
       const title = node('title', {});
       title.textContent = value;
-      group.append(clip, text, title);
-      // Transparent bounds support selecting blank or clipped text without changing its appearance.
-      group.append(node('rect', { x, y, width, height, fill: 'transparent' }));
+      group.append(text, title);
     } else if (g.kind === 'rectangle')
       group.append(node('rect', { x, y, width, height, ...style }));
     else if (g.kind === 'ellipse')
@@ -59,20 +52,15 @@ export function renderTemplateGraphics(parent: SVGElement, graphics: TemplateGra
       );
     parent.append(group);
     if (g.kind === 'text') {
-      const text = group.querySelector('text')!;
-      const b = text.getBBox();
-      if (b.x < x || b.y < y || b.x + b.width > x + width || b.y + b.height > y + height) {
-        group.dataset.diagnostic = 'text-overflow';
-        group.querySelector('title')!.textContent +=
-          '\nText exceeds bounds; full content is preserved';
-        group.append(
-          node('path', {
-            d: `M ${x + width - 2} ${y} l 2 0 l 0 2 Z`,
-            fill: '#b96b00',
-            class: 'overflow-marker',
-          }),
-        );
-      }
+      reserveTextBounds(
+        group,
+        group.querySelector('text')!,
+        x,
+        y + Number(g.text_height) / 1000,
+        Number(g.text_height) / 1000,
+        'text-bounds',
+        true,
+      );
     }
   }
 }

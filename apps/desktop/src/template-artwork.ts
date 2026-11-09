@@ -87,7 +87,7 @@ export class TemplateArtwork {
       details.dataset.artworkId = g.id;
       details.open = !!this.selectedId;
       details.append(element('summary', '', `${i + 1} · ${g.kind}`));
-      ['X', 'Y', 'Width', 'Height'].forEach((label, n) =>
+      (g.kind === 'text' ? ['X', 'Y'] : ['X', 'Y', 'Width', 'Height']).forEach((label, n) =>
         this.field(details, `Artwork ${label} (µm)`, g.bounds[n], (v) => (g.bounds[n] = v)),
       );
       this.field(details, 'Artwork colour', g.colour, (v) => (g.colour = v), false, 'colour');

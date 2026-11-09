@@ -70,7 +70,10 @@ fn collapsed_negative_extreme_and_outside_geometry_reject_without_clamping() {
     let g = TemplateGraphic::between(id, TemplatePrimitive::Text, [0, 0], [40000, 20000], &paper)
         .unwrap();
     assert!(g.placed_at([-1, 0], &paper).is_err());
-    assert!(g.placed_at([280000, 200000], &paper).is_err());
+    let moved = g.placed_at([280000, 200000], &paper).unwrap();
+    assert_eq!(moved.bounds.width, g.bounds.width);
+    assert_eq!(moved.shape, g.shape);
+    assert!(g.placed_at([i64::from(paper.width), 0], &paper).is_err());
     assert_eq!(g.bounds.x, 0);
 }
 

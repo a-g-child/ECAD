@@ -49,6 +49,56 @@ export function registerTemplateArtworkTests({ page, button, until }) {
     assert.equal(await art.count(), 1);
     assert.equal(await art.locator('text').textContent(), 'Company{company.name}');
     assert.equal(await art.locator('text tspan').count(), 2);
+    assert.equal(
+      await detail.getByRole('textbox', { name: 'Artwork Width (µm)', exact: true }).count(),
+      0,
+    );
+    assert.equal(await art.locator('clipPath').count(), 0);
+    // Exercise the shared renderer with a tiny legacy box and resolved, multiline values.
+    const measured = await p.evaluate(async () => {
+      const { renderTemplateGraphics } = await import('/src/template-graphic-render.ts');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      document.body.append(svg);
+      const graphic = {
+        id: 'bounds-probe',
+        kind: 'text',
+        bounds: ['10000', '10000', '1', '1'],
+        contents: [{ kind: 'literal', value: '\nLong resolved company name\n' }],
+        font: 'sans-serif',
+        text_height: '3500',
+        stroke_width: '250',
+        colour: '#000000',
+        points: [],
+      };
+      const measure = () => {
+        svg.replaceChildren();
+        renderTemplateGraphics(svg, [graphic]);
+        const box = svg.querySelector('.text-bounds').getBBox();
+        const glyph = svg.querySelector('text').getBBox();
+        return {
+          width: box.width,
+          height: box.height,
+          encloses:
+            box.x <= glyph.x &&
+            box.y <= glyph.y &&
+            box.x + box.width >= glyph.x + glyph.width &&
+            box.y + box.height >= glyph.y + glyph.height,
+          clipped: svg.querySelector('text').hasAttribute('clip-path'),
+        };
+      };
+      const first = measure();
+      graphic.text_height = '7000';
+      const larger = measure();
+      graphic.contents = [{ kind: 'literal', value: '' }];
+      const empty = measure();
+      svg.remove();
+      return { first, larger, empty };
+    });
+    assert.ok(measured.first.encloses && !measured.first.clipped);
+    assert.ok(measured.first.width > 20 && measured.first.height > 10);
+    assert.ok(measured.larger.width > measured.first.width * 1.9);
+    assert.ok(measured.larger.height > measured.first.height * 1.9);
+    assert.ok(measured.empty.width > 0 && measured.empty.height > 0);
     await command('Undo');
     assert.equal(await art.count(), 0);
     await command('Redo');
@@ -67,7 +117,7 @@ export function registerTemplateArtworkTests({ page, button, until }) {
       .fill('0,0\n40000,0\n40000,15000');
     await apply();
     assert.equal(await art.locator('polyline').getAttribute('points'), '10,10 50,10 50,25');
-    detail = editor.locator('.template-artwork > details').first();
+    detail = editor.locator('.template-artwork > details').nth(1);
     await detail.locator(':scope > summary').click();
     await detail
       .getByRole('textbox', { name: 'Artwork Width (µm)', exact: true })

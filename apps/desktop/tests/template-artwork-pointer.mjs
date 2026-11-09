@@ -84,7 +84,8 @@ export function registerTemplateArtworkPointerTests({ page, button, until }) {
       }
       await route.continue();
     });
-    await drag([30, 30], [45, 45]);
+    // Hit the content-sized text, not the old empty clipping-box area.
+    await drag([22, 22], [37, 37]);
     await p.unroute('**/bridge');
     assert.ok(delayed);
     assert.equal(await art.first().getAttribute('data-template-graphic'), before);
@@ -95,7 +96,8 @@ export function registerTemplateArtworkPointerTests({ page, button, until }) {
       .evaluate((n) => ['x', 'y', 'width', 'height'].map((k) => Number(n.getAttribute(k))));
     assert.ok(Math.abs(moved[0] - original[0] - 15) < 0.5);
     assert.ok(Math.abs(moved[1] - original[1] - 15) < 0.5);
-    assert.deepEqual(moved.slice(2), original.slice(2));
+    // Browser glyph measurements can differ by floating-point rounding after translation.
+    for (const n of [2, 3]) assert.ok(Math.abs(moved[n] - original[n]) < 0.00001);
     await command('Undo');
     await ready();
     assert.deepEqual(
@@ -106,7 +108,7 @@ export function registerTemplateArtworkPointerTests({ page, button, until }) {
         .evaluate((n) => ['x', 'y', 'width', 'height'].map((k) => Number(n.getAttribute(k)))),
       original,
     );
-    const click = await point(30, 30);
+    const click = await point(22, 22);
     await p.mouse.click(click.x, click.y);
     await ready();
     await command('Draw template ellipse');

@@ -137,7 +137,7 @@ Template gestures and schematic annotations now share preview scheduling. A sche
 
 Choose **Draw template text**, then click the starting point. A canvas-local editor opens with one multiline **Text and variables** field. Use **Insert variable** or right-click the field to choose a grouped variable and insert it at the caret. **Place text** or Ctrl/Cmd+Enter creates the complete object once; Enter inserts newlines, and Escape/**Cancel text** leaves no object or undo entry. Invalid text remains editable. The existing IME protections apply.
 
-Click placement starts with a 60 × 20 mm box limited by the remaining paper. Drag a box instead when a specific extent is needed; both workflows edit contents before committing. The floating editor stays inside the canvas at smaller window sizes. Text appearance and exact box dimensions remain available in the contextual inspector after placement. Overflow uses the existing clipping/marker policy. Library previews show placeholders; sheet values resolve only in their project context. See [decision 0049](decisions/0049-inline-template-text-placement.md).
+Click placement establishes the text anchor. The floating editor stays inside the canvas at smaller window sizes. Text appearance and anchor remain available in the contextual inspector after placement. Free text grows with its contents, font and explicit line breaks; it does not wrap or clip to a stored box. Its selectable area includes blank lines. Table-cell clipping remains unchanged. Library previews show placeholders; sheet values resolve only in their project context. See [decision 0049](decisions/0049-inline-template-text-placement.md).
 
 
 ### Template paths

@@ -152,3 +152,7 @@ Desktop loading opts into an in-memory preservation migration before establishin
 ## Inline variable authoring
 
 Template cells and free text now use a single multiline text field with inline `{{field}}` placeholders and a grouped variable picker, opened by button or right-click. Persistence remains typed literal/field runs; existing template revisions and project pins are unchanged. Literal delimiter escaping, captured caret insertion, local text undo and field/tool transaction boundaries are described in [decision 0053](decisions/0053-inline-template-variable-editing.md). This supersedes stacked run-entry controls as the authoring UI.
+
+### Content-sized free text
+
+Free template text uses a paper anchor, font, height and typed literal/variable runs. The shared renderer derives visible/hit bounds from resolved glyphs and semantic line boxes; it never persists font measurements. Text does not wrap or clip to legacy extents. Width/height controls are omitted for text; table geometry and cell overflow behavior remain separate. See [decision 0054](decisions/0054-content-sized-template-text.md).

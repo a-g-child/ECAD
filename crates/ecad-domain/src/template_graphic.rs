@@ -13,12 +13,13 @@ pub enum TemplateGraphicShape {
     /// Ordered local points; at least two distinct consecutive vertices are required.
     Polyline(Vec<[u32; 2]>),
 }
-/// One retained template object. Bounds enclose its geometry (text is clipped to its box).
+/// One retained template object. Text uses an anchor and renderer-derived visible bounds.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TemplateGraphic {
     /// Stable identity independent of geometry or content.
     pub id: TemplateGraphicId,
     /// Paper-space origin and extent, in micrometres.
+    /// For text, extents are retained legacy hints, not clipping or movement limits.
     pub bounds: FrameRect,
     /// Retained geometry/content, never resolved project values.
     pub shape: TemplateGraphicShape,
@@ -34,11 +35,14 @@ pub struct TemplateGraphic {
 impl TemplateGraphic {
     pub(crate) fn validate(&self, paper: &crate::SheetPaper) -> Result<(), TemplateError> {
         let b = self.bounds;
-        if u64::from(b.x) + u64::from(b.width) > u64::from(paper.width)
-            || u64::from(b.y) + u64::from(b.height) > u64::from(paper.height)
-            || self.text_height == 0
-            || self.stroke_width == 0
-            || self.font.trim().is_empty()
+        let text = matches!(self.shape, TemplateGraphicShape::Text(_));
+        let outside = if text {
+            b.x >= paper.width || b.y >= paper.height
+        } else {
+            u64::from(b.x) + u64::from(b.width) > u64::from(paper.width)
+                || u64::from(b.y) + u64::from(b.height) > u64::from(paper.height)
+        };
+        if outside || self.text_height == 0 || self.stroke_width == 0 || self.font.trim().is_empty()
         {
             return Err(TemplateError::Graphic);
         }

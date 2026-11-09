@@ -34,17 +34,23 @@ export function reserveTextBounds(
   y: number,
   height: number,
   className = 'text-bounds',
+  includeSingleLine = false,
 ) {
   const count = Number(text.dataset.lines);
-  const b = text.getBBox();
-  if (count <= 1) return;
+  const glyphs = text.getBBox();
+  // Empty strings have an SVG box at (0, 0), not at the text anchor.
+  const b = glyphs.width === 0 && glyphs.height === 0 ? { x, y, width: 0, height: 0 } : glyphs;
+  if (count <= 1 && !includeSingleLine) return;
   const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   const top = Math.min(b.y, y - height),
     bottom = Math.max(b.y + b.height, y + (count - 1) * height * 1.3 + height * 0.3);
   for (const [name, value] of Object.entries({
     x: Math.min(x, b.x),
     y: top,
-    width: Math.max(x, b.x + b.width) - Math.min(x, b.x),
+    width: Math.max(
+      includeSingleLine ? height * 0.3 : 0,
+      Math.max(x, b.x + b.width) - Math.min(x, b.x),
+    ),
     height: bottom - top,
   }))
     rect.setAttribute(name, String(value));

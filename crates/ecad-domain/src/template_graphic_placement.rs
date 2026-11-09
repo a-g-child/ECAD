@@ -6,7 +6,7 @@ use crate::{
 /// Initial pointer primitive. A line is retained as one two-vertex polyline.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TemplatePrimitive {
-    /// Multiline text box, initially containing the literal "Text".
+    /// Multiline anchored text, initially containing the literal "Text".
     Text,
     /// Ordered line endpoints, including horizontal and vertical lines.
     Line,
@@ -76,6 +76,9 @@ impl TemplateGraphic {
         };
         let a = point(start)?;
         let b = point(end)?;
+        if a[0] > paper.width || b[0] > paper.width || a[1] > paper.height || b[1] > paper.height {
+            return Err(TemplateError::Graphic);
+        }
         let x = a[0].min(b[0]);
         let y = a[1].min(b[1]);
         let bounds = FrameRect {

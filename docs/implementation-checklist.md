@@ -300,7 +300,7 @@ Margin validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (51 brow
 
 - [x] Retained stable artwork identities; multiline literal/variable text, rectangles, ellipses and coherent line/polylines in exact paper units.
 - [x] Template ribbon/command-search Artwork action, explorer/canvas property access, property-based creation/edit/removal with one Apply/Undo and pending-field guards.
-- [x] Explicit font, text height, outline width and colour; paper-bounds validation, clipped text with overflow feedback, artwork behind title-block tables.
+- [x] Explicit font, text height, outline width and colour; paper geometry/anchor validation, content-sized free text, artwork behind title-block tables.
 - [x] Shared typed variable resolution from each project/document/sheet; independent template bodies never store resolved project values.
 - [x] Strict nested variant v3 artwork persistence, existing v1/v2 encoding preserved for artwork-free bodies; project/library round trips and table-edit preservation.
 - [x] Two-point pointer drawing and whole-object dragging (see pointer tools below).
@@ -383,13 +383,13 @@ Shared-preview validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` 
 
 ### Inline template text placement
 
-- [x] Click an anchor or drag a text box, then edit multiline literal/variable runs beside it inside a bounded canvas overlay.
+- [x] Click an anchor, then edit multiline literal/variable runs beside it inside a bounded canvas overlay.
 - [x] Reuse the existing run controls; notify preview owners after updating the typed run value.
 - [x] Preview complete text proposals without document edits; Place/Ctrl+Enter commits one retained token and one undo entry.
 - [x] Protect composition, reject blank/unknown runs, retain invalid text for correction, and cancel without losing redo.
 - [x] Cover bridge validation/history and browser live preview, delayed completion, viewport bounds, drag compatibility and library reopen.
 
-See [decision 0049](decisions/0049-inline-template-text-placement.md). New text defaults to a bounded 60 × 20 mm box; appearance and exact box editing remain contextual properties. Persistence, template pins and electrical geometry are unchanged.
+See [decision 0049](decisions/0049-inline-template-text-placement.md). Free text derives visible and hit bounds from contents/font/line count; only its anchor and appearance are edited. Legacy extents remain stored hints. See [decision 0054](decisions/0054-content-sized-template-text.md). Persistence, template pins and electrical geometry are unchanged.
 
 Inline-text validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (61 browser workflows), and `cargo xtask desktop` passed. A final focused inline workflow and frontend build also passed after refining focus restoration on invalid placement. Desktop checks are host build/lint, not native interaction automation; Windows/Linux runtime validation remains pending.
 
