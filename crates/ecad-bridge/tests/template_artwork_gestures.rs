@@ -127,3 +127,52 @@ fn invalid_superseded_and_retargeted_proposals_cannot_commit_and_cancel_keeps_st
     assert!(commit(&mut b, latest["token"].clone()).is_err());
     assert_eq!(variant(&b), original);
 }
+
+#[test]
+fn inline_text_contents_remain_transient_validate_strictly_and_commit_one_complete_object() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut b = bridge(&dir);
+    let original = variant(&b);
+    let runs = json!([{"kind":"literal","value":"Company\n  Office\n"},{"kind":"field","value":"company.name"}]);
+    let edit = json!({"start":["10000","20000"],"end":["70000","40000"],"contents":runs});
+    let p = preview(&mut b, "template.draw.text", ID, edit.clone()).unwrap();
+    assert_eq!(variant(&b), original);
+    assert_eq!(p["graphics"][0]["contents"], runs);
+    assert!(action(&mut b, "document.save").is_err());
+    assert!(action(&mut b, "template.close").is_err());
+    for contents in [
+        json!([]),
+        json!([{"kind":"literal","value":" \n "}]),
+        json!([{"kind":"field","value":"unknown.field"}]),
+    ] {
+        let mut invalid = edit.clone();
+        invalid["contents"] = contents;
+        assert!(preview(&mut b, "template.draw.text", ID, invalid).is_err());
+        assert!(commit(&mut b, p["token"].clone()).is_err());
+        assert_eq!(variant(&b), original);
+    }
+    let p = preview(&mut b, "template.draw.text", ID, edit).unwrap();
+    commit(&mut b, p["token"].clone()).unwrap();
+    let created = variant(&b);
+    assert_eq!(created["graphics"][0]["contents"], runs);
+    action(&mut b, "document.undo").unwrap();
+    assert_eq!(variant(&b), original);
+    let variable = json!({"start":["10000","20000"],"end":["70000","40000"],"contents":[{"kind":"field","value":"sheet.title"}]});
+    preview(&mut b, "template.draw.text", ID, variable.clone()).unwrap();
+    action(&mut b, "placement.cancel").unwrap();
+    action(&mut b, "document.redo").unwrap();
+    assert_eq!(variant(&b), created);
+    assert!(preview(&mut b, "template.artwork.move", ID, variable.clone()).is_err());
+    action(&mut b, "placement.cancel").unwrap();
+    assert!(
+        preview(
+            &mut b,
+            "template.draw.rectangle",
+            "00000000000000000000000000000002",
+            variable
+        )
+        .is_err()
+    );
+    action(&mut b, "placement.cancel").unwrap();
+    assert_eq!(variant(&b), created);
+}

@@ -128,6 +128,13 @@ Paper properties show **Paper family**, **Paper size**, **Orientation** and **Ge
 
 ### Click placement and shared previews
 
-Template **Line**, **Rectangle** and **Ellipse** tools accept a start click and a finish click, with a visible anchor and hovering preview. Press-drag-release placement still works. Escape cancels; the final point controls the result even while an older preview is loading. Invalid final geometry creates no object. Text-box placement and whole-artwork movement still use dragging.
+Template **Line**, **Rectangle** and **Ellipse** tools accept a start click and a finish click, with a visible anchor and hovering preview. Press-drag-release placement still works. Escape cancels; the final point controls the result even while an older preview is loading. Invalid final geometry creates no object. Whole-artwork movement uses dragging; text creation now follows the inline workflow below.
 
-Template gestures and schematic annotations now share preview scheduling. A schematic text finish click or Ctrl/Cmd+Enter waits for the latest text/position preview; invalid final values remain editable. Tool cancellation suppresses delayed replies from the old frontend session. Each successful placement remains one undo operation. Inline template text/variable insertion and shared appearance controls remain planned. See [decision 0048](decisions/0048-shared-preview-queue-and-click-placement.md).
+Template gestures and schematic annotations now share preview scheduling. A schematic text finish click or Ctrl/Cmd+Enter waits for the latest text/position preview; invalid final values remain editable. Tool cancellation suppresses delayed replies from the old frontend session. Each successful placement remains one undo operation. Inline template text creation is described below; shared appearance controls remain planned. See [decision 0048](decisions/0048-shared-preview-queue-and-click-placement.md).
+
+
+### Inline template text creation
+
+Choose **Draw template text**, then click the starting point. A canvas-local editor opens with multiline literal/variable controls; use **Add text content** to append runs and choose **Variable** for a typed placeholder. **Place text** or Ctrl/Cmd+Enter creates the complete object once; Enter inserts newlines, and Escape/**Cancel text** leaves no object or undo entry. Invalid text remains editable. The existing IME protections apply.
+
+Click placement starts with a 60 × 20 mm box limited by the remaining paper. Drag a box instead when a specific extent is needed; both workflows edit contents before committing. The floating editor stays inside the canvas at smaller window sizes. Text appearance and exact box dimensions remain available in the contextual inspector after placement. Overflow uses the existing clipping/marker policy. Library previews show placeholders; sheet values resolve only in their project context. See [decision 0049](decisions/0049-inline-template-text-placement.md).

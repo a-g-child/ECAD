@@ -31,8 +31,6 @@ export class TemplateRuns {
     label.append(element('span', '', name), input);
     parent.append(label);
     input.setAttribute('aria-label', name);
-    input.addEventListener('input', this.changed);
-    input.addEventListener('change', this.changed);
     return label;
   }
   render() {
@@ -66,9 +64,16 @@ export class TemplateRuns {
         run.kind = type.value as TemplateRun['kind'];
         run.value = run.kind === 'literal' ? literal.value : binding.value;
         show();
+        this.changed();
       });
-      literal.addEventListener('input', () => (run.value = literal.value));
-      binding.addEventListener('change', () => (run.value = binding.value));
+      literal.addEventListener('input', () => {
+        run.value = literal.value;
+        this.changed();
+      });
+      binding.addEventListener('change', () => {
+        run.value = binding.value;
+        this.changed();
+      });
       const remove = element('button', 'plain', `Remove content ${i + 1}`);
       remove.type = 'button';
       remove.addEventListener('click', () => {

@@ -371,8 +371,22 @@ Contextual-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui`
 - [x] Template line/rectangle/ellipse start–finish clicks with anchor feedback; preserve drag placement and whole-artwork movement.
 - [x] Accept schematic text finish while a preview is loading; validate the final text/position and retain invalid input for correction.
 - [x] Regression workflows for delayed canvas clicks, delayed numeric/text finish, invalid final proposals, cancellation, exact history and anchor cleanup.
-- [ ] Inline template text/variable placement, successive-vertex template paths, shared appearance controls and further tool extraction.
+- [x] Inline template text/variable placement.
+- [ ] Successive-vertex template paths, shared appearance controls and further tool extraction.
 
 See [decision 0048](decisions/0048-shared-preview-queue-and-click-placement.md). Ordered schematic path intents remain separate from replaceable pointer previews. Persistence and electrical connectivity are unchanged.
 
 Shared-preview validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (60 browser workflows), and `cargo xtask desktop` passed. Native desktop checks build/lint the available host; native interaction automation and Windows/Linux runtime testing remain pending.
+
+
+### Inline template text placement
+
+- [x] Click an anchor or drag a text box, then edit multiline literal/variable runs beside it inside a bounded canvas overlay.
+- [x] Reuse the existing run controls; notify preview owners after updating the typed run value.
+- [x] Preview complete text proposals without document edits; Place/Ctrl+Enter commits one retained token and one undo entry.
+- [x] Protect composition, reject blank/unknown runs, retain invalid text for correction, and cancel without losing redo.
+- [x] Cover bridge validation/history and browser live preview, delayed completion, viewport bounds, drag compatibility and library reopen.
+
+See [decision 0049](decisions/0049-inline-template-text-placement.md). New text defaults to a bounded 60 × 20 mm box; appearance and exact box editing remain contextual properties. Persistence, template pins and electrical geometry are unchanged.
+
+Inline-text validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (61 browser workflows), and `cargo xtask desktop` passed. A final focused inline workflow and frontend build also passed after refining focus restoration on invalid placement. Desktop checks are host build/lint, not native interaction automation; Windows/Linux runtime validation remains pending.

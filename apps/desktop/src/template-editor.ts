@@ -450,7 +450,8 @@ export class TemplateEditor {
     for (const input of this.root.querySelectorAll<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLButtonElement
     >('input,textarea,select,button'))
-      input.disabled = busy || this.operating || !!this.propertyCommit || this.gestureActive;
+      if (!input.closest('[data-template-text-editor]'))
+        input.disabled = busy || this.operating || !!this.propertyCommit || this.gestureActive;
   }
   focus() {
     this.preview.svg.focus();

@@ -75,6 +75,11 @@ export class TemplateGesture {
       values: { variant: state.variant, [this.artwork ? 'graphic' : 'table']: state.table, edit },
     });
   }
+  /** Wait for a text draft's final validation while retaining invalid input for correction. */
+  async ready() {
+    await this.queue.drain();
+    return !!this.state?.token && !this.ending;
+  }
   async finish(commit: boolean) {
     const state = this.state;
     if (!state || this.ending) return;

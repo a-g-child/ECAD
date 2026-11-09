@@ -1,5 +1,5 @@
 //! Exact pointer intent for artwork, resolved against the captured immutable draft.
-use crate::dto::BridgeError;
+use crate::{dto::BridgeError, template_rows::RunRow};
 use ecad_app::{ActionParameters, TemplateDocument};
 use ecad_domain::*;
 use serde::Deserialize;
@@ -16,6 +16,8 @@ struct Edit {
     // Both absent arms a creation tool without manufacturing an object or undo entry.
     start: Option<[String; 2]>,
     end: Option<[String; 2]>,
+    // Typed unresolved runs are allowed only for text creation, never movement or vectors.
+    contents: Option<Vec<RunRow>>,
 }
 impl ArtworkEditRow {
     pub(crate) fn target(&self) -> Vec<String> {
@@ -46,8 +48,14 @@ impl ArtworkEditRow {
         if kind.is_none() && index.is_none() {
             return Err(error("Artwork is unavailable".into()));
         }
+        if self.edit.contents.is_some() && kind != Some(TemplatePrimitive::Text) {
+            return Err(error("Text contents require the text creation tool".into()));
+        }
         let (start, end) = match (self.edit.start, self.edit.end) {
-            (None, None) => return Ok(None),
+            (None, None) if self.edit.contents.is_none() => return Ok(None),
+            (None, None) => {
+                return Err(error("Place a text anchor before editing contents".into()));
+            }
             (Some(a), Some(b)) => (a, b),
             _ => return Err(error("Both pointer coordinates are required".into())),
         };
@@ -63,10 +71,22 @@ impl ArtworkEditRow {
         let end = parse(end)?;
         let paper = old.layout().paper();
         if let Some(kind) = kind {
-            graphics.push(
-                TemplateGraphic::between(id, kind, start, end, paper)
-                    .map_err(|e| error(e.to_string()))?,
-            );
+            let mut graphic = TemplateGraphic::between(id, kind, start, end, paper)
+                .map_err(|e| error(e.to_string()))?;
+            if let Some(contents) = self.edit.contents {
+                let runs = contents
+                    .into_iter()
+                    .map(TemplateTextRun::try_from)
+                    .collect::<Result<Vec<_>, _>>()?;
+                if !runs.iter().any(|r| match r {
+                    TemplateTextRun::Literal(text) => !text.trim().is_empty(),
+                    TemplateTextRun::Field(_) => true,
+                }) {
+                    return Err(error("Enter text or choose a template variable".into()));
+                }
+                graphic.shape = TemplateGraphicShape::Text(runs);
+            }
+            graphics.push(graphic);
         } else {
             let index = index.expect("validated existing object");
             graphics[index] = graphics[index]

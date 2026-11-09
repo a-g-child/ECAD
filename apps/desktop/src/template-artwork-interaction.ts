@@ -1,6 +1,7 @@
 /** One-shot pointer artwork tools; authoritative previews and closed commits stay in Rust. */
 import type { Context, Reply, TemplateGraphic, TemplateVariant } from './types';
 import { TemplatePreview } from './template-preview';
+import { TemplateTextPlacement } from './template-text-placement';
 import { TemplateGesture } from './template-gesture';
 import { paperPoint } from './template-table-selection';
 type Point = { x: number; y: number };
@@ -12,6 +13,7 @@ export class TemplateArtworkInteraction {
   private drag: { start: Point; pointer: number | null; screen: Point; second: boolean } | null =
     null;
   private ending = false;
+  private textPlacement: TemplateTextPlacement | null = null;
   private gesture: TemplateGesture;
   get active() {
     return this.tool !== null || this.gesture.active;
@@ -64,6 +66,7 @@ export class TemplateArtworkInteraction {
         if (
           this.drag &&
           !this.ending &&
+          !this.textPlacement &&
           (this.drag.pointer === null || this.drag.pointer === e.pointerId)
         ) {
           const p = paperPoint(svg, e);
@@ -96,7 +99,7 @@ export class TemplateArtworkInteraction {
       kind === 'move'
         ? 'Drag the selected artwork · Escape cancels'
         : kind === 'text'
-          ? 'Drag a text box · Escape cancels'
+          ? 'Click a text anchor or drag a text box · Escape cancels'
           : `Click start, then finish ${kind} · Drag also works · Escape cancels`,
     );
     this.preview.svg.focus();
@@ -113,7 +116,14 @@ export class TemplateArtworkInteraction {
     this.changed();
   }
   private down(e: PointerEvent) {
-    if (e.button !== 0 || this.drag?.pointer != null || this.ending || !this.model) return;
+    if (
+      e.button !== 0 ||
+      this.drag?.pointer != null ||
+      this.ending ||
+      this.textPlacement ||
+      !this.model
+    )
+      return;
     const p = paperPoint(this.preview.svg, e);
     if (!p) return;
     const hit = (e.target as Element).closest<SVGElement>('[data-template-graphic]')?.dataset
@@ -162,12 +172,64 @@ export class TemplateArtworkInteraction {
     e.preventDefault();
     e.stopImmediatePropagation();
     const distance = Math.hypot(e.clientX - this.drag.screen.x, e.clientY - this.drag.screen.y);
-    if (
-      !this.drag.second &&
-      this.tool?.kind !== 'move' &&
-      this.tool?.kind !== 'text' &&
-      distance < 4
-    ) {
+    if (this.tool?.kind === 'text') {
+      const a = this.drag.start;
+      const p = paperPoint(this.preview.svg, e);
+      if (
+        !p ||
+        !this.model ||
+        a.x < 0 ||
+        a.y < 0 ||
+        a.x >= Number(this.model.paper[0]) ||
+        a.y >= Number(this.model.paper[1])
+      ) {
+        await this.finish(false);
+        return;
+      }
+      const b =
+        distance < 4
+          ? {
+              x: Math.min(a.x + 60000, Number(this.model.paper[0])),
+              y: Math.min(a.y + 20000, Number(this.model.paper[1])),
+            }
+          : p;
+      if (
+        b.x < 0 ||
+        b.y < 0 ||
+        b.x > Number(this.model.paper[0]) ||
+        b.y > Number(this.model.paper[1]) ||
+        b.x === a.x ||
+        b.y === a.y
+      ) {
+        await this.finish(false);
+        this.status('Place a positive text box inside the paper.', true);
+        return;
+      }
+      this.drag.pointer = null;
+      if (this.preview.svg.hasPointerCapture(e.pointerId))
+        this.preview.svg.releasePointerCapture(e.pointerId);
+      this.preview.svg.dataset.artworkPhase = 'text';
+      this.textPlacement = new TemplateTextPlacement(
+        this.preview.svg.parentElement!,
+        this.preview.svg,
+        [Math.min(a.x, b.x), Math.min(a.y, b.y)],
+        (contents) =>
+          this.gesture.propose({
+            start: [String(a.x), String(a.y)],
+            end: [String(b.x), String(b.y)],
+            contents,
+          }),
+        async () => {
+          if (!(await this.gesture.ready())) return false;
+          await this.finish(true);
+          return true;
+        },
+        () => this.cancel(),
+      );
+      return;
+    }
+
+    if (!this.drag.second && this.tool?.kind !== 'move' && distance < 4) {
       // A click establishes the anchor. Clear capture ownership before releasing it.
       this.drag.pointer = null;
       if (this.preview.svg.hasPointerCapture(e.pointerId))
@@ -206,6 +268,8 @@ export class TemplateArtworkInteraction {
       await this.gesture.finish(commit);
     } finally {
       const pointer = this.drag?.pointer;
+      this.textPlacement?.close();
+      this.textPlacement = null;
       this.drag = null;
       this.tool = null;
       if (pointer != null && this.preview.svg.hasPointerCapture(pointer))

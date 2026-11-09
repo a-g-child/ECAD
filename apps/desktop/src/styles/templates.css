@@ -145,3 +145,26 @@
   stroke-width: 1.5px;
   vector-effect: non-scaling-stroke;
 }
+
+/* Inline creation is an overlay, never a new pane or a layout-changing notification. */
+.template-canvas {
+  position: relative;
+}
+.template-text-placement {
+  position: absolute;
+  z-index: 3;
+  width: min(300px, 100%);
+  max-height: min(360px, 100%);
+  overflow: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 3px 12px #0002;
+}
+.template-text-placement .settings-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--panel);
+}
