@@ -106,4 +106,10 @@ Template properties now includes General margin (µm), which sets all four sides
 
 In the template editor choose **Artwork** on the Template ribbon (also available in command search). Add text, a line/polyline, rectangle or ellipse, edit paper coordinates and appearance, then **Apply properties**. Expand an artwork item for its fields, or select it in the preview/explorer. Add literal or variable runs using the same controls as table cells. Text is multiline; overflowing text is clipped with a marker and full-value tooltip. Templates show variable placeholders; assigned project sheets resolve their own values.
 
-Artwork changes share template Undo/Redo, Revert fields and Save revision. Artwork may sit in margins and stays fixed when table margin fitting runs. Vector authoring currently uses exact coordinates and local point lists; pointer drawing/dragging and imported logos/images are not implemented yet.
+Artwork changes share template Undo/Redo, Revert fields and Save revision. Artwork may sit in margins and stays fixed when table margin fitting runs. Vector authoring supports exact coordinates/local point lists and the pointer tools below. Imported logos/images are not implemented yet.
+
+### Pointer artwork tools
+
+The Template ribbon's **Draw** group places text boxes, lines, rectangles and ellipses: choose a tool, then drag between two paper positions. Reverse drags are supported, including horizontal/vertical lines. Text starts as `Text`; edit multiline text or add variables through its properties. Drag an existing object to move it whole, or right-click to open its properties. **Escape** cancels; each changed gesture is one undo step. Click-only movement preserves redo.
+
+Placement previews are checked by Rust and commit the final release coordinate. Out-of-paper or collapsed geometry is rejected. Artwork pointer coordinates are currently unsnapped. Images, multi-click polyline drawing and pointer resize/vertex handles remain future work; numeric geometry/local-point editing remains available.

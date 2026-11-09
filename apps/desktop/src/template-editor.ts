@@ -13,6 +13,7 @@ import { send, inputId, errorText } from './transport';
 import { TemplatePreview } from './template-preview';
 import { TemplateProperties } from './template-properties';
 import { TemplateTableTools } from './template-table-tools';
+import { TemplateArtworkInteraction } from './template-artwork-interaction';
 import { TemplateTableInteraction } from './template-table-interaction';
 export class TemplateEditor {
   private root = element('section', 'template-workspace');
@@ -24,12 +25,15 @@ export class TemplateEditor {
   private form: TemplateProperties;
   private preview: TemplatePreview;
   private interaction: TemplateTableInteraction;
+  private artworkInteraction: TemplateArtworkInteraction;
   private selectedCells: TemplateCell[] = [];
   get gestureActive() {
-    return this.interaction?.active ?? false;
+    return (this.interaction?.active ?? false) || (this.artworkInteraction?.active ?? false);
   }
   cancelGesture() {
-    return this.interaction.cancel();
+    return this.artworkInteraction.active
+      ? this.artworkInteraction.cancel()
+      : this.interaction.cancel();
   }
   private tableTools: TemplateTableTools;
   get tableActive() {
@@ -114,15 +118,29 @@ export class TemplateEditor {
       context,
       apply,
       (table, cells) => this.selectGroup(table, cells),
-      () => !this.uiBusy && !this.operating && !this.fieldsPending && !this.tableActive,
+      () =>
+        !this.uiBusy &&
+        !this.operating &&
+        !this.fieldsPending &&
+        !this.tableActive &&
+        !this.artworkInteraction?.active,
       controls,
       status,
     );
-    this.preview.svg.addEventListener('pointerdown', (event) => {
-      const graphic = (event.target as Element).closest<SVGElement>('[data-template-graphic]');
-      if (!graphic || this.fieldsPending || this.working || this.uiBusy) return;
-      this.form.focusArtwork(graphic.dataset.templateGraphic!);
-    });
+    this.artworkInteraction = new TemplateArtworkInteraction(
+      this.preview,
+      context,
+      apply,
+      () =>
+        !this.uiBusy &&
+        !this.operating &&
+        !this.fieldsPending &&
+        !this.tableActive &&
+        !this.interaction.active,
+      controls,
+      status,
+      (id) => this.form.focusArtwork(id),
+    );
     this.canvas.append(this.preview.svg);
     this.root.append(left, center, right);
     shell.workspace.append(this.root);
@@ -241,6 +259,7 @@ export class TemplateEditor {
       this.variant,
       this.selection ? { table: this.selection.table, cells: this.selectedCells } : null,
     );
+    this.artworkInteraction.update(this.variant);
     this.preview.render(this.variant, reset);
     document.title = `${view.dirty || view.pending || this.fieldsPending ? '● ' : ''}${this.variant.name} — Template — ECAD`;
   }
@@ -287,6 +306,9 @@ export class TemplateEditor {
     setTimeout(() => {
       if (this.active) this.form.focus();
     }, 0);
+  }
+  draw(kind: 'text' | 'line' | 'rectangle' | 'ellipse' | 'move') {
+    this.artworkInteraction.start(kind);
   }
   artwork() {
     this.form.focusArtwork();

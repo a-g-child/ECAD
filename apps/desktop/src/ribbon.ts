@@ -162,6 +162,15 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
         ],
       },
       {
+        title: 'Draw',
+        commands: [
+          command('Text', 'Draw template text', 'properties', 'template.draw.text'),
+          command('Line', 'Draw template line', 'move', 'template.draw.line'),
+          command('Rectangle', 'Draw template rectangle', 'blocks', 'template.draw.rectangle'),
+          command('Ellipse', 'Draw template ellipse', 'blocks', 'template.draw.ellipse'),
+        ],
+      },
+      {
         title: 'Tables',
         commands: [
           command('Resize', 'Resize title-block table', 'properties', 'template.table.resize'),

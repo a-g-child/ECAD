@@ -24,6 +24,7 @@ Ribbon tabs use ArrowLeft/Right and Home/End with native control focus. File/Dra
 | Origin alignment/distribution | Unbound; remappable | Canvas |
 | Drawing fallbacks/creation presets | Primary+K, S | Document |
 | Template text and graphics | Unbound; remappable | Template editor |
+| Template pointer text/line/rectangle/ellipse and artwork move | Unbound; remappable | Template editor |
 | Palette request | Primary+Shift+P | Application |
 | Cancel placement request | Escape | Active canvas tool |
 

@@ -501,6 +501,43 @@ impl ActionRegistry {
                 })
                 .expect("unique valid builtins");
         }
+        for (id, label, kind) in [
+            (
+                "template.draw.text",
+                "Draw template text",
+                Some(ecad_domain::TemplatePrimitive::Text),
+            ),
+            (
+                "template.draw.line",
+                "Draw template line",
+                Some(ecad_domain::TemplatePrimitive::Line),
+            ),
+            (
+                "template.draw.rectangle",
+                "Draw template rectangle",
+                Some(ecad_domain::TemplatePrimitive::Rectangle),
+            ),
+            (
+                "template.draw.ellipse",
+                "Draw template ellipse",
+                Some(ecad_domain::TemplatePrimitive::Ellipse),
+            ),
+            ("template.artwork.move", "Move template artwork", None),
+        ] {
+            registry
+                .register(ActionDefinition {
+                    id: ActionId::new(id).expect("stable constant"),
+                    label: label.into(),
+                    category: "Templates".into(),
+                    description: label.into(),
+                    search_terms: vec![],
+                    scope: Scope::Application,
+                    handler: Handler::Template(TemplateOperation::Draw(kind)),
+                    repeat: ActionRepeat::Ignore,
+                    defaults: DefaultBindings::Unbound,
+                })
+                .expect("unique artwork actions");
+        }
         registry
     }
 }

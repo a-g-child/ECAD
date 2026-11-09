@@ -151,7 +151,7 @@ impl DesktopBridge {
         if self.templates.gesture.is_some() && handler != ActionHandler::CancelPlacement {
             return Err(BridgeError::new(
                 "template",
-                "Finish or cancel the table gesture first",
+                "Finish or cancel the template gesture first",
             ));
         }
         let table_commit = matches!(handler, ActionHandler::Template(TemplateOperation::Table(op))
@@ -198,6 +198,20 @@ impl DesktopBridge {
             )
             .map_err(|e| BridgeError::new("template", e))?;
         let message = match outcome {
+            TemplateActionOutcome::Request(TemplateOperation::Draw(kind)) => {
+                let mut response = self.snapshot();
+                response.request = Some(
+                    match kind {
+                        Some(TemplatePrimitive::Text) => "template_draw_text",
+                        Some(TemplatePrimitive::Line) => "template_draw_line",
+                        Some(TemplatePrimitive::Rectangle) => "template_draw_rectangle",
+                        Some(TemplatePrimitive::Ellipse) => "template_draw_ellipse",
+                        None => "template_artwork_move",
+                    }
+                    .into(),
+                );
+                return Ok(response);
+            }
             TemplateActionOutcome::Request(TemplateOperation::Artwork) => {
                 let mut response = self.snapshot();
                 response.request = Some("template_artwork".into());
@@ -205,7 +219,7 @@ impl DesktopBridge {
             }
             TemplateActionOutcome::Request(TemplateOperation::CancelDrag) => {
                 self.templates.gesture = None;
-                "Table gesture cancelled"
+                "Template gesture cancelled"
             }
             TemplateActionOutcome::Changed => {
                 self.templates.pending = false;
@@ -370,7 +384,7 @@ impl DesktopBridge {
                 if self.templates.gesture.is_some() {
                     return Err(BridgeError::new(
                         "template",
-                        "Finish or cancel the table gesture first",
+                        "Finish or cancel the template gesture first",
                     ));
                 }
                 let operation = table_action

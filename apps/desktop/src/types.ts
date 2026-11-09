@@ -211,7 +211,12 @@ export interface SheetPreview {
   scene: SceneRow[];
 }
 export interface Reply {
-  table_preview?: { token: string; tables: TemplateTable[]; snapped: string[] };
+  table_preview?: {
+    token: string;
+    tables: TemplateTable[];
+    snapped: string[];
+    graphics: TemplateGraphic[];
+  };
   project_templates: TemplateCatalog | null;
   activate_sheet: string | null;
   sheet_draft: SheetRow | null;

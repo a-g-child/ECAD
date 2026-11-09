@@ -97,6 +97,8 @@ pub use drawing_document_info::{
 
 mod template_border_snap;
 mod template_graphic;
+mod template_graphic_placement;
+pub use template_graphic_placement::TemplatePrimitive;
 mod template_layout;
 pub use identity::TemplateGraphicId;
 pub use template_graphic::{TemplateGraphic, TemplateGraphicShape};

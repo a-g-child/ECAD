@@ -20,6 +20,7 @@ pub(crate) struct TablePreviewRow {
     pub token: String,
     pub tables: Vec<TableRow>,
     pub snapped: Vec<String>,
+    pub graphics: Vec<crate::template_graphic_rows::GraphicRow>,
 }
 impl DesktopBridge {
     pub(crate) fn template_table_request(
@@ -50,31 +51,48 @@ impl DesktopBridge {
                     g.parameters = None;
                 }
                 let action = ActionId::new(action).map_err(|e| BridgeError::new("action", e))?;
-                let Some(ActionHandler::Template(TemplateOperation::Table(op))) =
-                    self.registry.get(&action).map(|a| a.handler)
-                else {
-                    return Err(BridgeError::new(
-                        "template",
-                        "Choose a registered table action",
-                    ));
+                let operation = match self.registry.get(&action).map(|a| a.handler) {
+                    Some(ActionHandler::Template(
+                        op @ (TemplateOperation::Table(_) | TemplateOperation::Draw(_)),
+                    )) => op,
+                    _ => {
+                        return Err(BridgeError::new(
+                            "template",
+                            "Choose a registered template geometry action",
+                        ));
+                    }
                 };
                 let state = self.registry.template_state(&action, &context, doc);
                 if let Some(reason) = state.disabled {
                     return Err(BridgeError::new(
                         "template",
-                        format!("Table action unavailable: {reason:?}"),
+                        format!("Template action unavailable: {reason:?}"),
                     ));
                 }
-                let row: TableEditRow =
-                    serde_json::from_value(values).map_err(|e| BridgeError::new("template", e))?;
-                let target = row.target();
+                let (target, proposal) = match operation {
+                    TemplateOperation::Table(op) => {
+                        let row: TableEditRow = serde_json::from_value(values)
+                            .map_err(|e| BridgeError::new("template", e))?;
+                        (
+                            row.target(),
+                            row.proposal_with_snap(doc, op).map(|(p, s)| (Some(p), s)),
+                        )
+                    }
+                    TemplateOperation::Draw(kind) => {
+                        let row: crate::template_artwork_edit::ArtworkEditRow =
+                            serde_json::from_value(values)
+                                .map_err(|e| BridgeError::new("template", e))?;
+                        (row.target(), row.proposal(doc, kind).map(|p| (p, vec![])))
+                    }
+                    _ => unreachable!("validated geometry operation"),
+                };
                 let revision = doc.revision();
                 if let Some(g) = &self.templates.gesture
                     && (g.revision != revision || g.action != action || g.target != target)
                 {
                     return Err(BridgeError::new(
                         "template",
-                        "The table gesture target changed; cancel before retargeting",
+                        "The template gesture target changed; cancel before retargeting",
                     ));
                 }
                 self.templates.gesture = Some(TableGesture {
@@ -84,20 +102,31 @@ impl DesktopBridge {
                     token: input.clone(),
                     parameters: None,
                 });
-                let (parameters, snapped) = row.proposal_with_snap(doc, op)?;
-                let ActionParameters::TemplateEdit { layout, .. } = &parameters else {
-                    unreachable!("table proposal")
+                let (parameters, snapped) = proposal?;
+                let layout = match &parameters {
+                    Some(ActionParameters::TemplateEdit { layout, .. }) => Some(layout),
+                    None => None,
+                    _ => unreachable!("geometry proposal"),
                 };
                 let preview = TablePreviewRow {
-                    token: input,
-                    tables: layout.tables().iter().map(TableRow::new).collect(),
+                    token: if parameters.is_some() {
+                        input
+                    } else {
+                        String::new()
+                    },
+                    tables: layout
+                        .map(|l| l.tables().iter().map(TableRow::new).collect())
+                        .unwrap_or_default(),
+                    graphics: layout
+                        .map(|l| l.graphics().iter().map(Into::into).collect())
+                        .unwrap_or_default(),
                     snapped,
                 };
                 self.templates
                     .gesture
                     .as_mut()
                     .expect("started gesture")
-                    .parameters = Some(parameters);
+                    .parameters = parameters;
                 Ok(Response {
                     table_preview: Some(preview),
                     ..Response::default()
@@ -111,16 +140,16 @@ impl DesktopBridge {
                 let context = self.context(context)?;
                 let g =
                     self.templates.gesture.as_ref().ok_or_else(|| {
-                        BridgeError::new("template", "No table gesture is active")
+                        BridgeError::new("template", "No template gesture is active")
                     })?;
                 if g.token != preview || context.editor != Some(g.revision) {
                     return Err(BridgeError::new(
                         "stale",
-                        "Table preview was superseded or belongs to another editor",
+                        "Template preview was superseded or belongs to another editor",
                     ));
                 }
                 let parameters = g.parameters.clone().ok_or_else(|| {
-                    BridgeError::new("template", "The latest table proposal is invalid")
+                    BridgeError::new("template", "The latest template proposal is invalid")
                 })?;
                 let invocation = ActionInvocation {
                     input_id: input_id(&input)?,
@@ -141,7 +170,7 @@ impl DesktopBridge {
             }
             _ => Err(BridgeError::new(
                 "template",
-                "Unknown table gesture request",
+                "Unknown template gesture request",
             )),
         }
     }

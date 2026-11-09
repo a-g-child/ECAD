@@ -1,5 +1,5 @@
 /** One coalesced Rust preview stream; pointer release commits the latest closed proposal only. */
-import type { Context, Reply, TemplateTable } from './types';
+import type { Context, Reply, TemplateTable, TemplateGraphic } from './types';
 import { send, inputId, errorText } from './transport';
 export class TemplateGesture {
   private state: {
@@ -18,10 +18,16 @@ export class TemplateGesture {
   }
   constructor(
     private context: () => Context,
-    private display: (tables: TemplateTable[] | null, invalid: boolean, snapped: string[]) => void,
+    private display: (
+      tables: TemplateTable[] | null,
+      invalid: boolean,
+      snapped: string[],
+      graphics?: TemplateGraphic[] | null,
+    ) => void,
     private apply: (r: Reply) => Promise<void>,
     private changed: () => void,
     private status: (s: string, error?: boolean) => void,
+    private artwork = false,
   ) {}
   begin(variant: string, table: string, action: string) {
     if (this.active) return false;
@@ -56,17 +62,26 @@ export class TemplateGesture {
       state.attempted = true;
       try {
         const reply = await send({
-          type: 'template_table_preview',
+          type: this.artwork ? 'template_geometry_preview' : 'template_table_preview',
           context: state.context,
           action: state.action,
-          values: { variant: state.variant, table: state.table, edit },
+          values: {
+            variant: state.variant,
+            [this.artwork ? 'graphic' : 'table']: state.table,
+            edit,
+          },
           input: inputId(),
         });
         if (!reply.table_preview) throw new Error('Missing table preview');
         // A newer queued pointer coordinate owns the next preview; do not flash an obsolete reply.
         if (!state.latest) {
           state.token = reply.table_preview.token;
-          this.display(reply.table_preview.tables, false, reply.table_preview.snapped);
+          this.display(
+            reply.table_preview.tables,
+            false,
+            reply.table_preview.snapped,
+            reply.table_preview.token ? reply.table_preview.graphics : null,
+          );
         }
       } catch (e) {
         state.token = null;
@@ -86,16 +101,16 @@ export class TemplateGesture {
       if (commit && state.token) {
         await this.apply(
           await send({
-            type: 'template_table_commit',
+            type: this.artwork ? 'template_geometry_commit' : 'template_table_commit',
             context: state.context,
             preview: state.token,
             input: inputId(),
           }),
         );
-        this.status('Table updated · one undo operation');
+        this.status(`${this.artwork ? 'Artwork' : 'Table'} updated · one undo operation`);
       } else if (state.attempted) {
         await this.cancel(state.context);
-        if (!commit) this.status('Table gesture cancelled');
+        if (!commit) this.status('Template gesture cancelled');
       }
     } catch (e) {
       this.status(errorText(e), true);

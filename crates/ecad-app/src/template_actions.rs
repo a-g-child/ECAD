@@ -4,6 +4,8 @@ use ecad_domain::{TemplateRevisionId, TemplateVariantRef};
 /// Operations available in the template workspace; property values remain command parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TemplateOperation {
+    /// Place a primitive with a pointer, or translate an existing artwork object for None.
+    Draw(Option<ecad_domain::TemplatePrimitive>),
     /// Focus retained text and vector artwork property controls.
     Artwork,
     /// Cancel a host-owned transient table gesture.
@@ -154,7 +156,11 @@ impl ActionDispatcher {
                 Ok(O::Changed)
             }
             (
-                H::Template(TemplateOperation::Apply | TemplateOperation::Table(_)),
+                H::Template(
+                    TemplateOperation::Apply
+                    | TemplateOperation::Table(_)
+                    | TemplateOperation::Draw(_),
+                ),
                 ActionParameters::TemplateEdit {
                     variant,
                     name,

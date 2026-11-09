@@ -22,6 +22,7 @@ mod sheets;
 pub use controller::DesktopBridge;
 pub use dto::{BridgeError, Request, Response};
 
+mod template_artwork_edit;
 mod template_graphic_rows;
 mod template_rows;
 mod template_table_edit;

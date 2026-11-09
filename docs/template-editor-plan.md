@@ -206,4 +206,8 @@ General margin sets the existing four side values in one template edit; individu
 
 The Template ribbon's Artwork action opens draft controls for text, line/polylines, rectangles and ellipses. Apply properties commits creation, exact geometry/style/content edits and removals together; Undo/Redo and saved revisions include the complete artwork. Text shares the existing literal/variable editor with cells, supports multiline content immediately and resolves per sheet. Artwork can occupy margins; changing margins only fits tables/content and never relocates artwork. Canvas and explorer entries open artwork properties. See [decision 0045](decisions/0045-template-artwork-and-variable-text.md).
 
-The current authoring surface is numeric properties/local polyline points. Interactive drawing/dragging, artwork snaps, assets/logos, filled primitives, arcs and reusable artwork styles remain planned.
+Numeric properties/local polyline points remain available alongside the pointer tools below. Artwork snaps, assets/logos, filled primitives, arcs and reusable artwork styles remain planned.
+
+## Implemented: pointer artwork placement and movement
+
+Registered Template ribbon tools now place text boxes, lines, rectangles and ellipses by dragging between two points. Drag existing artwork to move the complete object with its local geometry/content intact. Right-click opens its properties. Escape cancels the armed tool or gesture; successful changed gestures produce one undo operation. Invalid releases never apply an older valid preview. Two-point lines remain editable polylines; multi-click path drawing, pointer resizing and artwork snapping remain planned. See [decision 0046](decisions/0046-template-artwork-pointer-tools.md).

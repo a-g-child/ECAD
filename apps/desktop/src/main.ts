@@ -276,6 +276,15 @@ async function apply(reply: Reply) {
   }
   if (reply.request === 'template_fit') templateEditor.fit();
   if (reply.request === 'template_properties') templateEditor.properties();
+  const artworkTools = {
+    template_draw_text: 'text',
+    template_draw_line: 'line',
+    template_draw_rectangle: 'rectangle',
+    template_draw_ellipse: 'ellipse',
+    template_artwork_move: 'move',
+  } as const;
+  if (reply.request && reply.request in artworkTools)
+    templateEditor.draw(artworkTools[reply.request as keyof typeof artworkTools]);
   if (reply.request === 'template_artwork') templateEditor.artwork();
   const tableOperations: Record<string, string> = {
     template_table_insert_row: 'insert_row',

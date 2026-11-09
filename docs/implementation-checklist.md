@@ -301,8 +301,21 @@ Margin validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (51 brow
 - [x] Explicit font, text height, outline width and colour; paper-bounds validation, clipped text with overflow feedback, artwork behind title-block tables.
 - [x] Shared typed variable resolution from each project/document/sheet; independent template bodies never store resolved project values.
 - [x] Strict nested variant v3 artwork persistence, existing v1/v2 encoding preserved for artwork-free bodies; project/library round trips and table-edit preservation.
-- [ ] Direct pointer drawing/dragging and artwork snapping/transform tools; image/logo portable assets, fills and arcs.
+- [x] Two-point pointer drawing and whole-object dragging (see pointer tools below).
+- [ ] Artwork snapping/transform tools; image/logo portable assets, fills and arcs.
 
 Validation: added adapter/domain integration coverage for all shapes, malformed/duplicate/out-of-paper geometry, unknown fields, version rejection, exact canonical round trips and per-sheet variable resolution; bridge regression covers Apply/Undo/Redo, failed edits, table preservation and library saves. Browser workflow covers multiline bindings, all shapes, exact polyline edits, validation, Revert, history and saved-template reopen. See decision 0045 for first-slice limits.
 
 Local verification for this slice: `cargo xtask full`, `cargo xtask ui` (52 browser workflows), and `cargo xtask desktop` passed on macOS/aarch64. Browser tests use the real Rust loopback host; desktop checks are host build/lint checks, not native interaction automation. Windows/Linux runtime validation remains pending.
+
+### Template artwork pointer tools
+
+- [x] Registered text/line/rectangle/ellipse drag placement and whole-object movement, accessible through the template ribbon and command search.
+- [x] Checked paper geometry, reverse box drags, retained line endpoint order, complete local path/text/style preservation during movement.
+- [x] Shared revision/target-bound retained previews, guarded armed tools, coalesced pointer updates, exact final-release commits, Escape/capture-loss cancellation and coherent history.
+- [x] Domain geometry/failure regressions, bridge arming/dirty guards/history/token/retarget tests, and Rust-backed browser placement/movement/delayed-release/cancel/invalid-release workflow.
+- [ ] Multi-click polyline drawing, pointer resizing and vertex handles, artwork snaps and portable image assets.
+
+See [decision 0046](decisions/0046-template-artwork-pointer-tools.md). Existing numeric properties and variable text editing remain available after placement.
+
+Pointer-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (53 browser workflows), and `cargo xtask desktop` passed. New coverage includes two domain regressions, two retained-gesture bridge workflows and a browser workflow covering every primitive, delayed movement release, click-only redo preservation, armed cancellation and invalid release. Desktop checks are host build/lint, not native interaction automation; Windows/Linux runtime validation remains pending.

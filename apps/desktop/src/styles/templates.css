@@ -124,3 +124,14 @@
 .template-artwork summary {
   cursor: pointer;
 }
+
+.template-preview[data-artwork-tool] {
+  cursor: crosshair;
+}
+.template-preview[data-artwork-tool='move'] {
+  cursor: move;
+}
+.template-preview.artwork-invalid {
+  outline: 2px solid #b96b00;
+  outline-offset: -2px;
+}

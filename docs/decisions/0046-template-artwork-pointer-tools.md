@@ -1,0 +1,11 @@
+# 0046 — Template artwork pointer tools
+
+The property-based artwork editor now has registered drag-to-place tools for text boxes, lines, rectangles and ellipses, plus whole-object dragging. These tools edit the independent template document; they never create schematic geometry or electrical connectivity.
+
+The headless placement functions use checked signed input coordinates in integer micrometres. Reverse drags normalize box bounds and preserve ordered line endpoints. Horizontal/vertical lines are valid; collapsed shapes, negative coordinates and out-of-paper bounds reject. Translation retains object identity, all local vertices, text variable runs and appearance. There is no implicit grid or margin snapping in this slice.
+
+Table and artwork gestures share the existing retained-proposal lifecycle and monotonic input stream. Strict artwork proposals name the captured variant, graphic identity and registered operation. A tool can be armed with absent coordinates: the bridge retains a guarded gesture without inserting an object or creating history. Every newer attempt invalidates the previous successful proposal. Commit uses the exact retained command body and revision; malformed, superseded and retargeted attempts cannot commit an older preview. Generic geometry request aliases preserve existing table transport compatibility.
+
+The frontend sends at most one preview at a time, coalesces intervening pointer coordinates and waits for the final release proposal before commit. Pointer capture belongs to the stable SVG surface, not to regenerated shape nodes. Escape, pointer cancellation and lost capture discard the gesture. A successful changed gesture is one undo step; click-only movement is a no-op and preserves redo. Tool activation and pending proposals protect native save/close. Right-click artwork opens its existing property controls.
+
+This remains a bounded pointer slice. Lines can be extended into multi-vertex paths with the existing local-point editor. Multi-click polyline drawing, dragging resize/vertex handles, snapping/constraints, imported images and native interaction automation remain future work. Text boxes initially contain the literal `Text`; use the shared property editor for multiline contents and variable runs after placement. Existing explicit creation appearance is unchanged.

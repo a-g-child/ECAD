@@ -122,6 +122,7 @@ pub enum Request {
         input: String,
     },
     /// Validate a transient table proposal at its captured editor revision.
+    #[serde(alias = "template_geometry_preview")]
     TemplateTablePreview {
         /// Original editor context, retained throughout the gesture.
         context: serde_json::Value,
@@ -133,6 +134,7 @@ pub enum Request {
         input: String,
     },
     /// Commit exactly the retained successful table preview, without rebuilding it.
+    #[serde(alias = "template_geometry_commit")]
     TemplateTableCommit {
         /// Original editor context.
         context: serde_json::Value,
