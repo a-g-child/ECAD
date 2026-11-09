@@ -150,6 +150,15 @@ export function registerTemplateTableInteractionTests({ page, button, until, pro
     const originalProject = await readFile(project(), 'utf8');
     await open(p);
     const originalIds = await ids(p);
+    const lastCell = await point(rectangles(p).last());
+    await p.mouse.click(lastCell.x, lastCell.y);
+    await ready(p);
+    assert.ok(
+      Math.abs((await point(editor(p).locator('[data-control="column"]'))).y - lastCell.y) < 1,
+    );
+    const firstCell = await point(rectangles(p).first());
+    await p.mouse.click(firstCell.x, firstCell.y);
+    await ready(p);
     await editor(p)
       .getByRole('button', { name: 'Insert row below selection; keep bottom edge', exact: true })
       .focus();
@@ -162,16 +171,37 @@ export function registerTemplateTableInteractionTests({ page, button, until, pro
     assert.deepEqual(await ids(p), originalIds);
     await command(p, 'Redo');
     assert.deepEqual(await ids(p), rowIds);
+    const beforeColumn = await editor(p)
+      .locator('.table-edge[data-axis="x"][data-outer]:not([data-outer=""])')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('x1')));
     await editor(p).locator('[data-control="column"]').click();
     await ready(p);
     assert.equal(await rectangles(p).count(), 15);
+    assert.deepEqual(
+      await editor(p)
+        .locator('.table-edge[data-axis="x"][data-outer]:not([data-outer=""])')
+        .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('x1'))),
+      beforeColumn,
+    );
     const columnIds = await ids(p);
     assert.deepEqual(columnIds.slice(0, 10), rowIds);
-    assert.equal((await bounds(p))[0], 17);
+    assert.equal((await bounds(p))[0], 107);
     assert.equal((await bounds(p))[1], 150);
     await command(p, 'Undo');
     assert.deepEqual(await ids(p), rowIds);
     await command(p, 'Redo');
+    assert.deepEqual(await ids(p), columnIds);
+    // A second insertion formerly grew left past the margin for this same wide cell.
+    await editor(p).locator('[data-control="column"]').click();
+    await ready(p);
+    assert.equal(await rectangles(p).count(), 20);
+    assert.deepEqual(
+      await editor(p)
+        .locator('.table-edge[data-axis="x"][data-outer]:not([data-outer=""])')
+        .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('x1'))),
+      beforeColumn,
+    );
+    await command(p, 'Undo');
     assert.deepEqual(await ids(p), columnIds);
     await command(p, 'Save template revision');
     await until(async () => !/^●/.test(await p.title()));

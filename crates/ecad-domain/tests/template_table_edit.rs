@@ -196,3 +196,61 @@ fn column_split_is_order_independent_and_rejects_gaps_width_changes_and_late_fai
     );
     assert_eq!(short_last, before);
 }
+
+#[test]
+fn row_layout_retains_cells_styles_and_bounds_with_exact_unequal_partitions() {
+    let t = table(101, 103)
+        .split_cell(id(1), 2, 2, &[id(2), id(3), id(4)])
+        .unwrap();
+    assert_eq!(t.row_column_counts(), [2, 2]);
+    assert_eq!(t.with_row_layout(&[2, 2], &[], false).unwrap(), t);
+    let shaped = t.with_row_layout(&[3, 1], &[id(5)], true).unwrap();
+    assert_eq!(shaped.bounds(), t.bounds());
+    assert_eq!(shaped.row_column_counts(), [3, 1]);
+    assert_eq!(
+        shaped.cells().iter().map(|c| c.id).collect::<Vec<_>>(),
+        [id(1), id(2), id(5), id(3)]
+    );
+    assert_eq!(shaped.cells()[0].contents, t.cells()[0].contents);
+    assert_eq!(shaped.cells()[0].caption, t.cells()[0].caption);
+    assert_eq!(shaped.cells()[0].text_styles, t.cells()[0].text_styles);
+    assert_eq!(shaped.cells()[0].bounds, rect(0, 0, 33, 51));
+    assert_eq!(shaped.cells()[2].bounds, rect(67, 0, 34, 51));
+    assert_eq!(shaped.cells()[3].bounds, rect(0, 51, 101, 52));
+    assert!(shaped.cells()[2].contents.is_empty());
+    let three = shaped.with_row_layout(&[3, 1, 1], &[id(6)], false).unwrap();
+    assert_eq!(three.cells().last().unwrap().bounds, rect(0, 68, 101, 35));
+    for (columns, fresh, remove) in [
+        (vec![3, 1], vec![id(5)], false), // removal requires acknowledgement
+        (vec![3, 2], vec![id(1)], true),  // reused identity
+        (vec![3, 2], vec![], true),       // missing identity
+        (vec![0, 2], vec![], true),
+        (vec![102, 2], vec![], true),  // collapsed widths
+        (vec![1; 104], vec![], true),  // collapsed heights
+        (vec![4096, 2], vec![], true), // bounded total
+    ] {
+        assert!(t.with_row_layout(&columns, &fresh, remove).is_err());
+    }
+}
+
+#[test]
+fn row_layout_normalizes_spans_without_duplicating_bindings_and_noop_keeps_spans() {
+    let t = table(101, 103)
+        .split_cell(id(1), 2, 1, &[id(2)])
+        .unwrap()
+        .split_cell(id(2), 1, 2, &[id(3)])
+        .unwrap();
+    assert_eq!(t.row_column_counts(), [2, 1]);
+    assert_eq!(t.with_row_layout(&[2, 1], &[], false).unwrap(), t);
+    let changed = t.with_row_layout(&[2, 2], &[id(4)], false).unwrap();
+    assert_eq!(changed.cells()[0].bounds.height, 51);
+    assert_eq!(changed.cells()[2].bounds.x, 0);
+    assert_eq!(
+        changed
+            .cells()
+            .iter()
+            .filter(|c| !c.contents.is_empty())
+            .count(),
+        1
+    );
+}

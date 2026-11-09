@@ -161,7 +161,12 @@ export function registerTemplateMarginTests({ page, button, until, project, root
     assert.deepEqual(await box(p), right);
     await command(p, 'Redo');
     assert.deepEqual(await box(p), bottom);
-    await ribbon(p).getByRole('button', { name: 'Resize title-block table', exact: true }).click();
+    await editor(p).locator('svg.template-preview').focus();
+    await p.keyboard.press(`${process.platform === 'darwin' ? 'Meta' : 'Control'}+Shift+p`);
+    await p
+      .getByRole('textbox', { name: 'Search commands', exact: true })
+      .fill('template.table.resize');
+    await p.locator('.palette-item').first().click();
     const d = p.getByRole('dialog', { name: 'Resize title-block table', exact: true });
     await d.waitFor();
     await d.getByRole('textbox', { name: 'Table width (µm)', exact: true }).fill('276000');

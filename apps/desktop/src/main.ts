@@ -314,6 +314,7 @@ async function apply(reply: Reply) {
     template_table_insert_row: 'insert_row',
     template_table_insert_column: 'insert_column',
     template_table_resize: 'resize',
+    template_table_layout: 'layout',
     template_cell_split: 'split',
     template_cells_merge: 'merge',
     template_table_boundary: 'boundary',

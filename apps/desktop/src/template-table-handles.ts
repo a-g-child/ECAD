@@ -131,21 +131,23 @@ export function tableHandles(
   };
   button('Move title-block table', '✥', 'move', tx - 12 * px, ty - 12 * px);
   if (cells.length) {
+    const left = Math.min(...cells.map((c) => Number(c.bounds[0]))) / 1000;
+    const top = Math.min(...cells.map((c) => Number(c.bounds[1]))) / 1000;
     const right = Math.max(...cells.map((c) => Number(c.bounds[0]) + Number(c.bounds[2]))) / 1000;
     const bottom = Math.max(...cells.map((c) => Number(c.bounds[1]) + Number(c.bounds[3]))) / 1000;
     button(
       'Insert row below selection; keep bottom edge',
       '+',
       'row',
-      tx + right / 2,
+      tx + (left + right) / 2,
       ty + bottom + 12 * px,
     );
     button(
-      'Insert column after selection; keep right edge',
+      'Insert column after selection; fit table width',
       '+',
       'column',
       tx + right + 12 * px,
-      ty + bottom / 2,
+      ty + (top + bottom) / 2,
     );
   }
   svg.append(group);

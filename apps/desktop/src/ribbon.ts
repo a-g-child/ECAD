@@ -174,7 +174,7 @@ const definitions: { id: string; label: string; groups: Group[] }[] = [
       {
         title: 'Tables',
         commands: [
-          command('Resize', 'Resize title-block table', 'properties', 'template.table.resize'),
+          command('Layout', 'Table layout', 'properties', 'template.table.layout'),
           command('Split', 'Split title-block cell', 'blocks', 'template.cell.split'),
           command('Merge', 'Merge title-block cells', 'blocks', 'template.cells.merge'),
           command('Boundary', 'Move table boundary', 'move', 'template.table.boundary'),

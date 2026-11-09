@@ -36,7 +36,14 @@ export function registerTemplateTableTests({ page, button, until, project, root 
     await p.mouse.up();
   }
   async function tool(p, name) {
-    await ribbon(p).getByRole('button', { name, exact: true }).click();
+    if (name === 'Resize title-block table') {
+      await editor(p).locator('svg.template-preview').focus();
+      await p.keyboard.press(`${process.platform === 'darwin' ? 'Meta' : 'Control'}+Shift+p`);
+      await p
+        .getByRole('textbox', { name: 'Search commands', exact: true })
+        .fill('template.table.resize');
+      await p.locator('.palette-item').first().click();
+    } else await ribbon(p).getByRole('button', { name, exact: true }).click();
     const d = dialog(p, name);
     await d.waitFor();
     return d;
@@ -173,6 +180,56 @@ export function registerTemplateTableTests({ page, button, until, project, root 
     await command(p, 'Close template editor');
     await editor(p).waitFor({ state: 'hidden' });
     assert.equal(await readFile(project(), 'utf8'), original);
+    assert.deepEqual(p.errors, []);
+    await p.close();
+  });
+
+  test('table layout configures per-row columns, confirms removal and restores exact cells through undo and cancellation', async () => {
+    const p = await page({ electrical: false });
+    await open(p);
+    const geometry = () =>
+      editor(p)
+        .locator('.frame-cell')
+        .evaluateAll((nodes) =>
+          nodes.map((n) => ({
+            id: n.dataset.field,
+            rect: n.querySelector('rect').outerHTML,
+            text: n.textContent,
+          })),
+        );
+    const original = await geometry();
+    let d = await tool(p, 'Table layout');
+    await d.getByRole('combobox', { name: 'Number of rows', exact: true }).selectOption('3');
+    for (const [row, count] of [
+      [1, '3'],
+      [2, '1'],
+      [3, '2'],
+    ])
+      await d.getByRole('spinbutton', { name: `Row ${row} columns`, exact: true }).fill(count);
+    assert.equal(await d.getByRole('spinbutton').count(), 3);
+    await d.getByRole('button', { name: 'Apply table edit', exact: true }).click();
+    await until(async () => (await d.getByRole('alert').textContent()).includes('Confirm removal'));
+    assert.deepEqual(await geometry(), original);
+    await d.getByRole('checkbox', { name: 'Remove surplus cells and their contents' }).check();
+    await apply(d);
+    assert.equal(await cells(p).count(), 6);
+    const changed = await geometry();
+    assert.equal(changed[0].id, original[0].id);
+    assert.equal(changed[0].text, original[0].text);
+    await command(p, 'Undo');
+    assert.deepEqual(await geometry(), original);
+    d = await tool(p, 'Table layout');
+    await d.getByRole('combobox', { name: 'Number of rows', exact: true }).selectOption('5');
+    assert.equal(await d.getByRole('spinbutton').count(), 5);
+    await d.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await d.waitFor({ state: 'hidden' });
+    await command(p, 'Redo');
+    assert.deepEqual(await geometry(), changed);
+    d = await tool(p, 'Table layout');
+    await apply(d); // unchanged counts preserve exact geometry and history
+    await command(p, 'Undo');
+    assert.deepEqual(await geometry(), original);
+    await command(p, 'Discard template draft');
     assert.deepEqual(p.errors, []);
     await p.close();
   });

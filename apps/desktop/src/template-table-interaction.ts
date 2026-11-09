@@ -283,6 +283,7 @@ export class TemplateTableInteraction {
         at: String(at),
         size: String(size),
         anchor: 'end',
+        fit: kind === 'column',
       });
       await this.gesture.finish(true);
       this.paint();

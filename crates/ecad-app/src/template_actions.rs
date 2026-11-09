@@ -32,6 +32,8 @@ pub enum TemplateOperation {
 /// Registered structured table operations; numeric values remain closed command parameters.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TableOperation {
+    /// Set independent column counts per row within the existing table bounds.
+    Layout,
     /// Insert a row across a retained table partition.
     InsertRow,
     /// Insert a column across a retained table partition.

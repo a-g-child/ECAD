@@ -109,6 +109,7 @@ pub use template_border_snap::{
 mod template_table;
 mod template_table_edit;
 mod template_table_insert;
+mod template_table_layout;
 pub use identity::{
     TemplateCellId, TemplateDefinitionId, TemplateRevisionId, TemplateTableId, TemplateVariantId,
 };

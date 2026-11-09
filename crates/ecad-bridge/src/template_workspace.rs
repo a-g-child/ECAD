@@ -245,6 +245,7 @@ impl DesktopBridge {
                         TableOperation::InsertRow => "template_table_insert_row",
                         TableOperation::InsertColumn => "template_table_insert_column",
                         TableOperation::Resize => "template_table_resize",
+                        TableOperation::Layout => "template_table_layout",
                         TableOperation::Split => "template_cell_split",
                         TableOperation::Merge => "template_cells_merge",
                         TableOperation::Boundary => "template_table_boundary",

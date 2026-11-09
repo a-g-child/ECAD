@@ -17,6 +17,10 @@ pub(crate) struct TableEditRow {
 #[derive(Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Edit {
+    Layout {
+        columns: Vec<String>,
+        allow_removal: bool,
+    },
     Pointer {
         drag: PointerDrag,
         snap_tolerance: Option<String>,
@@ -26,6 +30,8 @@ enum Edit {
         at: String,
         size: String,
         anchor: String,
+        #[serde(default)]
+        fit: bool,
     },
     Resize {
         bounds: [String; 4],
@@ -132,13 +138,24 @@ impl TableEditRow {
                     target.extend(["pointer_resize".into(), edge.clone()])
                 }
             },
+            Edit::Layout { .. } => target.push("layout".into()),
             Edit::Resize { .. } => target.push("resize".into()),
             Edit::Boundary { axis, from, .. } => {
                 target.extend(["boundary".into(), axis.clone(), from.clone()])
             }
             Edit::Insert {
-                axis, at, anchor, ..
-            } => target.extend(["insert".into(), axis.clone(), at.clone(), anchor.clone()]),
+                axis,
+                at,
+                anchor,
+                fit,
+                ..
+            } => target.extend([
+                "insert".into(),
+                axis.clone(),
+                at.clone(),
+                anchor.clone(),
+                fit.to_string(),
+            ]),
             Edit::Split { cell, cells, .. } => {
                 target.push("split".into());
                 target.extend(cell.iter().cloned());
@@ -180,6 +197,58 @@ impl TableEditRow {
             .ok_or_else(|| error("Selected table is unavailable"))?;
         let changed = match (operation, self.edit) {
             (
+                TableOperation::Layout,
+                Edit::Layout {
+                    columns,
+                    allow_removal,
+                },
+            ) => {
+                let columns = columns
+                    .iter()
+                    .map(|s| number(s))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let total: u64 = columns.iter().map(|n| u64::from(*n)).sum();
+                if columns.is_empty()
+                    || columns.len() > 4096
+                    || total > 4096
+                    || columns.contains(&0)
+                {
+                    return Err(error("Use positive row counts and at most 4096 cells"));
+                }
+                let old_counts = old.row_column_counts();
+                let retained: usize = columns
+                    .iter()
+                    .enumerate()
+                    .map(|(i, n)| (*n as usize).min(old_counts.get(i).copied().unwrap_or(0)))
+                    .sum();
+                if retained < old.cells().len() && !allow_removal {
+                    return Err(error("Confirm removal of surplus cells and their contents"));
+                }
+                let count: usize = columns
+                    .iter()
+                    .enumerate()
+                    .map(|(i, n)| {
+                        (*n as usize).saturating_sub(old_counts.get(i).copied().unwrap_or(0))
+                    })
+                    .sum();
+                let mut used: std::collections::BTreeSet<_> = draft
+                    .layout()
+                    .tables()
+                    .iter()
+                    .flat_map(|t| t.cells().iter().map(|c| c.id))
+                    .collect();
+                let mut fresh = Vec::new();
+                for _ in 0..count {
+                    let id = RandomIds::template_cell().map_err(error)?;
+                    if !used.insert(id) {
+                        return Err(error("Generated cell identity already exists; retry"));
+                    }
+                    fresh.push(id);
+                }
+                old.with_row_layout(&columns, &fresh, allow_removal)
+            }
+
+            (
                 TableOperation::Resize,
                 Edit::Pointer {
                     drag,
@@ -210,6 +279,7 @@ impl TableEditRow {
                     at,
                     size,
                     anchor,
+                    fit,
                 },
             ) => {
                 let axis = match (op, axis.as_str()) {
@@ -241,7 +311,12 @@ impl TableEditRow {
                     "end" => TableGrowthAnchor::End,
                     _ => return Err(error("Choose a start or end growth anchor")),
                 };
-                old.insert_band(axis, at, number(&size)?, anchor, &fresh)
+                if fit {
+                    old.insert_band(axis, at, number(&size)?, TableGrowthAnchor::Start, &fresh)
+                        .and_then(|table| table.resized(old.bounds()))
+                } else {
+                    old.insert_band(axis, at, number(&size)?, anchor, &fresh)
+                }
             }
             (TableOperation::Resize, Edit::Resize { bounds }) => {
                 let b = bounds

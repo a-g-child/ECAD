@@ -1,9 +1,11 @@
 /** Captured structural table edits; the Rust core owns geometry, identity allocation and history. */
+import { TableLayoutFields } from './template-table-layout';
 import { dimension, readDimension } from './dimensions';
 import type { Context, Reply, TemplateVariant, TemplateTable, TemplateCell } from './types';
 import { element } from './ui';
 import { send, inputId, errorText } from './transport';
 const actions: Record<string, [string, string]> = {
+  layout: ['Table layout', 'template.table.layout'],
   insert_row: ['Insert title-block row', 'template.table.insert_row'],
   insert_column: ['Insert title-block column', 'template.table.insert_column'],
   resize: ['Resize title-block table', 'template.table.resize'],
@@ -21,6 +23,7 @@ export class TemplateTableTools {
   private cancelButton = element('button', 'plain', 'Cancel');
   private context: Context | null = null;
   private variant: TemplateVariant | null = null;
+  private layoutFields: TableLayoutFields | null = null;
   private operation = '';
   private pending = false;
   private dirty = false;
@@ -132,13 +135,17 @@ export class TemplateTableTools {
   private populate() {
     this.body.replaceChildren();
     this.controls.clear();
+    this.layoutFields = null;
     const table = this.table();
     this.applyButton.disabled = !table;
     if (!table) {
       this.body.append(element('p', '', 'This variant has no title-block table.'));
       return;
     }
-    if (this.operation.startsWith('insert_')) {
+    if (this.operation === 'layout') {
+      this.layoutFields = new TableLayoutFields(table);
+      this.body.append(this.layoutFields.root);
+    } else if (this.operation.startsWith('insert_')) {
       const axis = this.operation === 'insert_row' ? 1 : 0;
       this.number('Insert at (µm)', table.bounds[axis + 2]);
       this.number('Band size (µm)', table.cells[0].bounds[axis + 2]);
@@ -238,6 +245,9 @@ export class TemplateTableTools {
     const value = (name: string) => this.value(name);
     let edit: object;
     switch (this.operation) {
+      case 'layout':
+        edit = this.layoutFields!.proposal();
+        break;
       case 'insert_row':
       case 'insert_column':
         edit = {

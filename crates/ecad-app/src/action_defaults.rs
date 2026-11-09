@@ -61,6 +61,18 @@ impl ActionRegistry {
                 vec![],
             ),
             (
+                "template.table.layout",
+                "Table layout",
+                "Templates",
+                "Set rows and independent column counts within the existing table bounds",
+                Handler::Template(crate::TemplateOperation::Table(
+                    crate::TableOperation::Layout,
+                )),
+                Scope::Application,
+                ActionRepeat::Ignore,
+                vec![],
+            ),
+            (
                 "template.table.resize",
                 "Resize title-block table",
                 "Templates",

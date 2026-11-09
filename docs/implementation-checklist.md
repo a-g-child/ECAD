@@ -489,3 +489,14 @@ Default-label validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (
 - [x] Keep drawing-wide colour/stroke controls outside the font-only adapter, and retain explicit artwork/default values where no parent default exists.
 
 Shared-palette validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (70 workflows), and `cargo xtask desktop` passed. Bridge regression covers compound edits, Default resets, mixed applicability, stale/invalid rejection and exact undo/redo. Native Windows/Linux interaction remains unverified.
+
+### Row-specific table layout and contextual column insertion
+
+- [x] Replace ribbon Resize with registered Layout dialog: row selector, dynamic per-row column counts and explicit acknowledgement of cell removal.
+- [x] Core repartitioning retains outer bounds, surviving identities/content/styles, exact no-op behavior and complete undo/redo; validates counts, collapsed geometry, fresh IDs and revision guards.
+- [x] Fit contextual column insertion within existing width so wide/repeated additions remain usable at margins; position plus controls beside the actual selection. Retain row/numeric insertion behavior and pointer/numeric resizing.
+- [x] Local domain, bridge and browser regressions cover unequal rows, spans, invalid/removal rejection, cancellation, stable identities and exact history.
+
+See [decision 0057](decisions/0057-row-specific-table-layout.md).
+
+Row-layout validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (71 browser workflows), and `cargo xtask desktop` passed. Browser regressions include dynamic row fields, explicit removal acknowledgement, cancellation/no-op history, repeated fitted columns and control placement beside lower-row selections. Native Windows/Linux interaction remains unverified.

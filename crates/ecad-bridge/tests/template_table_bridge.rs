@@ -261,3 +261,57 @@ fn contextual_eligibility_target_checks_and_column_edits_share_exact_history() {
     );
     assert_eq!(variant(&b), split);
 }
+
+#[test]
+fn row_layout_and_fitted_columns_keep_bounds_and_exact_guarded_history() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut b = DesktopBridge::demo().unwrap();
+    b.configure_template_store(dir.path().join("templates.json"))
+        .unwrap();
+    action(&mut b, "library.templates").unwrap();
+    let original = table(&b);
+    let layout = json!({"operation":"layout","columns":["3","1","2"],"allow_removal":true});
+    let stale = request(&b, "template.table.layout", layout.clone());
+    edit(&mut b, "template.table.layout", layout.clone()).unwrap();
+    let changed = table(&b);
+    assert_eq!(changed["bounds"], original["bounds"]);
+    assert_eq!(changed["cells"].as_array().unwrap().len(), 6);
+    assert_eq!(changed["cells"][0]["id"], original["cells"][0]["id"]);
+    assert_eq!(
+        changed["cells"][0]["contents"],
+        original["cells"][0]["contents"]
+    );
+    assert!(call(&mut b, stale).is_err());
+    action(&mut b, "document.undo").unwrap();
+    assert_eq!(table(&b), original);
+    for bad in [
+        json!({"operation":"layout","columns":["1"],"allow_removal":false}),
+        json!({"operation":"layout","columns":["0"],"allow_removal":true}),
+        json!({"operation":"layout","columns":["4097"],"allow_removal":true}),
+    ] {
+        assert!(edit(&mut b, "template.table.layout", bad).is_err());
+        assert_eq!(table(&b), original);
+    }
+    action(&mut b, "document.redo").unwrap();
+    assert_eq!(table(&b), changed);
+    action(&mut b, "document.undo").unwrap();
+    // A full-width column used to push the table outside the paper. Fitted insertion
+    // reuses the same core partition rules but retains the exact paper footprint.
+    let width = original["bounds"][2].clone();
+    edit(
+        &mut b,
+        "template.table.insert_column",
+        json!({"operation":"insert","axis":"x",
+        "at":width,"size":width,"anchor":"end","fit":true}),
+    )
+    .unwrap();
+    let fitted = table(&b);
+    assert_eq!(fitted["bounds"], original["bounds"]);
+    assert!(
+        fitted["cells"].as_array().unwrap().len() > original["cells"].as_array().unwrap().len()
+    );
+    action(&mut b, "document.undo").unwrap();
+    assert_eq!(table(&b), original);
+    action(&mut b, "document.redo").unwrap();
+    assert_eq!(table(&b), fitted);
+}
