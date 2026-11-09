@@ -528,3 +528,13 @@ See [decision 0058](decisions/0058-portable-pictures.md) for packaging tradeoffs
 See [decision 0060](decisions/0060-cell-text-layout-and-justification.md). Automatic wrapping, word-spacing justification and native font/output parity remain future work.
 
 Cell-layout validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (79 browser workflows), and `cargo xtask desktop` passed. Final frontend build and focused empty-separator/reset/undo coverage also passed. Native Windows/Linux runtime and font/output parity remain unverified.
+
+
+### Contextual cell inspector organisation
+
+- [x] Text cells show compact collapsible Text/Layout/Style groups; picture cells show only applicable picture controls. Picture insertion stays on the shared ribbon action.
+- [x] Reuse one property-section control, preserve expanded state across rerenders/selections and retain inspector scrolling for same-target edits.
+- [x] Compact text editors, content-sized labels and errors, full-width caption editing and no empty picture/import area in text cells.
+- [x] Browser regression covers grouping, applicability, bounds, pending text, collapsed-state retention, image insertion/undo and scroll preservation; text/picture screenshots reviewed locally.
+
+Cell-inspector validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (80 browser workflows), and `cargo xtask desktop` passed. Text/picture screenshots were reviewed; native Windows/Linux interaction remains unverified.

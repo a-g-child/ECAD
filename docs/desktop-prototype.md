@@ -222,3 +222,14 @@ applies changes to text cells; template paper properties expose the correspondin
 defaults. Picture cells omit these controls. Changes use existing contextual
 completion and exact undo/redo. Saved templates and resolved project sheets carry
 the layout. No automatic wrapping or font shrinking is performed.
+
+
+Cell inspectors group their applicable properties into collapsible **Text**,
+**Layout** and **Style** sections. Picture cells show **Picture** controls instead;
+text cells use the ribbon's **Picture** action when converting to an image. Sections
+start expanded and retain their open/closed state through edits and cell selection
+within the template editor. The text editors use compact initial heights with
+scrolling for longer values. Inspector scroll position survives edits to the same
+selection, while selection changes start at the top. Group expansion is workspace
+state and creates no document/history change. Template text defaults use the same
+Layout/Style grouping.

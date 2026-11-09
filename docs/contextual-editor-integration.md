@@ -67,3 +67,5 @@ Portable pictures now share browsing/property controls and rendering across sche
 Cell picture insertion now replaces caption/value text as one undoable edit; picture properties offer Use text instead. Legacy mixed cells retain their data until explicitly resolved. See [decision 0059](decisions/0059-image-formats-and-exclusive-cells.md).
 
 Caption block layout and justification now share one control adapter and one renderer across placeholder templates and actual sheets. Above/inline flow and exact separators inherit per property, bulk edit coherently and preserve prior canonical bodies; see [decision 0060](decisions/0060-cell-text-layout-and-justification.md).
+
+Cell inspectors now organise applicable controls with the shared `PropertySections` view control. Text/Layout/Style groups and picture-only inspectors preserve transient expansion and same-selection scroll state without changing the template proposal, action dispatch or persistence contracts.

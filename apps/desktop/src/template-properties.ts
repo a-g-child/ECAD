@@ -1,3 +1,4 @@
+import { PropertySections } from './property-sections';
 import { PictureFields } from './picture-controls';
 /** Exact local fields form one closed property proposal; typing never edits a project. */
 import { unitPicker } from './unit-picker';
@@ -12,6 +13,8 @@ import { TemplateArtwork } from './template-artwork';
 export class TemplateProperties {
   readonly root = element('form', 'template-properties inspector');
   private blanket = false;
+  private sections = new PropertySections();
+  private contextKey = '';
   private cellPicture: PictureFields | null = null;
   private textDefaults: TemplateTextProperties | null = null;
   private cellStyles: { id: string; styles: import('./types').TemplateTextStyles }[] = [];
@@ -70,6 +73,17 @@ export class TemplateProperties {
     cells: TemplateCell[] = [],
     wholeTable = false,
   ) {
+    const key = JSON.stringify([
+      model.id,
+      selection?.table.id,
+      selection?.cell.id,
+      cells.map((c) => c.id),
+      wholeTable,
+      artworkId,
+      catalog,
+    ]);
+    const scroll = key === this.contextKey ? this.root.scrollTop : 0;
+    this.contextKey = key;
     this.model = model;
     this.blanket = wholeTable || cells.length > 1;
     this.selected = selection;
@@ -78,7 +92,7 @@ export class TemplateProperties {
     this.paperFields = element('div');
     this.paperFields.hidden = !!selection || !!artworkId || catalog;
     this.root.replaceChildren(this.paperFields);
-    this.root.scrollTop = 0;
+
     this.name = textEditor('property-input property-text', 2);
     this.name.value = model.name;
     this.label('Template name', this.name);
@@ -141,6 +155,9 @@ export class TemplateProperties {
       this.changed,
       true,
       this.apply,
+      false,
+      undefined,
+      this.sections,
     );
     this.paperFields.append(this.textDefaults.root, unitPicker());
     this.cellStyles = cells
@@ -159,18 +176,15 @@ export class TemplateProperties {
       if (!this.blanket) {
         this.caption = textEditor('property-input property-text', 2);
         this.caption.value = selection.cell.caption;
-        if (!selection.cell.picture) this.label('Cell caption', this.caption, this.root);
-        this.root.append(dimensionSummary(selection.cell.bounds, 'Cell bounds · '));
+        this.root.append(
+          dimensionSummary(selection.cell.bounds, 'Cell bounds · ', 'cell-bounds-summary'),
+        );
         this.runs = selection.cell.contents.map((r) => ({ ...r }));
         if (!selection.cell.picture) {
-          this.root.append(new TemplateRuns(this.runs, this.changed).runFields);
-          this.root.append(
-            element(
-              'p',
-              'settings-note',
-              'Choosing a picture replaces the cell caption and content.',
-            ),
-          );
+          const text = this.sections.section('cell-text', 'Text');
+          this.label('Cell caption', this.caption, text.body).classList.add('cell-caption-field');
+          text.body.append(new TemplateRuns(this.runs, this.changed).runFields);
+          this.root.append(text.root);
         } else if (selection.cell.caption || selection.cell.contents.length) {
           this.root.append(
             element(
@@ -189,23 +203,23 @@ export class TemplateProperties {
           });
           this.root.append(keep);
         }
-        this.cellPicture = new PictureFields(
-          {
-            bounds: selection.cell.bounds,
-            picture: structuredClone(
-              selection.cell.picture ?? { data: '', mime: 'image/png', fit: 'contain' },
-            ),
-          },
-          false,
-          this.changed,
-          () => {
-            this.caption.value = '';
-            this.runs.splice(0);
-            this.apply();
-          },
-        );
-        this.root.append(this.cellPicture.root);
         if (selection.cell.picture) {
+          const picture = this.sections.section('cell-picture', 'Picture');
+          this.cellPicture = new PictureFields(
+            {
+              bounds: selection.cell.bounds,
+              picture: structuredClone(selection.cell.picture),
+            },
+            false,
+            this.changed,
+            () => {
+              this.caption.value = '';
+              this.runs.splice(0);
+              this.apply();
+            },
+          );
+          picture.body.append(this.cellPicture.root);
+          this.root.append(picture.root);
           const remove = element('button', 'plain', 'Use text instead');
           remove.type = 'button';
           remove.addEventListener('click', () => {
@@ -229,9 +243,11 @@ export class TemplateProperties {
             this.apply,
             this.blanket,
             this.model?.text_defaults.layout,
+            this.sections,
           ).root,
         );
     }
+    this.root.scrollTop = scroll;
   }
 
   proposal() {
@@ -276,10 +292,14 @@ export class TemplateProperties {
       this.focusArtwork(this.artworkId);
       return;
     }
-    if (this.blanket)
-      this.root
-        .querySelector<HTMLInputElement>('.font-palette textarea,.font-palette input')
-        ?.focus();
-    else (this.selected ? this.caption : this.name).focus();
+    const control = this.blanket
+      ? (this.root.querySelector<HTMLElement>('.font-palette textarea,.font-palette input') ??
+        undefined)
+      : this.selected?.cell.picture
+        ? (this.root.querySelector<HTMLElement>('.picture-properties button') ?? undefined)
+        : this.selected
+          ? this.caption
+          : this.name;
+    this.sections.focus(control);
   }
 }

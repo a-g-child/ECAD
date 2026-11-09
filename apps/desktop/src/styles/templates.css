@@ -47,7 +47,7 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
   min-height: 0;
 }
 .template-structure {
@@ -226,4 +226,65 @@
   width: calc(100% - 24px);
   border: 0;
   background: transparent;
+}
+
+/* Cell inspectors use the same compact section control for text, layout and style. */
+.template-properties > * {
+  flex-shrink: 0;
+  min-width: 0;
+}
+.template-properties > h3 {
+  margin: 0;
+  font-size: 12px;
+}
+.template-text-properties {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.template-properties .settings-field {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 8px;
+}
+.template-properties .settings-field > span {
+  padding-top: 4px;
+  font-size: 10px;
+}
+.template-properties .cell-caption-field {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.template-properties .cell-caption-field > span {
+  padding: 0;
+}
+.template-properties .cell-caption-field .property-text {
+  height: 42px;
+}
+.template-properties .template-text-input {
+  height: 80px;
+}
+.template-properties .template-run-fields,
+.template-properties .template-text-label,
+.template-properties .picture-properties {
+  gap: 6px;
+}
+.template-properties :is(.inspector-note, .cell-bounds-summary) {
+  margin: 0;
+  padding: 0;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.template-properties .template-text-hint {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.template-properties .settings-error {
+  height: auto;
+  max-height: 64px;
+  margin: 0;
+  padding: 0;
+}
+.template-properties .settings-error:empty {
+  display: none;
 }

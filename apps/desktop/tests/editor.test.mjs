@@ -1,3 +1,4 @@
+import { registerCellPropertiesPanelTests } from './cell-properties-panel.mjs';
 import { registerCellTextLayoutTests } from './cell-text-layout.mjs';
 import { registerPictureTests } from './pictures.mjs';
 import { registerTableTextUnits } from './table-text-units.mjs';
@@ -598,3 +599,5 @@ registerPictureTests({
 });
 
 registerCellTextLayoutTests({ page, button, until });
+
+registerCellPropertiesPanelTests({ page, button, until, root });

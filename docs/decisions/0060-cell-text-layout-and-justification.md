@@ -61,3 +61,14 @@ previews resolve the new properties and use the same rendering implementation.
 Regression coverage includes inheritance/explicit empty separators, invalid and
 stale proposals, coherent range undo, old/new file round trips, actual sheet
 resolution, mixed-font geometry, blank lines, overflow and template publication.
+
+
+## Inspector presentation follow-up
+
+Use the shared `PropertySections` UI control for compact collapsible Text, Layout
+and Style groups. Show picture fields only on picture cells; conversion from text
+uses the existing Picture ribbon action. Expansion and scroll are transient
+inspector state, retained through same-target property completion without entering
+undo or persistence. Sections start expanded and remain explicitly collapsible.
+Numeric/text validation, pending drafts, keyboard completion and exact proposals
+remain owned by the existing template editor.

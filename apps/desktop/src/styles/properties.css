@@ -142,3 +142,47 @@
 .picture-preview[hidden] {
   display: none;
 }
+
+/* Reusable inspector groups keep content-sized rows and retain the shell's pane geometry. */
+.property-section {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+.property-section > summary {
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+.property-section[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+.property-section > summary:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -2px;
+}
+.property-section-body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+}
+.property-section-body h4 {
+  margin: 0;
+}
+.property-section-body .font-palette {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  gap: 6px;
+}
+.property-section-body .font-palette + .font-palette {
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  padding-top: 8px;
+}
+.property-section-body > .picture-properties > h4 {
+  display: none;
+}

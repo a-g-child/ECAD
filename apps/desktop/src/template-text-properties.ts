@@ -1,3 +1,4 @@
+import { PropertySections } from './property-sections';
 /** Selection adapter: one palette for ranges, independent caption/content palettes for one cell. */
 import { CellTextLayoutProperties } from './cell-text-layout-properties';
 import type { TemplateTextStyles, TemplateCellTextLayout } from './types';
@@ -12,6 +13,7 @@ export class TemplateTextProperties {
     complete: () => void = () => {},
     allText = false,
     layoutDefaults?: TemplateCellTextLayout,
+    sections = new PropertySections(),
   ) {
     const hasLayout = styles.some((s) =>
       [s.layout, layoutDefaults].some((l) => Object.values(l ?? {}).some((v) => v != null)),
@@ -22,9 +24,20 @@ export class TemplateTextProperties {
     const options: import('./font-properties').FontPaletteOptions = {
       exclude: hasLayout ? (inline ? ['horizontal', 'vertical'] : ['vertical']) : [],
     };
-    this.root.append(new CellTextLayoutProperties(styles, changed, defaults, complete).root);
+    const layout = sections.section(
+      defaults ? 'default-layout' : 'cell-layout',
+      defaults ? 'Layout defaults' : 'Layout',
+    );
+    const layoutFields = new CellTextLayoutProperties(styles, changed, defaults, complete);
+    layoutFields.root.querySelector('h4')?.remove();
+    layout.body.append(layoutFields.root);
+    const style = sections.section(
+      defaults ? 'default-style' : 'cell-style',
+      defaults ? 'Style defaults' : 'Style',
+    );
+    this.root.append(layout.root, style.root);
     if (!defaults && (styles.length > 1 || allText)) {
-      this.root.append(
+      style.body.append(
         new FontPalette(
           styles.flatMap((s) => [s.caption, s.content]),
           'Text',
@@ -33,7 +46,7 @@ export class TemplateTextProperties {
           options,
         ).root,
       );
-      this.root.append(
+      style.body.append(
         element(
           'p',
           'inspector-note',
@@ -43,7 +56,7 @@ export class TemplateTextProperties {
     } else {
       for (const channel of ['caption', 'content'] as const) {
         const title = `${channel === 'caption' ? 'Caption' : 'Content'}${defaults ? ' default' : ''}`;
-        this.root.append(
+        style.body.append(
           new FontPalette(
             styles.map((s) => s[channel]),
             title,
