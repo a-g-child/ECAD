@@ -363,3 +363,16 @@ Field-completion validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui
 See [decision 0047](decisions/0047-contextual-table-actions-and-paper-presets.md). Existing property Apply/Revert fallback, artwork management and numeric table placement remain available. Standardized margin profiles and native Windows/Linux execution remain pending.
 
 Contextual-tool validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (57 browser workflows), and `cargo xtask desktop` passed. Desktop checks are host build/lint checks, not native interaction automation or Windows/Linux runtime validation.
+
+
+### Shared previews and click placement
+
+- [x] One reusable latest-preview queue for template gestures and schematic annotation placement, with coalescing, stale-response suppression and finish draining.
+- [x] Template line/rectangle/ellipse start–finish clicks with anchor feedback; preserve drag placement and whole-artwork movement.
+- [x] Accept schematic text finish while a preview is loading; validate the final text/position and retain invalid input for correction.
+- [x] Regression workflows for delayed canvas clicks, delayed numeric/text finish, invalid final proposals, cancellation, exact history and anchor cleanup.
+- [ ] Inline template text/variable placement, successive-vertex template paths, shared appearance controls and further tool extraction.
+
+See [decision 0048](decisions/0048-shared-preview-queue-and-click-placement.md). Ordered schematic path intents remain separate from replaceable pointer previews. Persistence and electrical connectivity are unchanged.
+
+Shared-preview validation (macOS/aarch64): `cargo xtask full`, `cargo xtask ui` (60 browser workflows), and `cargo xtask desktop` passed. Native desktop checks build/lint the available host; native interaction automation and Windows/Linux runtime testing remain pending.

@@ -124,3 +124,10 @@ The inspector now follows the active cell range or artwork object; blank-paper c
 Select a cell or vertically aligned contiguous stack, then choose **Split**; only row/column counts are required. All selected cells split in one undo step. **Merge** is available only for a rectangular cell selection; the top-left identity survives. Content handling appears only when more than one selected cell contains captions or text. The final Apply confirms the merge. No table/cell identifiers or survivor selectors are needed. Ribbon and palette eligibility comes from Rust and dispatch checks the same captured target.
 
 Paper properties show **Paper family**, **Paper size**, **Orientation** and **General margin**. Presets cover ISO A0–A5 and US Letter/Legal/Tabloid/ANSI C–E. **Advanced paper settings** retains exact custom dimensions, individual margins, content bounds and fit behavior. Preset/orientation edits never scale cells or artwork; invalid fits remain editable. Custom values survive save/reopen. These are dimension presets, not verified standard margin profiles. See [decision 0047](decisions/0047-contextual-table-actions-and-paper-presets.md).
+
+
+### Click placement and shared previews
+
+Template **Line**, **Rectangle** and **Ellipse** tools accept a start click and a finish click, with a visible anchor and hovering preview. Press-drag-release placement still works. Escape cancels; the final point controls the result even while an older preview is loading. Invalid final geometry creates no object. Text-box placement and whole-artwork movement still use dragging.
+
+Template gestures and schematic annotations now share preview scheduling. A schematic text finish click or Ctrl/Cmd+Enter waits for the latest text/position preview; invalid final values remain editable. Tool cancellation suppresses delayed replies from the old frontend session. Each successful placement remains one undo operation. Inline template text/variable insertion and shared appearance controls remain planned. See [decision 0048](decisions/0048-shared-preview-queue-and-click-placement.md).

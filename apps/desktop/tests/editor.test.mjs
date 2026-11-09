@@ -1,3 +1,4 @@
+import { registerTemplateClickPlacement } from './template-click-placement.mjs';
 import { registerTemplateContextualTools } from './template-contextual-tools.mjs';
 import { registerPropertyCompletionTests } from './template-property-completion.mjs';
 import { registerTemplateSelectionTests } from './template-selection.mjs';
@@ -556,3 +557,5 @@ registerTemplateSelectionTests({ page, button, until });
 registerPropertyCompletionTests({ page, button, until });
 
 registerTemplateContextualTools({ page, button, until });
+
+registerTemplateClickPlacement({ page, button, until });

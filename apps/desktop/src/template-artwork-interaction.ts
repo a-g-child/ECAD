@@ -9,7 +9,8 @@ export class TemplateArtworkInteraction {
   private model: TemplateVariant | null = null;
 
   private tool: { kind: Kind; id: string; original: TemplateGraphic | null } | null = null;
-  private drag: { start: Point; pointer: number } | null = null;
+  private drag: { start: Point; pointer: number | null; screen: Point; second: boolean } | null =
+    null;
   private ending = false;
   private gesture: TemplateGesture;
   get active() {
@@ -31,6 +32,7 @@ export class TemplateArtworkInteraction {
         if (this.model)
           this.preview.render({ ...this.model, graphics: graphics ?? this.model.graphics }, false);
         this.preview.svg.classList.toggle('artwork-invalid', invalid);
+        this.paintAnchor();
       },
       apply,
       () => {
@@ -59,7 +61,11 @@ export class TemplateArtworkInteraction {
     svg.addEventListener(
       'pointermove',
       (e) => {
-        if (this.drag && !this.ending) {
+        if (
+          this.drag &&
+          !this.ending &&
+          (this.drag.pointer === null || this.drag.pointer === e.pointerId)
+        ) {
           const p = paperPoint(svg, e);
           if (p) this.propose(p);
         }
@@ -68,8 +74,8 @@ export class TemplateArtworkInteraction {
     );
     svg.addEventListener('pointerup', (e) => void this.up(e), true);
     svg.addEventListener('pointercancel', () => void this.cancel());
-    svg.addEventListener('lostpointercapture', () => {
-      if (this.drag && !this.ending) void this.cancel();
+    svg.addEventListener('lostpointercapture', (e) => {
+      if (this.drag?.pointer === e.pointerId && !this.ending) void this.cancel();
     });
   }
   update(model: TemplateVariant) {
@@ -89,7 +95,9 @@ export class TemplateArtworkInteraction {
     this.status(
       kind === 'move'
         ? 'Drag the selected artwork · Escape cancels'
-        : `Drag to place ${kind} · Escape cancels`,
+        : kind === 'text'
+          ? 'Drag a text box · Escape cancels'
+          : `Click start, then finish ${kind} · Drag also works · Escape cancels`,
     );
     this.preview.svg.focus();
   }
@@ -105,7 +113,7 @@ export class TemplateArtworkInteraction {
     this.changed();
   }
   private down(e: PointerEvent) {
-    if (e.button !== 0 || this.drag || this.ending || !this.model) return;
+    if (e.button !== 0 || this.drag?.pointer != null || this.ending || !this.model) return;
     const p = paperPoint(this.preview.svg, e);
     if (!p) return;
     const hit = (e.target as Element).closest<SVGElement>('[data-template-graphic]')?.dataset
@@ -119,10 +127,21 @@ export class TemplateArtworkInteraction {
     } else if (this.tool.kind === 'move' && hit !== this.tool.id) return;
     e.preventDefault();
     e.stopImmediatePropagation();
-    this.drag = { start: p, pointer: e.pointerId };
+    if (this.drag) {
+      this.drag.pointer = e.pointerId;
+      this.drag.second = true;
+    } else {
+      this.drag = {
+        start: p,
+        pointer: e.pointerId,
+        screen: { x: e.clientX, y: e.clientY },
+        second: false,
+      };
+    }
+    this.paintAnchor();
     this.preview.svg.focus();
     this.preview.svg.setPointerCapture(e.pointerId);
-    if (this.tool?.kind === 'move') this.propose(p);
+    if (this.tool?.kind === 'move' || this.drag.second) this.propose(p);
   }
   private propose(p: Point) {
     if (!this.drag || !this.tool) return;
@@ -142,9 +161,40 @@ export class TemplateArtworkInteraction {
     if (!this.drag || this.drag.pointer !== e.pointerId || this.ending) return;
     e.preventDefault();
     e.stopImmediatePropagation();
+    const distance = Math.hypot(e.clientX - this.drag.screen.x, e.clientY - this.drag.screen.y);
+    if (
+      !this.drag.second &&
+      this.tool?.kind !== 'move' &&
+      this.tool?.kind !== 'text' &&
+      distance < 4
+    ) {
+      // A click establishes the anchor. Clear capture ownership before releasing it.
+      this.drag.pointer = null;
+      if (this.preview.svg.hasPointerCapture(e.pointerId))
+        this.preview.svg.releasePointerCapture(e.pointerId);
+      this.preview.svg.dataset.artworkPhase = 'finish';
+      this.status('Click the finish point · Escape cancels');
+      return;
+    }
     const p = paperPoint(this.preview.svg, e);
     if (p) this.propose(p);
-    await this.finish(true);
+    await this.finish(p !== null);
+  }
+  private paintAnchor() {
+    const svg = this.preview.svg;
+    svg.querySelector('[data-artwork-anchor]')?.remove();
+    if (!this.drag || this.tool?.kind === 'move' || this.tool?.kind === 'text') return;
+    const anchor = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    anchor.setAttribute('data-artwork-anchor', '');
+    anchor.setAttribute('cx', String(this.drag.start.x / 1000));
+    anchor.setAttribute('cy', String(this.drag.start.y / 1000));
+    anchor.setAttribute('r', String(4 / Math.max(0.000001, Math.abs(svg.getScreenCTM()?.a ?? 1))));
+    anchor.setAttribute('fill', 'none');
+    anchor.setAttribute('stroke', '#2383bf');
+    anchor.setAttribute('stroke-width', '1');
+    anchor.setAttribute('vector-effect', 'non-scaling-stroke');
+    anchor.setAttribute('pointer-events', 'none');
+    svg.append(anchor);
   }
   async cancel() {
     if (this.active && !this.ending) await this.finish(false);
@@ -158,9 +208,11 @@ export class TemplateArtworkInteraction {
       const pointer = this.drag?.pointer;
       this.drag = null;
       this.tool = null;
-      if (pointer !== undefined && this.preview.svg.hasPointerCapture(pointer))
+      if (pointer != null && this.preview.svg.hasPointerCapture(pointer))
         this.preview.svg.releasePointerCapture(pointer);
       delete this.preview.svg.dataset.artworkTool;
+      delete this.preview.svg.dataset.artworkPhase;
+      this.preview.svg.querySelector('[data-artwork-anchor]')?.remove();
       this.preview.svg.classList.remove('artwork-invalid');
       this.preview.locked = false;
       this.ending = false;

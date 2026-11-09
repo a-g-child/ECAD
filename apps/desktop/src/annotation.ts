@@ -4,13 +4,13 @@ import type { Shell } from './shell';
 import type { DrawingCanvas } from './canvas';
 import { element } from './ui';
 import { textEditor, applyTextKey } from './text';
+import { PreviewQueue } from './preview-queue';
 import { send, inputId, errorText } from './transport';
 export class AnnotationTool {
   active = false;
   private generation = 0;
   private row: AnnotationRow | null = null;
-  private pending: object | null = null;
-  private pumping = false;
+  private previews: PreviewQueue<object, Reply>;
   private committing = false;
   private valid = false;
   private suppressed = false;
@@ -30,6 +30,16 @@ export class AnnotationTool {
     private select: (target: Target) => void,
     private cancelAction: () => void,
   ) {
+    this.previews = new PreviewQueue(
+      send,
+      (reply) => this.accept(reply),
+      (error) => {
+        this.valid = false;
+        this.drawing.clearPreview();
+        this.status(errorText(error), true);
+      },
+      () => this.controls(),
+    );
     this.text.setAttribute('aria-label', 'Annotation text');
     this.text.placeholder = 'Annotation text';
     this.x.setAttribute('aria-label', 'Annotation X (µm)');
@@ -82,7 +92,7 @@ export class AnnotationTool {
     this.shell.app.querySelector('[data-tool="select"]')?.classList.toggle('active', !this.active);
     for (const node of [this.text, this.x, this.y, this.cancelButton])
       node.disabled = this.committing || !this.row;
-    this.applyButton.disabled = !this.valid || this.pumping || !!this.pending || this.committing;
+    this.applyButton.disabled = !this.valid || this.previews.busy || this.committing;
     if (this.active) {
       this.shell.sheets.disabled = true;
       this.shell.inspector.inert = true;
@@ -119,9 +129,9 @@ export class AnnotationTool {
     }
   }
   private queue(candidate: number | null = null) {
-    if (!this.active || !this.row) return;
+    if (!this.active || !this.row || this.committing) return;
     this.valid = false;
-    this.pending = {
+    this.previews.propose({
       type: 'preview_annotation',
       session: this.row.session,
       placement: {
@@ -133,34 +143,8 @@ export class AnnotationTool {
         candidate,
         tolerance_um: this.pointer?.tolerance ?? 0,
       },
-    };
+    });
     this.controls();
-    void this.pump();
-  }
-  private async pump() {
-    if (this.pumping) return;
-    this.pumping = true;
-    const generation = this.generation;
-    try {
-      while (this.pending && generation === this.generation) {
-        const request = this.pending;
-        this.pending = null;
-        try {
-          const reply = await send(request);
-          if (generation === this.generation && !this.pending) this.accept(reply);
-        } catch (error) {
-          if (generation === this.generation && !this.pending) {
-            this.valid = false;
-            this.drawing.clearPreview();
-            this.status(errorText(error), true);
-          }
-        }
-      }
-    } finally {
-      this.pumping = false;
-      this.controls();
-      if (this.pending) void this.pump();
-    }
   }
   private accept(reply: Reply) {
     if (!reply.annotation) throw new Error('Missing annotation proposal');
@@ -182,11 +166,18 @@ export class AnnotationTool {
     this.controls();
   }
   async commit() {
-    if (!this.active || !this.valid || this.pumping || this.pending || !this.row || this.committing)
-      return;
-    const target = this.row.scene[0].target;
+    if (!this.active || !this.row || this.committing) return;
+    const generation = this.generation;
     this.committing = true;
     this.controls();
+    await this.previews.drain();
+    if (generation !== this.generation || !this.active) return;
+    if (!this.valid || !this.row) {
+      this.committing = false;
+      this.controls();
+      return;
+    }
+    const target = this.row.scene[0].target;
     try {
       const reply = await send({
         type: 'commit_annotation',
@@ -239,7 +230,7 @@ export class AnnotationTool {
     this.generation++;
     this.active = false;
     this.row = null;
-    this.pending = null;
+    this.previews.reset();
     this.committing = false;
     this.valid = false;
     this.suppressed = false;

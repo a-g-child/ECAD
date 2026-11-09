@@ -1,5 +1,6 @@
 /** One coalesced Rust preview stream; pointer release commits the latest closed proposal only. */
 import type { Context, Reply, TemplateTable, TemplateGraphic } from './types';
+import { PreviewQueue } from './preview-queue';
 import { send, inputId, errorText } from './transport';
 export class TemplateGesture {
   private state: {
@@ -7,11 +8,10 @@ export class TemplateGesture {
     variant: string;
     table: string;
     action: string;
-    latest: object | null;
     token: string | null;
     attempted: boolean;
   } | null = null;
-  private running: Promise<void> | null = null;
+  private queue: PreviewQueue<object, Reply>;
   private ending = false;
   get active() {
     return this.state !== null;
@@ -28,7 +28,27 @@ export class TemplateGesture {
     private changed: () => void,
     private status: (s: string, error?: boolean) => void,
     private artwork = false,
-  ) {}
+  ) {
+    this.queue = new PreviewQueue(
+      (request) => send({ ...request, input: inputId() }),
+      (reply) => {
+        if (!reply.table_preview) throw new Error('Missing table preview');
+        if (!this.state) return;
+        this.state.token = reply.table_preview.token;
+        this.display(
+          reply.table_preview.tables,
+          false,
+          reply.table_preview.snapped,
+          reply.table_preview.token ? reply.table_preview.graphics : null,
+        );
+      },
+      (error) => {
+        if (this.state) this.state.token = null;
+        this.display(null, true, []);
+        this.status(errorText(error), true);
+      },
+    );
+  }
   begin(variant: string, table: string, action: string) {
     if (this.active) return false;
     this.state = {
@@ -36,7 +56,6 @@ export class TemplateGesture {
       variant,
       table,
       action,
-      latest: null,
       token: null,
       attempted: false,
     };
@@ -46,58 +65,22 @@ export class TemplateGesture {
   }
   propose(edit: object) {
     if (!this.state || this.ending) return;
-    this.state.latest = edit;
-    this.state.token = null;
-    if (!this.running)
-      this.running = this.pump().finally(() => {
-        this.running = null;
-      });
-  }
-  private async pump() {
     const state = this.state;
-    if (!state) return;
-    while (state.latest) {
-      const edit = state.latest;
-      state.latest = null;
-      state.attempted = true;
-      try {
-        const reply = await send({
-          type: this.artwork ? 'template_geometry_preview' : 'template_table_preview',
-          context: state.context,
-          action: state.action,
-          values: {
-            variant: state.variant,
-            [this.artwork ? 'graphic' : 'table']: state.table,
-            edit,
-          },
-          input: inputId(),
-        });
-        if (!reply.table_preview) throw new Error('Missing table preview');
-        // A newer queued pointer coordinate owns the next preview; do not flash an obsolete reply.
-        if (!state.latest) {
-          state.token = reply.table_preview.token;
-          this.display(
-            reply.table_preview.tables,
-            false,
-            reply.table_preview.snapped,
-            reply.table_preview.token ? reply.table_preview.graphics : null,
-          );
-        }
-      } catch (e) {
-        state.token = null;
-        if (!state.latest) {
-          this.display(null, true, []);
-          this.status(errorText(e), true);
-        }
-      }
-    }
+    state.token = null;
+    state.attempted = true;
+    this.queue.propose({
+      type: this.artwork ? 'template_geometry_preview' : 'template_table_preview',
+      context: state.context,
+      action: state.action,
+      values: { variant: state.variant, [this.artwork ? 'graphic' : 'table']: state.table, edit },
+    });
   }
   async finish(commit: boolean) {
     const state = this.state;
     if (!state || this.ending) return;
     this.ending = true;
     try {
-      await this.running;
+      await this.queue.drain();
       if (commit && state.token) {
         await this.apply(
           await send({
@@ -116,6 +99,7 @@ export class TemplateGesture {
       this.status(errorText(e), true);
       if (state.attempted) await this.cancel(state.context).catch(() => undefined);
     } finally {
+      this.queue.reset();
       this.state = null;
       this.ending = false;
       this.display(null, false, []);

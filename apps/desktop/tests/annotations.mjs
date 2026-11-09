@@ -110,4 +110,104 @@ export function registerAnnotationTests({
     assert.deepEqual(p.errors, []);
     await p.close();
   });
+  test('annotation finish waits for the latest preview, rejects invalid text and cancels delayed drafts', async () => {
+    const p = await page();
+    const before = await p.locator('svg.drawing [data-object^="label:"]').count();
+    await button(p, 'Create annotation · T').click();
+    await text(p).waitFor();
+    await text(p).fill('Initial text');
+    await until(async () => !(await button(p, 'Apply').isDisabled()));
+    let delayed = 0;
+    await p.route('**/bridge', async (route) => {
+      const request = route.request().postDataJSON();
+      if (request.type === 'preview_annotation') {
+        delayed++;
+        await new Promise((resolve) => setTimeout(resolve, 220));
+      }
+      await route.continue();
+    });
+    await text(p).fill('Final multiline\ntext');
+    await x(p).fill('12345');
+    await y(p).fill('-23456');
+    await text(p).press('Control+Enter');
+    await until(async () => !(await text(p).isVisible()));
+    assert.ok(delayed > 0);
+    await p.unrouteAll({ behavior: 'wait' });
+    await input(p, 'drawing_text').waitFor();
+    assert.equal(await input(p, 'drawing_text').inputValue(), 'Final multiline\ntext');
+    const key = await p
+      .locator('svg.drawing [data-object^="label:"]')
+      .filter({ hasText: 'Final multiline' })
+      .getAttribute('data-object');
+    await pressAction(p, 'Save project', 'Project saved');
+    const saved = JSON.parse(await readFile(project(), 'utf8'));
+    assert.deepEqual(
+      saved.drawing.labels.find((l) => `label:${l.id}` === key).position_um,
+      [12345, -23456],
+    );
+    await pressAction(p, 'Undo', 'Undo complete');
+    assert.equal(await p.locator('svg.drawing [data-object^="label:"]').count(), before);
+    await button(p, 'Create annotation · T').click();
+    await text(p).waitFor();
+    await text(p).fill('Valid draft');
+    await until(async () => !(await button(p, 'Apply').isDisabled()));
+    await p.route('**/bridge', async (route) => {
+      if (route.request().postDataJSON().type === 'preview_annotation')
+        await new Promise((resolve) => setTimeout(resolve, 180));
+      await route.continue();
+    });
+    await text(p).fill('   ');
+    await text(p).press('Control+Enter');
+    await until(async () =>
+      (await p.locator('.status-message').getAttribute('class')).includes('error'),
+    );
+    assert.equal(await text(p).isVisible(), true);
+    assert.equal(await button(p, 'Apply').isDisabled(), true);
+    await text(p).fill('Cancelled while loading');
+    await text(p).press('Escape');
+    await until(async () => !(await text(p).isVisible()));
+    await p.unrouteAll({ behavior: 'wait' });
+    assert.equal(await ghosts(p).count(), 0);
+    assert.equal(await p.locator('svg.drawing [data-object^="label:"]').count(), before);
+    await pressAction(p, 'Redo', 'Redo complete');
+    await pressAction(p, 'Undo', 'Undo complete');
+    await pressAction(p, 'Save project', 'Project saved');
+    assert.deepEqual(p.errors, []);
+    await p.close();
+  });
+  test('schematic annotation click during a delayed pointer preview commits the clicked position once', async () => {
+    const p = await page();
+    await button(p, 'Create annotation · T').click();
+    await text(p).waitFor();
+    await text(p).fill('Delayed pointer click');
+    await until(async () => !(await button(p, 'Apply').isDisabled()));
+    let placement = null;
+    await p.route('**/bridge', async (route) => {
+      const request = route.request().postDataJSON();
+      if (request.type === 'preview_annotation') {
+        placement = request.placement;
+        await new Promise((resolve) => setTimeout(resolve, 220));
+      }
+      await route.continue();
+    });
+    const cursor = await p.locator('svg.drawing').evaluate((svg) => {
+      const point = new DOMPoint(55, 35).matrixTransform(svg.getScreenCTM());
+      return { x: point.x, y: point.y };
+    });
+    await p.mouse.click(cursor.x, cursor.y);
+    await until(async () => !(await text(p).isVisible()));
+    await p.unrouteAll({ behavior: 'wait' });
+    assert.ok(placement);
+    await input(p, 'drawing_text').waitFor();
+    assert.equal(await input(p, 'drawing_text').inputValue(), 'Delayed pointer click');
+    await pressAction(p, 'Save project', 'Project saved');
+    const saved = JSON.parse(await readFile(project(), 'utf8'));
+    const added = saved.drawing.labels.filter((l) => l.text === 'Delayed pointer click');
+    assert.equal(added.length, 1);
+    assert.deepEqual(added[0].position_um, [Number(placement.x), Number(placement.y)]);
+    await pressAction(p, 'Undo', 'Undo complete');
+    await pressAction(p, 'Save project', 'Project saved');
+    assert.deepEqual(p.errors, []);
+    await p.close();
+  });
 }
